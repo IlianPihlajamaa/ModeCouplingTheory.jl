@@ -1,5 +1,7 @@
 
-
+"""
+Package to solve mode-coupling theory like equations
+"""
 module ModeCouplingTheory
     using StaticArrays, SparseArrays, LinearAlgebra, Random, Tullio, LoopVectorization, ProgressMeter
     export solve, FuchsSolver, EulerSolver
@@ -11,5 +13,5 @@ module ModeCouplingTheory
         include(file)
     end
 
-    
+
 end # module

@@ -3,7 +3,7 @@ abstract type MemoryKernel end
 """
     ExponentiallyDecayingKernel{T<:Number} <: MemoryKernel
 
-    Scalar kernel with fields `λ` and `τ` which when called returns `λ exp(-t/τ)`.
+Scalar kernel with fields `λ` and `τ` which when called returns `λ exp(-t/τ)`.
 """
 struct ExponentiallyDecayingKernel{T<:Number} <: MemoryKernel
     λ::T
@@ -16,9 +16,9 @@ end
 
 
 """
-SchematicF1Kernel{T<:Number} <: MemoryKernel
+    SchematicF1Kernel{T<:Number} <: MemoryKernel
 
-    Scalar kernel with field `λ` which when called returns `λ F`.
+Scalar kernel with field `λ` which when called returns `λ F`.
 """
 struct SchematicF1Kernel{T<:Number} <: MemoryKernel
     λ::T
@@ -30,9 +30,9 @@ function (kernel::SchematicF1Kernel)(F, t)
 end
 
 """
-SchematicF2Kernel{T<:Number} <: MemoryKernel
+    SchematicF2Kernel{T<:Number} <: MemoryKernel
 
-    Scalar kernel with field `λ` which when called returns `λ F^2`.
+Scalar kernel with field `λ` which when called returns `λ F^2`.
 """
 struct SchematicF2Kernel{T<:Number} <: MemoryKernel
     λ::T
@@ -44,9 +44,9 @@ function (kernel::SchematicF2Kernel)(F, t)
 end
 
 """
-SchematicF1Kernel{T<:Number} <: MemoryKernel
+    SchematicF1Kernel{T<:Number} <: MemoryKernel
 
-    Scalar kernel with fields `λ1`, `λ2`, and `λ3` which when called returns `λ1 * F^1 + λ2 * F^2 + λ3 * F^3`.
+Scalar kernel with fields `λ1`, `λ2`, and `λ3` which when called returns `λ1 * F^1 + λ2 * F^2 + λ3 * F^3`.
 """
 struct SchematicF123Kernel{T<:Number} <: MemoryKernel
     λ1::T
@@ -60,9 +60,9 @@ end
 
 
 """
-SchematicDiagonalKernel{T<:Union{SVector, Vector}} <: MemoryKernel
+    SchematicDiagonalKernel{T<:Union{SVector, Vector}} <: MemoryKernel
 
-    Matrix kernel with field `λ` which when called returns `Diagonal(λ .* F .^ 2)`, i.e., it implements a non-coupled system of SchematicF2Kernels.
+Matrix kernel with field `λ` which when called returns `Diagonal(λ .* F .^ 2)`, i.e., it implements a non-coupled system of SchematicF2Kernels.
 """
 struct SchematicDiagonalKernel{T<:Union{SVector, Vector}} <: MemoryKernel
     λ::T
@@ -81,9 +81,9 @@ function (kernel::SchematicDiagonalKernel)(out::Diagonal, F::Vector, t)
 end
 
 """
-SchematicMatrixKernel{T<:Union{SVector, Vector}} <: MemoryKernel
+    SchematicMatrixKernel{T<:Union{SVector, Vector}} <: MemoryKernel
 
-    Matrix kernel with field `λ` which when called returns `λ * F * F'`, i.e., it implements Kαβ = λ*Fα*Fβ.
+Matrix kernel with field `λ` which when called returns `λ * F * Fᵀ`, i.e., it implements Kαβ = λ*Fα*Fβ.
 """
 struct SchematicMatrixKernel{T<:Union{SMatrix,Matrix}} <: MemoryKernel
     λ::T
@@ -125,7 +125,7 @@ Constructor of a ModeCouplingKernel. It implements the kernel
 K(k,t) = ρ kBT / (16π^3m) ∫dq V^2(k,q) F(q,t) F(k-q,t)
 in which k and q are vectors. 
 
-arguments:
+# arguments:
 
 `ρ`: number density
 `kBT`: Thermal energy
@@ -133,7 +133,7 @@ arguments:
 `k_array`: vector of wavenumbers at which the structure factor is known
 `Sₖ`: structure factor
 
-returns:
+# returns:
 
 an instance `k` of `ModeCouplingKernel <: MemoryKernel`, which can be called both in-place and out-of-place:
 `k`(out, F, t)
@@ -346,7 +346,7 @@ Constructor of a MultiComponentModeCouplingKernel. It implements the kernel
 Kαβ(k,t) = ρ  / (2 xα xβ (2π)³) Σμνμ'ν' ∫dq Vμ'ν'(k,q) Fμμ'(q,t) Fνν'(k-q,t) Vμν(k,q)
 in which k and q are vectors and α and β species labels. 
 
-arguments:
+# arguments:
 
 `ρ`: vector of number densities for each species
 `kBT`: Thermal energy
@@ -354,7 +354,7 @@ arguments:
 `k_array`: vector of wavenumbers at which the structure factor is known
 `Sₖ`: a `Vector` of Nk `SMatrix`s containing the structure factor of each component at each wave number
 
-returns:
+# returns:
 
 an instance `k` of `ModeCouplingKernel <: MemoryKernel`, which can be called both in-place and out-of-place:
 k = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)

@@ -4,7 +4,7 @@
 
 Finds the time at which a signal first decreases below some `threshold`. Uses interpolation to find an accurate result
 
-arguments:
+# arguments:
     `t`: a vector of time values at which the signal `F` is known
     `F`: the signal
     `threshold`: see above

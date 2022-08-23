@@ -28,9 +28,9 @@ end
 """"
     solve_steady_state(γ, F₀::Vector, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false)
 
-Finds the steady-state solution (non-ergodicity parameter) of the generalized Langevin equation by recursive iteration of F = (K + γ) \ K(F) * F₀
+Finds the steady-state solution (non-ergodicity parameter) of the generalized Langevin equation by recursive iteration of F = (K + γ)⁻¹ * K(F) * F₀
 
-arguments:
+# arguments:
     `γ` parameter in front of the linear term in F
     `F₀` initial condition of F
     `kernel` callable memory kernel
@@ -38,7 +38,7 @@ arguments:
     `tolerance` while the error is bigger than this value, convergence is not reached. The error by default is computed as the absolute sum of squares
     `verbosity` if `true`, information will be printed to STDOUT
 
-returns:
+# returns:
     The steady state solution
 """
 function solve_steady_state(γ, F₀::Vector, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false)

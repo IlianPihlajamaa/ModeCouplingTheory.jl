@@ -13,13 +13,13 @@ end
 Constructs a solver object that, when called `solve` upon will solve an `MCTProblem` using a forward Euler method.
 It will discretise the integral using a Trapezoidal rule.
 
-arguments:
+# arguments:
     `problem` an instance of MCTProblem
     `t_max` when this time value is reached, the integration returns
     `Δt` fixed time step
     `verbosity` if `true`, information will be printed to STDOUT
 
-returns 
+# returns 
     `t` an array of time values
     `F` The solution in an array of which the last dimension corresponds to the time.
     `K` The memory kernel corresponding to each `F`

@@ -41,7 +41,7 @@ end
 
 Uses the algorithm devised by Fuchs et al. to solve the `MCTProblem`.
 
-arguments:
+# arguments:
     `problem` an instance of MCTProblem
     `t_max` when this time value is reached, the integration returns
     `Δt` starting time step, this will be doubled repeatedly
@@ -49,7 +49,7 @@ arguments:
     `tolerance` while the error is bigger than this value, convergence is not reached. The error by default is computed as the absolute sum of squares
     `verbosity` if `true`, information will be printed to STDOUT
 
-returns 
+        # returns 
     `t` an array of time values
     `F` The solution in an array of which the last dimension corresponds to the time.
     `K` The memory kernel corresponding to each `F`
