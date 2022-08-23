@@ -1,14 +1,25 @@
 abstract type MemoryKernel end
 
+"""
+    ExponentiallyDecayingKernel{T<:Number} <: MemoryKernel
+
+    Scalar kernel with fields `λ` and `τ` which when called returns `λ exp(-t/τ)`.
+"""
 struct ExponentiallyDecayingKernel{T<:Number} <: MemoryKernel
     λ::T
+    τ::T
 end
 
 function (kernel::ExponentiallyDecayingKernel)(F, t)
-    λ = kernel.λ
-    return λ * exp(-t)
+    return kernel.λ * exp(-t/kernel.τ)
 end
 
+
+"""
+SchematicF1Kernel{T<:Number} <: MemoryKernel
+
+    Scalar kernel with field `λ` which when called returns `λ F`.
+"""
 struct SchematicF1Kernel{T<:Number} <: MemoryKernel
     λ::T
 end
@@ -18,6 +29,11 @@ function (kernel::SchematicF1Kernel)(F, t)
     return λ * F
 end
 
+"""
+SchematicF2Kernel{T<:Number} <: MemoryKernel
+
+    Scalar kernel with field `λ` which when called returns `λ F^2`.
+"""
 struct SchematicF2Kernel{T<:Number} <: MemoryKernel
     λ::T
 end
@@ -27,7 +43,11 @@ function (kernel::SchematicF2Kernel)(F, t)
     return λ * F^2
 end
 
+"""
+SchematicF1Kernel{T<:Number} <: MemoryKernel
 
+    Scalar kernel with fields `λ1`, `λ2`, and `λ3` which when called returns `λ1 * F^1 + λ2 * F^2 + λ3 * F^3`.
+"""
 struct SchematicF123Kernel{T<:Number} <: MemoryKernel
     λ1::T
     λ2::T
@@ -38,6 +58,12 @@ function (kernel::SchematicF123Kernel)(F, t)
     return kernel.λ1 * F^1 + kernel.λ2 * F^2 + kernel.λ3 * F^3
 end
 
+
+"""
+SchematicDiagonalKernel{T<:Union{SVector, Vector}} <: MemoryKernel
+
+    Matrix kernel with field `λ` which when called returns `Diagonal(λ .* F .^ 2)`, i.e., it implements a non-coupled system of SchematicF2Kernels.
+"""
 struct SchematicDiagonalKernel{T<:Union{SVector, Vector}} <: MemoryKernel
     λ::T
     SchematicDiagonalKernel(λ::T) where {T<:Union{SVector,Vector}} = eltype(λ) <: Number ? new{T}(λ) : error("element type of this kernel must be a number")
@@ -54,6 +80,11 @@ function (kernel::SchematicDiagonalKernel)(out::Diagonal, F::Vector, t)
     @. diag = λ * F^2
 end
 
+"""
+SchematicMatrixKernel{T<:Union{SVector, Vector}} <: MemoryKernel
+
+    Matrix kernel with field `λ` which when called returns `λ * F * F'`, i.e., it implements Kαβ = λ*Fα*Fβ.
+"""
 struct SchematicMatrixKernel{T<:Union{SMatrix,Matrix}} <: MemoryKernel
     λ::T
     SchematicMatrixKernel(λ::T) where {T<:Union{SMatrix,Matrix}} = eltype(λ) <: Number ? new{T}(λ) : error("element type of this kernel must be a number")
@@ -87,6 +118,27 @@ struct ModeCouplingKernel{F,V,M, M2} <: MemoryKernel
     V3::M
 end
 
+"""
+    ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
+
+Constructor of a ModeCouplingKernel. It implements the kernel
+K(k,t) = ρ kBT / (16π^3m) ∫dq V^2(k,q) F(q,t) F(k-q,t)
+in which k and q are vectors. 
+
+arguments:
+
+`ρ`: number density
+`kBT`: Thermal energy
+`m` : particle mass
+`k_array`: vector of wavenumbers at which the structure factor is known
+`Sₖ`: structure factor
+
+returns:
+
+an instance `k` of `ModeCouplingKernel <: MemoryKernel`, which can be called both in-place and out-of-place:
+`k`(out, F, t)
+out = `k`(F, t)
+"""
 function ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
     Nk = length(k_array)
     T = promote_type(eltype(Sₖ), eltype(k_array), typeof(ρ), typeof(kBT), typeof(m))
@@ -287,7 +339,28 @@ struct MultiComponentModeCouplingKernel{F,AF1,AF2,AF3,AF4} <: MemoryKernel
     T3::AF3
 end
 
+"""
+    MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 
+Constructor of a MultiComponentModeCouplingKernel. It implements the kernel
+Kαβ(k,t) = ρ  / (2 xα xβ (2π)³) Σμνμ'ν' ∫dq Vμ'ν'(k,q) Fμμ'(q,t) Fνν'(k-q,t) Vμν(k,q)
+in which k and q are vectors and α and β species labels. 
+
+arguments:
+
+`ρ`: vector of number densities for each species
+`kBT`: Thermal energy
+`m` : vector of particle masses for each species
+`k_array`: vector of wavenumbers at which the structure factor is known
+`Sₖ`: a `Vector` of Nk `SMatrix`s containing the structure factor of each component at each wave number
+
+returns:
+
+an instance `k` of `ModeCouplingKernel <: MemoryKernel`, which can be called both in-place and out-of-place:
+k = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
+out = `k`(F, t)
+`k`(out, F, t)
+"""
 function MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
     Nk = length(k_array)
     Ns = size(Sₖ[1], 2)

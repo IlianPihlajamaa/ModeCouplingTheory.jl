@@ -35,7 +35,26 @@ function check_if_diag(::Any)
     return false
 end
 
-function FuchsSolver(problem; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false)
+
+"""
+    FuchsSolver(problem; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false)
+
+Uses the algorithm devised by Fuchs et al. to solve the `MCTProblem`.
+
+arguments:
+    `problem` an instance of MCTProblem
+    `t_max` when this time value is reached, the integration returns
+    `Δt` starting time step, this will be doubled repeatedly
+    `max_iterations` the maximal number of iterations before convergence is reached for each time doubling step
+    `tolerance` while the error is bigger than this value, convergence is not reached. The error by default is computed as the absolute sum of squares
+    `verbosity` if `true`, information will be printed to STDOUT
+
+returns 
+    `t` an array of time values
+    `F` The solution in an array of which the last dimension corresponds to the time.
+    `K` The memory kernel corresponding to each `F`
+"""
+function FuchsSolver(problem::MCTProblem, N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false)
     starttime = time()
     Ftype = problem.Ftype
     Kerneltype = problem.Kerneltype

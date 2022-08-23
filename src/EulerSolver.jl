@@ -7,7 +7,24 @@ mutable struct EulerSolver{I, F, B} <: Solver
     verbose::Bool
 end
 
-function EulerSolver(problem; t_max=10.0^2, Δt=10^-3, verbose=false)
+"""
+    EulerSolver(problem::MCTProblem; t_max=10.0^2, Δt=10^-3, verbose=false)
+
+Constructs a solver object that, when called `solve` upon will solve an `MCTProblem` using a forward Euler method.
+It will discretise the integral using a Trapezoidal rule.
+
+arguments:
+    `problem` an instance of MCTProblem
+    `t_max` when this time value is reached, the integration returns
+    `Δt` fixed time step
+    `verbosity` if `true`, information will be printed to STDOUT
+
+returns 
+    `t` an array of time values
+    `F` The solution in an array of which the last dimension corresponds to the time.
+    `K` The memory kernel corresponding to each `F`
+"""
+function EulerSolver(problem::MCTProblem; t_max=10.0^2, Δt=10^-3, verbose=false)
     Ftype = typeof(problem.F₀)
     F_element_type = eltype(problem.F₀)
     N = ceil(Int, t_max/Δt)

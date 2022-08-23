@@ -1,3 +1,15 @@
+
+"""
+    find_relaxation_time(t, F; threshold=exp(-1), mode=:log)
+
+Finds the time at which a signal first decreases below some `threshold`. Uses interpolation to find an accurate result
+
+arguments:
+    `t`: a vector of time values at which the signal `F` is known
+    `F`: the signal
+    `threshold`: see above
+    `mode`: uses interpolation either in a logarithmic or linear space. 
+"""
 function find_relaxation_time(t, F; threshold=exp(-1), mode=:log)
     Nt = length(t)
     for it = 1:Nt

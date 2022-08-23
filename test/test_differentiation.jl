@@ -1,0 +1,64 @@
+function main_scalar(λ)
+    F0 = 1.0
+    ∂F0 = 0.0
+    α = 0.0
+    β = 1.0
+    γ = 1.0
+
+    kernel1 = ExponentiallyDecayingKernel(λ)
+    system1 = MCTProblem(α, β, γ, F0, ∂F0, kernel1)
+    solver1 = FuchsSolver(system1, Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
+
+    t1, F1, K1 =  solve(system1, solver1, kernel1)
+    return [t1[2:end], F1[2:end], K1[2:end]]
+end
+
+function exactf(λ, t)
+    # t = 10 .^ range(-4,2,length = 100)
+    temp = sqrt(λ*(λ+4)) 
+    F = @. exp(-0.5* t*(temp+λ+2))  *  (temp*(exp(temp*t)+1)+ λ* (exp(temp*t)-1)) / (2temp) 
+    return [t, F]
+end
+
+F = main_scalar(5.0)
+F_exact = exactf(5.0, F[1])
+
+@test all(abs.(F[2] .- F_exact[2]) .< 10^-3)
+
+# plot(log10.(F_exact[1]), F_exact[2], lw=3, label="Exact") 
+# plot!(log10.(F[1]), F[2], ls=:dash, lw=3, label="Fuchs") |> display
+
+
+
+dF_exact = ForwardDiff.derivative(y -> exactf(y, F[1]), 5.0)
+dF = ForwardDiff.derivative(main_scalar, 5.0)
+
+# plot(log10.(F_exact[1]), dF_exact[2], lw=3, label="Exact") 
+# plot!(log10.(F[1]), dF[2], ls=:dash, lw=3, label="Fuchs") |> display
+
+@test all(abs.(dF[2] .- dF_exact[2]) .< 10^-4)
+
+
+
+function main_vector(Λ)
+    N = 10
+    λ = [sin(i*j/π)^4 for i = 1:N, j = 1:N]*Λ
+    F0 = ones(N)
+    ∂F0 = zeros(N)
+    α = 0.0
+    β = 1.0
+    γ = [sin(i*j/π)^4 for i = 1:N, j = 1:N]/N^2
+
+    kernel = SchematicMatrixKernel(λ)
+    system = MCTProblem(α, β, γ, F0, ∂F0, kernel)
+    solver = FuchsSolver(system, Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
+    
+    t1, F1, K1 =  solve(system, solver, kernel);
+    return F1[3000]
+end
+
+Λ = 0.1
+main_vector(Λ)
+dF = ForwardDiff.derivative(main_vector, Λ)
+finite_differences = (main_vector(Λ+sqrt(eps(Float64)))-main_vector(Λ))/sqrt(eps(Float64))
+@test all(dF .- finite_differences .< 0.001)
