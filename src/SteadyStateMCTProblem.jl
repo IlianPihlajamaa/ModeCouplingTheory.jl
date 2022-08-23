@@ -1,11 +1,3 @@
-using StaticArrays, SparseArrays, LinearAlgebra, Random, BenchmarkTools, Tullio, LoopVectorization, ProgressMeter
-BenchmarkTools.DEFAULT_PARAMETERS.seconds = 0.5
-
-for file in ["Kernels.jl", "MCTProblem.jl", "Solvers.jl"]
-    include(file)
-end
-
-
 function solve_steady_state(γ, F₀::Union{Number,SVector}, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false)
     t = Inf
     K = kernel(F₀, t)

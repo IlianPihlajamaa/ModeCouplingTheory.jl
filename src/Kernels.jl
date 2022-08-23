@@ -38,7 +38,7 @@ function (kernel::SchematicF123Kernel)(F, t)
     return kernel.λ1 * F^1 + kernel.λ2 * F^2 + kernel.λ3 * F^3
 end
 
-struct SchematicDiagonalKernel{T<:Union{SVector,Vector}} <: MemoryKernel
+struct SchematicDiagonalKernel{T<:Union{SVector, Vector}} <: MemoryKernel
     λ::T
     SchematicDiagonalKernel(λ::T) where {T<:Union{SVector,Vector}} = eltype(λ) <: Number ? new{T}(λ) : error("element type of this kernel must be a number")
 end
