@@ -54,7 +54,7 @@ Uses the algorithm devised by Fuchs et al. to solve the `MCTProblem`.
     `F` The solution in an array of which the last dimension corresponds to the time.
     `K` The memory kernel corresponding to each `F`
 """
-function FuchsSolver(problem::MCTProblem, N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false)
+function FuchsSolver(problem::MCTProblem; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false)
     starttime = time()
     Ftype = problem.Ftype
     Kerneltype = problem.Kerneltype

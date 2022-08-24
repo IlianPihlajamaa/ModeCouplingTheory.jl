@@ -5,9 +5,9 @@ abstract type MemoryKernel end
 
 Scalar kernel with fields `λ` and `τ` which when called returns `λ exp(-t/τ)`.
 """
-struct ExponentiallyDecayingKernel{T<:Number} <: MemoryKernel
-    λ::T
-    τ::T
+struct ExponentiallyDecayingKernel{T1<:Number, T2<:Number} <: MemoryKernel
+    λ::T1
+    τ::T2
 end
 
 function (kernel::ExponentiallyDecayingKernel)(F, t)

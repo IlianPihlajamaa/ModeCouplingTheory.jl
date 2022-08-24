@@ -5,7 +5,7 @@ function main_scalar(λ)
     β = 1.0
     γ = 1.0
 
-    kernel1 = ExponentiallyDecayingKernel(λ)
+    kernel1 = ExponentiallyDecayingKernel(λ, 1.0)
     system1 = MCTProblem(α, β, γ, F0, ∂F0, kernel1)
     solver1 = FuchsSolver(system1, Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
