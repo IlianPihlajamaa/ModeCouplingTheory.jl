@@ -21,7 +21,7 @@ julia> λ = 3.999
 julia> kernel = SchematicF2Kernel(λ)
 SchematicF2Kernel{Float64}(3.999)
 ```
-This kernel evaluates $K(t)=\lambda F(t)^2$.
+This kernel evaluates `K(t) = λ F(t)^2` when called.
 
 We can now define the equation we want to solve as follows:
 
