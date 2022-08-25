@@ -10,10 +10,24 @@ struct MCTProblem{T1, T2, T3, A, B}
     FK_elementtype::DataType
 end
 
+
+"""
+    MCTProblem(α, β, γ, F₀::T, ∂ₜF₀::T, kernel::MemoryKernel) where T
+
+Constructor of the `MCTProblem` type. It requires that `F₀` and `∂ₜF₀` have the same type.
+
+# Arguments:
+* `α`: coefficient in front of the second derivative term. If `α` and `F₀` are both vectors, `α` will automatically be converted to a diagonal matrix, to make them compatible.
+* `β`: coefficient in front of the first derivative term. If `β` and `F₀` are both vectors, `β` will automatically be converted to a diagonal matrix, to make them compatible.
+* `γ`: coefficient in front of the second derivative term. If `γ` and `F₀` are both vectors, `γ` will automatically be converted to a diagonal matrix, to make them compatible.
+* `F₀`: initial condition of F(t)
+* `∂ₜF₀` initial condition of the derivative of F(t)
+* `kernel` instance of a `MemoryKernel` that when called on F₀ and t=0, evaluates to the initial condition of the memory kernel.
+
+"""
 function MCTProblem(α, β, γ, F₀::T, ∂ₜF₀::T, kernel::MemoryKernel) where T
 
     Tnew = typeof(F₀)
-
     K₀ = kernel(F₀, 0.0)
     Ftype = typeof(K₀*F₀)
     Ktype = typeof(K₀)

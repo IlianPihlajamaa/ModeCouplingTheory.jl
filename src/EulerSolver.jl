@@ -11,18 +11,14 @@ end
     EulerSolver(problem::MCTProblem; t_max=10.0^2, Δt=10^-3, verbose=false)
 
 Constructs a solver object that, when called `solve` upon will solve an `MCTProblem` using a forward Euler method.
-It will discretise the integral using a Trapezoidal rule.
+It will discretise the integral using a Trapezoidal rule. Use this solver only for testing purposes. It is a wildy 
+inefficient way to solve MCT-like equations.
 
-# arguments:
-    `problem` an instance of MCTProblem
-    `t_max` when this time value is reached, the integration returns
-    `Δt` fixed time step
-    `verbosity` if `true`, information will be printed to STDOUT
-
-# returns 
-    `t` an array of time values
-    `F` The solution in an array of which the last dimension corresponds to the time.
-    `K` The memory kernel corresponding to each `F`
+# Arguments:
+* `problem` an instance of MCTProblem
+* `t_max` when this time value is reached, the integration returns
+* `Δt` fixed time step
+* `verbose` if `true`, information will be printed to STDOUT
 """
 function EulerSolver(problem::MCTProblem; t_max=10.0^2, Δt=10^-3, verbose=false)
     Ftype = typeof(problem.F₀)
@@ -73,7 +69,7 @@ function solve(problem::MCTProblem, solver::EulerSolver, kernel::MemoryKernel)
     F_array = Ftype[]
     t = 0.0
 
-    K₀ = problem.K₀
+    K₀ = kernel(F₀, t)
     
     kerneltype = problem.Kerneltype
     K_array = kerneltype[]

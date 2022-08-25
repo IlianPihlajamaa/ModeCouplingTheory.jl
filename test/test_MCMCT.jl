@@ -16,7 +16,7 @@ k_array = dk*(collect(1:Nk) .- 0.5)
 
 x = ρ/sum(ρ)
 
-Sₖdata = reshape(readdlm("Sk_MC.txt"), (2,2,100)).*sqrt.(x.*x')
+Sₖdata = reshape(readdlm("Sk_MC.txt"), (2,2,100))
 Sₖ = [@SMatrix(zeros(Ns, Ns)) for i = 1:Nk]
 for i = 1:Nk
     Sₖ[i] = Sₖdata[:, :, i]

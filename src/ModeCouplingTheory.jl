@@ -7,6 +7,7 @@ module ModeCouplingTheory
     export solve, FuchsSolver, EulerSolver
     export ModeCouplingKernel, MultiComponentModeCouplingKernel, ExponentiallyDecayingKernel, SchematicDiagonalKernel, SchematicF123Kernel, SchematicF1Kernel, SchematicF2Kernel, SchematicMatrixKernel
     export MCTProblem
+    export MemoryKernel
     export find_relaxation_time, solve_steady_state
 
     for file in ["Kernels.jl", "MCTProblem.jl", "Solvers.jl", "RelaxationTime.jl", "SteadyStateMCTProblem.jl"]

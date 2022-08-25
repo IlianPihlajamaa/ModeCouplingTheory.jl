@@ -1,0 +1,84 @@
+
+## Problems
+
+The most straightforward workflow for solving MCT-like equations is to first construct a `MemoryKernel`, a `MCTProblem`, and a `Solver`, in that order. The `MemoryKernel` is a function or callable object that evaluates the memory kernel when called. The `MCTProblem` holds the coefficients and initial conditions of the equations that need to be solved, and the `Solver` stores information related to the numerical integration procedure, such as the time step. Once these three objects have been defined, the function `solve` can be called on them to solve the equation
+
+$$\alpha \ddot{F}(t) + \beta \dot{F}(t) + \gamma F(t) + \int_0^t d\tau K(t-\tau)\dot{F}(\tau) = 0$$
+
+An `MCTProblem` is constructed by the constructor `MCTProblem(α, β, γ, F₀, ∂ₜF₀, kernel::MemoryKernel)`. Here, `F₀` and `∂ₜF₀` are the initial conditions of $F$ and its time derivative. In the case of vector-valued functions `F`, this package requires that the operation `α*F` is defined and returns the same type as `F`. This means that in general, when `F` is a vector, `α` must either be a matrix with a compatible element type, or a scalar. However, because it is common in practice to find equations in which `α` and `F` are both vectors (such that the multiplication `α*F` is understood to be conducted element-wise), vector-valued `α`s will automatically be promoted to diagonal matrices. `β` and `γ` are treated in the same way. `MCTProblem` will also evaluate the `kernel` at $t=0$ to find its initial condition.
+
+### Examples
+
+Scalar problems are the most straightforward:
+
+```julia
+kernel = SchematicF1Kernel(0.2); # in the next page of the documentation we will 
+                                 # explain how to construct memory kernels
+α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
+problem = MCTProblem(α, β, γ, F0, ∂F0, kernel)
+```
+
+For vector-valued problems, the coefficients can be scalar, vector or matrix-valued. They are automatically promoted to make linear algebra work:
+
+```
+julia> N = 5;
+julia> kernel = SchematicDiagonalKernel(rand(N));
+julia> α = 1.0; β = rand(N); γ = rand(N,N); F0 = ones(N); ∂F0 = zeros(N);
+julia> problem = MCTProblem(α, β, γ, F0, ∂F0, kernel);
+
+julia> problem.α
+LinearAlgebra.UniformScaling{Float64}
+1.0*I
+
+julia> problem.β
+5×5 LinearAlgebra.Diagonal{Float64, Vector{Float64}}:
+ 0.789182   ⋅         ⋅        ⋅         ⋅
+  ⋅        0.379832   ⋅        ⋅         ⋅
+  ⋅         ⋅        0.50589   ⋅         ⋅
+  ⋅         ⋅         ⋅       0.241663   ⋅
+  ⋅         ⋅         ⋅        ⋅        0.857202
+
+julia> problem.γ
+5×5 Matrix{Float64}:
+ 0.746936  0.963531  0.724356  0.31979   0.600617
+ 0.731198  0.217209  0.603705  0.373079  0.930195
+ 0.464137  0.670576  0.973505  0.23666   0.536108
+ 0.40188   0.797017  0.332496  0.841541  0.434256
+ 0.401826  0.303485  0.238624  0.239107  0.453554
+```
+
+### Limitations
+
+This package is not tested for and is not expected to work when the type of `F` is something other than a `Number`, `Vector` or `SVector`. For example, using types like `OffsetArrays` as initial conditions might lead to unexpected behaviour.
+
+## Solvers
+
+A `Solver` object holds the settings for a specific integration method. This package defines two solvers: `EulerSolver` and `FuchsSolver`. The `EulerSolver` implements a simple forward Euler method (with trapezoidal integration) which is wildly inefficient if the domain of $t$ spans many orders of magnitude (such as it often does in Mode-Coupling Theory). It should therefore mainly be used for testing purposes. The `FuchsSolver` should be used in almost all other cases. The scheme it implements outlined in [1] and in the appendix of [2].
+
+In short, the equation is discretised and solved on a grid of `4N` time-points, which are equally spaced over an interval `Δt`. It is solved using an implicit method, and thus a fixed point has to be found for each time point. This is done by recursive iteration. When the solution is found, the interval is doubled `Δt => 2Δt` and the solution on the previous grid is mapped onto the first `2N` time points of the new grid. This is repeated until some final time `t_max` is reached.
+
+A `FuchsSolver` is constructed as follows
+
+```julia
+julia> kernel = SchematicF1Kernel(0.2);
+julia> α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
+julia> problem = MCTProblem(α, β, γ, F0, ∂F0, kernel);
+julia> solver1 = FuchsSolver(problem) # using all default parameters
+julia> solver2 = FuchsSolver(problem; N=128, Δt=10^-5, 
+                            t_max=10.0^15, max_iterations=10^8, 
+                            tolerance=10^-6, verbose=true)
+```
+
+As optional keyword arguments `FuchsSolver` accepts:
+* `N`: The number of time points in the interval is equal to `4N`
+* `t_max`: when this time value is reached, the integration returns
+* `Δt`: starting time interval, this will be doubled repeatedly
+* `max_iterations`: the maximal number of iterations before convergence is reached for each time doubling step
+* `tolerance`: while the error of the recursive iteration is bigger than this value, convergence is not reached. The error by default is computed as the absolute sum of squared differences
+* `verbose`: if `true`, some information will be printed
+
+
+### References
+[1] Fuchs, Matthias, et al. "Comments on the alpha-peak shapes for relaxation in supercooled liquids." Journal of Physics: Condensed Matter 3.26 (1991): 5047.
+
+[2] Flenner, Elijah, and Grzegorz Szamel. "Relaxation in a glassy binary mixture: Comparison of the mode-coupling theory to a Brownian dynamics simulation." Physical Review E 72.3 (2005): 031508.

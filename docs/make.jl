@@ -6,8 +6,11 @@ push!(LOAD_PATH,"../src/")
 makedocs(
     sitename = "ModeCouplingTheory",
     pages = [
-        "Index" => "index.md",
-        "An other page" => "anotherPage.md",
+        "Introduction" => "index.md",
+        "Problems and Solvers" => "Problems_and_Solvers.md",
+        "Kernels" => "Kernels.md",
+        "Scope" => "Scope.md",
+        "API Reference" => "API.md",
      ],
      format = Documenter.HTML(prettyurls = false)
 )

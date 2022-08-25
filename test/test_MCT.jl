@@ -31,9 +31,7 @@ end
 
 
 N = 100
-
 η0 = 0.52
-
 ρ = η0*6/π
 kBT = 1.0
 m = 1.0
@@ -55,4 +53,4 @@ solver = FuchsSolver(system, Δt=10^-10, t_max=10.0^10, verbose=false, N = 2, to
 t , F, K = solve(system, solver, kernel);
 @test sum(F)≈13399.669989234215
 
-# plot(log10.(t), F[19, :]/F[19, 1], label="Fuchs", lw=3)
+# plot(log10.(t), F[19, :]/F[19, 1], label="k = $k_array[19]", lw=3, xlabel="log10(t)", ylabel="F(k,t)")

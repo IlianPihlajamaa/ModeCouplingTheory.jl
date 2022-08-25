@@ -125,15 +125,15 @@ Constructor of a ModeCouplingKernel. It implements the kernel
 K(k,t) = ρ kBT / (16π^3m) ∫dq V^2(k,q) F(q,t) F(k-q,t)
 in which k and q are vectors. 
 
-# arguments:
+# Arguments:
 
-`ρ`: number density
-`kBT`: Thermal energy
-`m` : particle mass
-`k_array`: vector of wavenumbers at which the structure factor is known
-`Sₖ`: structure factor
+* `ρ`: number density
+* `kBT`: Thermal energy
+* `m` : particle mass
+* `k_array`: vector of wavenumbers at which the structure factor is known
+* `Sₖ`: structure factor
 
-# returns:
+# Returns:
 
 an instance `k` of `ModeCouplingKernel <: MemoryKernel`, which can be called both in-place and out-of-place:
 `k`(out, F, t)
@@ -346,15 +346,15 @@ Constructor of a MultiComponentModeCouplingKernel. It implements the kernel
 Kαβ(k,t) = ρ  / (2 xα xβ (2π)³) Σμνμ'ν' ∫dq Vμ'ν'(k,q) Fμμ'(q,t) Fνν'(k-q,t) Vμν(k,q)
 in which k and q are vectors and α and β species labels. 
 
-# arguments:
+# Arguments:
 
-`ρ`: vector of number densities for each species
-`kBT`: Thermal energy
-`m` : vector of particle masses for each species
-`k_array`: vector of wavenumbers at which the structure factor is known
-`Sₖ`: a `Vector` of Nk `SMatrix`s containing the structure factor of each component at each wave number
+* `ρ`: vector of number densities for each species
+* `kBT`: Thermal energy
+* `m` : vector of particle masses for each species
+* `k_array`: vector of wavenumbers at which the structure factor is known
+* `Sₖ`: a `Vector` of Nk `SMatrix`s containing the structure factor of each component at each wave number
 
-# returns:
+# Returns:
 
 an instance `k` of `ModeCouplingKernel <: MemoryKernel`, which can be called both in-place and out-of-place:
 k = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
