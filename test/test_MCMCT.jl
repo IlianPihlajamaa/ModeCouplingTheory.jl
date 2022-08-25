@@ -45,7 +45,7 @@ end
 kernel = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 kernelnaive = ModeCouplingTheory.NaiveMultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 Ftest = rand(eltype(F₀), Nk)
-@test all(kernelnaive(Ftest, 0.0) .≈ kernel(Ftest, 0.0))
+@test all(evaluate_kernel(kernelnaive, Ftest, 0.0) .≈ evaluate_kernel(kernel, Ftest, 0.0))
 
 # println("Solve MCMCT with Euler")
 

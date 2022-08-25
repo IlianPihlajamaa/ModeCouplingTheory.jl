@@ -26,6 +26,7 @@ mutable struct FuchsSolver{I, F, T1, T2, T3, T4, T5} <: Solver
     second_order::Bool
     verbose::Bool
     start_time::Float64
+    inplace::Bool
 end
 
 function check_if_diag(::Diagonal)
@@ -49,8 +50,9 @@ Uses the algorithm devised by Fuchs et al. to solve the `MCTProblem`.
 * `max_iterations`: the maximal number of iterations before convergence is reached for each time doubling step
 * `tolerance`: while the error is bigger than this value, convergence is not reached. The error by default is computed as the absolute sum of squares
 * `verbose`: if `true`, information will be printed to STDOUT
+* `inplace`: if `true` and the type of F is mutable, the solver will try to avoid allocating many temporaries
 """
-function FuchsSolver(problem::MCTProblem; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false)
+function FuchsSolver(problem::MCTProblem; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true)
     starttime = time()
     Ftype = problem.Ftype
     Kerneltype = problem.Kerneltype
@@ -82,7 +84,9 @@ function FuchsSolver(problem::MCTProblem; N=32, Δt=10^-10, t_max=10.0^10, max_i
         push!(temp_arrays.K_I, K₀ + K₀)
     end
     second_order = !iszero(problem.α)
-    return FuchsSolver(Ftype, Kerneltype, N, Δt, t_max, 0, max_iterations, tolerance, temp_arrays, second_order, verbose, starttime)
+    Fmutable = ismutabletype(Ftype)
+    inplace = Fmutable & ismutable
+    return FuchsSolver(Ftype, Kerneltype, N, Δt, t_max, 0, max_iterations, tolerance, temp_arrays, second_order, verbose, starttime, inplace)
 end
 
 function initialize_F_temp!(problem::MCTProblem, solver::FuchsSolver)
@@ -117,10 +121,10 @@ function initialize_K_temp!(solver::FuchsSolver, kernel::MemoryKernel)
     δt = solver.Δt/(4*N)
     for it = 1:2N
         t = it*δt
-        if isbitstype(solver.Ftype)
-            solver.temp_arrays.K_temp[it] = kernel(solver.temp_arrays.F_temp[it], t)
+        if !solver.inplace
+            solver.temp_arrays.K_temp[it] = evaluate_kernel(kernel, solver.temp_arrays.F_temp[it], t)
         else
-            kernel(solver.temp_arrays.K_temp[it], solver.temp_arrays.F_temp[it], t)
+            evaluate_kernel!(solver.temp_arrays.K_temp[it], kernel, solver.temp_arrays.F_temp[it], t)
         end
     end
 end
@@ -134,7 +138,7 @@ function initialize_integrals!(problem::MCTProblem, solver::FuchsSolver)
     K_temp = solver.temp_arrays.K_temp
     N = solver.N
 
-    if isimmutabletype(solver.Ftype)
+    if !solver.inplace
         # it = 1
         F_I[1] =  (F_temp[1] + problem.F₀)/2
         K_I[1] =  (3*K_temp[1] - K_temp[2])/2
@@ -198,7 +202,7 @@ function update_Fuchs_parameters!(problem::MCTProblem, solver::FuchsSolver, it::
     α = problem.α
     β = problem.β
     γ = problem.γ
-    if isimmutabletype(solver.Ftype) # everything immutable (we are free to allocate)
+    if !solver.inplace # everything immutable (we are free to allocate)
         c1 = (2/(δt^2)*α + 3/(2δt)*β) + K_I[1] + γ 
 
         c2 = F_I[1] - problem.F₀
@@ -259,7 +263,7 @@ function update_F!(solver::FuchsSolver, it::Int)
     c1_temp = solver.temp_arrays.C1_temp 
     c2 = solver.temp_arrays.C2 
     c3 = solver.temp_arrays.C3
-    if isimmutabletype(solver.Ftype)
+    if !solver.inplace
         solver.temp_arrays.F_temp[it] = c1 \ (-solver.temp_arrays.K_temp[it]*c2 + c3)
     else # do the operation above without allocations
         mymul!(solver.temp_arrays.temp_vec, solver.temp_arrays.K_temp[it],c2, true, false) 
@@ -282,10 +286,10 @@ function update_K!(solver::FuchsSolver, kernel::MemoryKernel, it::Int)
     N = solver.N
     δt = solver.Δt/(4N)
     t = δt*it
-    if isimmutabletype(solver.Ftype)
-        solver.temp_arrays.K_temp[it] = kernel(solver.temp_arrays.F_temp[it], t)
+    if !solver.inplace
+        solver.temp_arrays.K_temp[it] = evaluate_kernel(kernel, solver.temp_arrays.F_temp[it], t)
     else
-        kernel(solver.temp_arrays.K_temp[it], solver.temp_arrays.F_temp[it], t)
+        evaluate_kernel!(solver.temp_arrays.K_temp[it], kernel, solver.temp_arrays.F_temp[it], t)
     end
 end
 
@@ -349,10 +353,10 @@ function do_time_steps!(problem::MCTProblem, solver::FuchsSolver, kernel::Memory
     return
 end
 
-function allocate_results!(t_array, F_array, K_array, solver)
+function allocate_results!(t_array, F_array, K_array, solver; istart=2(solver.N)+1, iend=4(solver.N))
     N = solver.N
     δt = solver.Δt/(4N)
-    for it = (2N+1):(4N)
+    for it = istart:iend
         t = δt*it
         push!(t_array, t)
         push!(F_array, deepcopy(solver.temp_arrays.F_temp[it]))
@@ -366,7 +370,7 @@ function new_time_mapping!(problem::MCTProblem, solver::FuchsSolver)
     F_I = solver.temp_arrays.F_I
     K_I = solver.temp_arrays.K_I
     N = solver.N
-    if isbitstype(solver.Ftype)
+    if !solver.inplace
         for j = 1:N
             F_I[j] = (F_I[2j] + F_I[2j - 1])/2
             K_I[j] = (K_I[2j] + K_I[2j - 1])/2
@@ -467,15 +471,12 @@ function solve(problem::MCTProblem, solver::FuchsSolver, kernel::MemoryKernel)
     Ftype = problem.Ftype
     kerneltype = problem.Kerneltype
 
-    t_array = Float64[]
-    F_array = Ftype[]
-    K_array = kerneltype[]
-
-    push!(t_array, t₀)
-    push!(F_array, F₀)
-    push!(K_array, K₀)
+    t_array = Float64[t₀]
+    F_array = Ftype[F₀]
+    K_array = kerneltype[K₀]
 
     initialize_temporary_arrays!(problem, solver, kernel)
+    allocate_results!(t_array, F_array, K_array, solver; istart=1, iend=2(solver.N))
     startΔt = solver.Δt
     solver.kernel_evals = 1
     is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")

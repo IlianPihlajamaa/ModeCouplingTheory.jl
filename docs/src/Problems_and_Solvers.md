@@ -68,15 +68,14 @@ julia> solver2 = FuchsSolver(problem; N=128, Δt=10^-5,
                             t_max=10.0^15, max_iterations=10^8, 
                             tolerance=10^-6, verbose=true)
 ```
-
 As optional keyword arguments `FuchsSolver` accepts:
-* `N`: The number of time points in the interval is equal to `4N`
-* `t_max`: when this time value is reached, the integration returns
-* `Δt`: starting time interval, this will be doubled repeatedly
-* `max_iterations`: the maximal number of iterations before convergence is reached for each time doubling step
-* `tolerance`: while the error of the recursive iteration is bigger than this value, convergence is not reached. The error by default is computed as the absolute sum of squared differences
-* `verbose`: if `true`, some information will be printed
-
+* `N`: The number of time points in the interval is equal to `4N`. default = `32`
+* `t_max`: when this time value is reached, the integration returns. default = `10.0^10`
+* `Δt`: starting time interval, this will be doubled repeatedly. default = `10^-10`
+* `max_iterations`: the maximal number of iterations before convergence is reached for each time doubling step. default = `10^4`
+* `tolerance`: while the error of the recursive iteration is bigger than this value, convergence is not reached. The error by default is computed as the absolute sum of squared differences. default = `10^-10`
+* `verbose`: if `true`, some information will be printed. default = `false`
+* `inplace`: if `true` and if the type of `F` is mutable, the solver will try to avoid allocating many temporaries. default = `true`
 
 ### References
 [1] Fuchs, Matthias, et al. "Comments on the alpha-peak shapes for relaxation in supercooled liquids." Journal of Physics: Condensed Matter 3.26 (1991): 5047.

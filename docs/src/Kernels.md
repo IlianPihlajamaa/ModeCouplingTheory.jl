@@ -1,6 +1,6 @@
 # Kernels
 
-A memory kernel `kernel` is a callable object of which `MemoryKernel` is a supertype. It can be called like `out = kernel(F, t)`. Additionally, when `F` is a mutable container like a `Vector`, it can be called like `kernel(out, F, t)` in which case it will mutate the elements of the temporary array `out`. Below we list the memory kernels that this package defines and give some examples of how to use them.
+A memory kernel `kernel` is an instance of a type of which `MemoryKernel` is a supertype. It can be called like `out = evaluate_kernel(kernel, F, t)`. Additionally, when `F` is a mutable container like a `Vector`, it can be called like `evaluate_kernel!(out, kernel, F, t)` in which case it will mutate the elements of the temporary array `out`. Below we list the memory kernels that this package defines and give some examples of how to use them.
 
 ## Schematic Kernels
 
@@ -73,7 +73,7 @@ The `SchematicF123Kernel` implements the kernel $K(t) = λ_1 F(t) + λ_2 F(t)^2 
 ```julia
 kernel = SchematicF123Kernel(3.0, 2.0, 1.0);
 F = 2; t = 0;
-kernel(F, t) # returns 22.0 = 3*2^1 + 2*2^2 + 1*2^3
+evaluate_kernel(kernel, F, t) # returns 22.0 = 3*2^1 + 2*2^2 + 1*2^3
 ```
 
 ### 5. `SchematicDiagonalKernel`
@@ -98,9 +98,9 @@ in which the vertex $V(\textbf{k}, \textbf{q}) = (\textbf{k}\cdot\textbf{q})c(q)
 
 This memory kernel integral is discretised as follows:
 
-$$\int d\textbf{q}f(q, |\textbf{k}-\textbf{q}|) =2\pi\int_0^\infty dq q^2 \int_0^\pi d\theta \sin \theta f(q, |\textbf{k}-\textbf{q}|) = \frac{2\pi}{k}\int_0^\infty dq \int_{|k-q|}^{k+q}dp pq f(q, p) = \frac{2\pi \Delta k^2}{k}\sum_{i_q=1}^{N_k} \sum_{i_p=|i_q-i_k|+1}^{i_k+i_q-1} p_iq_if(q_i, p_i).$$
+$$\int d\textbf{q}f(q, |\textbf{k}-\textbf{q}|) = 2\pi\int_0^\infty dq q^2 \int_0^\pi d\theta \sin \theta f(q, |\textbf{k}-\textbf{q}|) = \frac{2\pi}{k}\int_0^\infty dq \int_{|k-q|}^{k+q}dp pq f(q, p) \approx \frac{2\pi \Delta k^2}{k_i}\sum_{j=1}^{N_k} \sum_{l=|j-i|+1}^{j+i-1} \frac{p_l q_j}{k_i}f(k_j, k_l).$$
  
-in which $p = |\textbf{k}-\textbf{q}|$, and wave numbers $k$, $q$ and $p$ are discretized on the grid $k_i = (i_k-\frac{1}{2})\Delta k$ where $i_k = 1, 2, 3, \ldots, N_k$. The double sum is then performed for all $k$ using Bengtzelius' trick, yielding a fast $O(N_k^2)$ algorithm.
+in which $p = |\textbf{k}-\textbf{q}|$, and wave numbers $k$, $q$ and $p$ are discretized on the equidistant grid $k_i = (i_k-\frac{1}{2})\Delta k$ where $i_k = 1, 2, 3, \ldots, N_k$. The double sum is then performed for all $k$ using Bengtzelius' trick, yielding a fast $O(N_k^2)$ algorithm.
 
 ### Example 
 
@@ -139,10 +139,10 @@ function find_analytical_S_k(k, η)
     return Sₖ
 end
 
+# We solve MCT for hard spheres at a volume fraction of 0.51591
+η = 0.51591; ρ = η*6/π; kBT = 1.0; m = 1.0
 
-Nk = 100; η = 0.51591; ρ = η*6/π; kBT = 1.0; m = 1.0
-
-kmax = 40.0; dk = kmax/Nk; k_array = dk*(collect(1:Nk) .- 0.5)
+Nk = 100; kmax = 40.0; dk = kmax/Nk; k_array = dk*(collect(1:Nk) .- 0.5)
 Sₖ = find_analytical_S_k(k_array, η)
 
 ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ)
@@ -171,30 +171,34 @@ The multi-component mode-coupling theory equation reads
 
 $$\ddot{F}_{\alpha\beta}(k,t) + \Omega_{\alpha\gamma}(k)F_{\gamma\beta}(k,t) + \int_0^td\tau K_{\alpha\gamma}(t-\tau, k)\dot{F}_{\gamma\beta}(k, \tau)$$
 
-in which $\Omega_{\alpha\gamma} = k^2 k_B T x_\alpha/m_\alpha \cdot \left(S^{-1}\right)_{\alpha\beta}(k)$, and
+in which $\Omega_{\alpha\gamma} = k^2 k_B T x_\alpha/m_\alpha \cdot \left(S^{-1}\right)_{\alpha\gamma}(k)$, and
 
-$$K_{\alpha\beta}(k,t) =\frac{k_B T \rho}{2 x_\beta m_\alpha (2\pi)^3} \int d\mathbf{q} V_{\mu'\nu'\alpha}(\mathbf{k}, \mathbf{q})F_{\mu\mu'}(q, t)F_{\nu\nu'}(|\mathbf{k}-\mathbf{q}|,t)V_{\mu\nu\alpha}(\mathbf{k}, \mathbf{q})$$
+$$K_{\alpha\beta}(k,t) =\frac{k_B T \rho}{2 x_\beta m_\alpha (2\pi)^3} \int d\mathbf{q} V_{\mu'\nu'\alpha}(\mathbf{k}, \mathbf{q})F_{\mu\mu'}(q, t)F_{\nu\nu'}(|\mathbf{k}-\mathbf{q}|,t)V_{\mu\nu\beta}(\mathbf{k}, \mathbf{q})$$
 
 in which the vertex $V_{\mu\nu\alpha}(\mathbf{k}, \mathbf{q}) = (\textbf{k}\cdot\textbf{q})c_{\alpha\mu}(q)\delta_{\alpha\nu}/k+(\textbf{k}\cdot(\textbf{k}-\textbf{q})c_{\alpha\nu}(|\textbf{k}-\textbf{q}|)\delta_{\alpha\mu}/k$. Here, the Greek indices indicate species labels, and we have adopted the convention that we sum over repeated indices. This memory kernel has also been implemented using the Bengtzelius trick. It requires $O(N_k^2 N_s^2)$ storage and runs in $O(N_k^2 N_s^4)$ in which $N_s$ is the number of species.
 
-Numerically, the correlator $F_{\alpha\beta}(k)$ is implemented as a `Vector` of length `Nk` of which each of the elements is a small `Ns` x `Ns` static matrix. 
+Numerically, the correlator $F_{\alpha\beta}(k)$ is implemented as a `Vector` of length `Nk` of which each of the elements is a small `Ns` x `Ns` static matrix. This means that this is also the expected form of the initial condition.
 
 ### Example
 
 ```julia
 using StaticArrays, LinearAlgebra, DelimitedFiles
-Ns = 2; Nk = 100; ϕ  = 0.515; kBT = 1.0; m = ones(Ns)
+# number of species Ns, number of wave numbers Nk, volume fraction η
+# thermal energy kBT and mass m
+Ns = 2; Nk = 100; η  = 0.515; kBT = 1.0; m = ones(Ns)
 particle_diameters = [0.8,1.0]
-concentration_ratio = [0.2,0.8]
-ρ_all = 6ϕ/(π*sum(concentration_ratio .* particle_diameters .^3))
-ρ = ρ_all * concentration_ratio
-x = ρ/sum(ρ)
+x = [0.2,0.8] # concentration fraction
+
+# total density
+ρ_all = 6η/(π*sum(x .* particle_diameters .^3))
+ρ = ρ_all * x
 
 kmax = 40.0; dk = kmax/Nk
 k_array = dk*(collect(1:Nk) .- 0.5)
 
 # data can be found in the \test\ folder of the source code
 Sₖdata = reshape(readdlm("Sk_MC.txt"), (2,2,100))
+# convert the data to the Vector of SMatrix format
 Sₖ = [@SMatrix(zeros(Ns, Ns)) for i = 1:Nk]
 for i = 1:Nk
     Sₖ[i] = Sₖdata[:, :, i]
@@ -210,25 +214,187 @@ F₀ = copy(Sₖ)
 ∂ₜF₀ = [@SMatrix(zeros(Ns, Ns)) for i = 1:Nk]
 α = 0.0
 β = 1.0
-γ = similar(Sₖ)
-γ .*= 0.0
+Ω = similar(Sₖ)
+Ω .*= 0.0
 for ik = 1:Nk
-    γ .= J.*S⁻¹
+    Ω .= J.*S⁻¹
 end
 
 kernel = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = MCTProblem(α, β, γ, F₀, ∂ₜF₀, kernel)
-solver = FuchsSolver(problem, verbose=false, N=2, tolerance=10^-8, max_iterations=10^8)
-solve(problem, solver, kernel)
+problem = MCTProblem(α, β, Ω, F₀, ∂ₜF₀, kernel)
+solver = FuchsSolver(problem, verbose=false, N=16, tolerance=10^-8, max_iterations=10^8)
 t, F, K = solve(problem, solver, kernel)
 ik = 19
-p = plot(log10.(t), getindex.(F[ik,:], 1,1)/Sₖ[ik][1,1], ls=:dash, lw=2, color=1, label="Faa") 
-plot!(log10.(t), getindex.(F[ik,:], 1,2)/Sₖ[ik][1,2], lw=2, color=2, label="Fab") 
-plot!(log10.(t), getindex.(F[ik,:], 2,1)/Sₖ[ik][2,1], ls=:dash, lw=2, color=3, label="Fba") 
-plot!(log10.(t), getindex.(F[ik,:], 2,2)/Sₖ[ik][2,2], ls=:dash, lw=2, color=4, label="Fbb")
+k = k_array[ik]
+p = plot(log10.(t), getindex.(F[ik,:], 1,1)/Sₖ[ik][1,1], ls=:dash, lw=2, color=1, label="Faa(k=$k, t)") 
+plot!(log10.(t), getindex.(F[ik,:], 1,2)/Sₖ[ik][1,2], lw=2, color=2, label="Fab(k=$k, t)") 
+plot!(log10.(t), getindex.(F[ik,:], 2,1)/Sₖ[ik][2,1], ls=:dash, lw=2, color=3, label="Fba(k=$k, t)") 
+plot!(log10.(t), getindex.(F[ik,:], 2,2)/Sₖ[ik][2,2], ls=:dash, lw=2, color=4, label="Fbb(k=$k, t)")
 ```
 
 ![image](images/MCMCTKernel.png)
 
 ## Defining custom kernels
 
+In order to define a custom kernel, one has to overload `ModeCouplingTheory.evaluate_kernel(k::MyCustomKernel, F, t)`, and optionally  `ModeCouplingTheory.evaluate_kernel!(out, k::MyCustomKernel, F, t)` for better performance for mutable `F`.
+
+### Example 1
+
+Let's define a custom scalar kernel that evaluates $K(t) = \alpha F(t)^{F(t)}$. First, we define a `MyWeirdKernel<:MemoryKernel` type that holds the value of the parameter:
+
+```julia
+using ModeCouplingTheory
+import ModeCouplingTheory.MemoryKernel
+
+struct MyWeirdKernel <: MemoryKernel
+    α :: Float64
+end
+
+kernel = MyWeirdKernel(2.5)
+```
+
+Now, we can define the evaluation of this memory kernel
+
+```julia
+import ModeCouplingTheory.evaluate_kernel
+
+function evaluate_kernel(kernel::MyWeirdKernel, F, t)
+    return kernel.α*F^F
+end
+```
+
+That's it! We can now use it like any other memory kernel to solve the equation:
+
+```julia
+problem = MCTProblem(1.0, 0.0, 1.0, 1.0, 0.0, kernel)
+solver = FuchsSolver(problem, Δt = 10^-4, t_max=10.0^5)
+t, F, K = solve(problem, solver, kernel)
+using Plots
+p = plot(log10.(t), F, ylims=(0,1), ylabel="F(t)", xlabel="log10(t)")
+```
+![image](images/FFKernel.png)
+
+### Example 2
+
+For a slightly more complex example, let's define the tagged-particle mode-coupling theory memory kernel. The equation is given by:
+
+$$\ddot{F}_s(k,t) + \frac{k^2 k_BT}{m} F_s(k,t) + \int_0^t d\tau K(k, t-\tau)\dot{F}_s(k, \tau)=0,$$
+
+in which
+
+$$K(k,t) = \frac{\rho k_BT}{8\pi^2 m}\int d\mathbf{q} V(\mathbf{k}, \mathbf{q})^2 F(q, t)F_s(|\mathbf{k}-\mathbf{q}|,t)$$
+ 
+where
+
+$V(\textbf{k}, \textbf{q}) = (\textbf{k}\cdot\textbf{q})c(q)/k = \frac{k^2+q^2-p^2}{2k} \cdot c(q).$
+
+Note that in the equation for the memory kernel, the solution of collective mode-coupling theory $F(k,t)$ appears (without subscript $s$). The most straightforward way of solving the tagged-particle equation therefore is to solve the full collective equation first, and use the result in the memory kernel of the tagged-particle motion. So, first we quickly solve MCT:
+
+```julia
+using ModeCouplingTheory, LinearAlgebra
+η = 0.51591; ρ = η*6/π; kBT = 1.0; m = 1.0
+
+Nk = 100; kmax = 40.0; dk = kmax/Nk; k_array = dk*(collect(1:Nk) .- 0.5)
+# We use the Percus-Yevick solution to the structure factor that can be found above.
+Sₖ = find_analytical_S_k(k_array, η)
+
+∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ)
+
+kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
+problem = MCTProblem(α, β, γ, Sₖ, ∂F0, kernel)
+solver = FuchsSolver(problem, Δt=10^-5, t_max=10.0^15, verbose=false, 
+                     N = 8, tolerance=10^-8)
+t, F, K = @time solve(problem, solver, kernel);
+```
+
+Now, we need to construct the tagged-particle memory kernel for the self intermediate scattering function `Fs`. When called with `evaluate_kernel(kernel, Fs, t)` it needs some way to access the collective `F` at the right time. To make that easy, we create a dictionary that maps the values in `t` to their respective indices.
+
+```julia
+tDict = Dict(zip(t, eachindex(t)))
+# tdict[t[8]] == 8
+```
+
+Now we can construct a memory kernel like above. For performance reasons, we also implement the in-place `evaluate_kernel!(out, kernel, Fs, t)`. The discrete equation becomes 
+
+$$K(k_i,t) = \frac{\rho k_B T \Delta k^2}{4 \pi^2 m} \sum_{j=1}^{N_k} \sum_{l=|j-i|+1}^{j+i-1} \frac{p_l q_j}{k_i} V^2(k_i, q_j, p_l)F(k_j, t)F_s(k_l, t)$$
+
+The memory kernel can now be straightforwardly implemented as:
+
+```julia
+import ModeCouplingTheory.MemoryKernel
+struct TaggedMCTKernel <: MemoryKernel
+    V²::Array{Float64, 3}
+    k_array::Vector{Float64}
+    prefactor::Float64
+    F::Matrix{Float64}
+    tDict::Dict{Float64, Int64}
+end
+
+# The constructor for the TaggedMCTKernel
+function TaggedMCTKernel(ρ, kBT, m, k_array, Cₖ, t, F)
+    tDict = Dict(zip(t, eachindex(t)))
+    Δk = k_array[2] - k_array[1]
+    prefactor = ρ*kBT*Δk^2/(4*π^2*m)
+    Nk = length(k_array)
+    # calculate the vertices
+    V² = zeros(Nk, Nk, Nk)
+    for i = 1:Nk, j = 1:Nk, l = 1:Nk # loop over k, q, p
+        k = k_array[i]
+        q = k_array[j]
+        cq = Cₖ[j]
+        p = k_array[l]
+        if abs(j-i)+1 <= l <= j+i-1
+            V²[l, j, i] = (cq * (k^2  + q^2 - p^2)/(2k))^2
+        end
+    end
+    return TaggedMCTKernel(V², k_array, prefactor, F, tDict)
+end
+
+```
+Now to evaluate the kernel, we first write the in-place version of the code, that mutates its first argument. Note also that, since the mermory kernel is multiplied with a vector `F` to produce something of the same type of `F`, it has to be encoded as a diagonal matrix, with on the diagonal the dicretised wave-number dependent memory kernel.
+
+```julia
+import ModeCouplingTheory.evaluate_kernel!
+function evaluate_kernel!(out, kernel::TaggedMCTKernel, Fs, t)
+    out.diag .= 0 # set the output array to zero
+    it = kernel.tDict[t]
+    k_array = kernel.k_array
+    Nk = length(k_array)
+    for i = 1:Nk, j = 1:Nk, l = 1:Nk # loop over k, q, p
+        k = k_array[i]
+        q = k_array[j]
+        p = k_array[l]
+        out.diag[i] += p*q/k * kernel.V²[l, j, i] * kernel.F[j, it] * Fs[l]
+    end
+    out.diag .*= kernel.prefactor
+end
+
+import ModeCouplingTheory.evaluate_kernel
+function evaluate_kernel(kernel::TaggedMCTKernel, Fs, t)
+    out = Diagonal(similar(Fs)) # we need it to produce a diagonal matrix
+    evaluate_kernel!(out, kernel::TaggedMCTKernel, Fs, t) # call the inplace version
+    return out
+end
+```
+
+Now we can finally solve the tagged equation:
+
+```julia
+Cₖ = find_analytical_C_k(k_array, η)
+F0 = ones(Nk); ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m
+
+taggedkernel = TaggedMCTKernel(ρ, kBT, m, k_array, Cₖ, t, F)
+taggedproblem = MCTProblem(α, β, γ, F0, ∂F0, taggedkernel)
+taggedsolver = FuchsSolver(taggedproblem, Δt=10^-5, t_max=10.0^15, verbose=false, 
+                     N = 8, tolerance=10^-8) # it is important we use the same settings for Δt, t_max and N
+ts, Fs, Ks = @time solve(taggedproblem, taggedsolver, taggedkernel)
+using Plots
+p = plot(xlabel="log10(t)", ylabel="Fₛ(k,t)", ylims=(0,1))
+for ik = [7, 18, 25, 39]
+    plot!(p, log10.(t), Fs[ik, :], label="k = $(k_array[ik])", lw=3)
+end
+p
+```
+![image](images/sMCTKernel.png)
+
+This implementation of the tagged-particle memory kernel is an order of magnitude slower than the built-in collective one, and can be made much more performant by Bengtzelius' trick. For the purposes of this example, however, we do not pursue this.

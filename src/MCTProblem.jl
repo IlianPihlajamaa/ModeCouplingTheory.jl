@@ -28,7 +28,7 @@ Constructor of the `MCTProblem` type. It requires that `F₀` and `∂ₜF₀` h
 function MCTProblem(α, β, γ, F₀::T, ∂ₜF₀::T, kernel::MemoryKernel) where T
 
     Tnew = typeof(F₀)
-    K₀ = kernel(F₀, 0.0)
+    K₀ = evaluate_kernel(kernel, F₀, 0.0)
     Ftype = typeof(K₀*F₀)
     Ktype = typeof(K₀)
 

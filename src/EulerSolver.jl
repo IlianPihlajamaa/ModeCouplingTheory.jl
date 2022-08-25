@@ -69,7 +69,7 @@ function solve(problem::MCTProblem, solver::EulerSolver, kernel::MemoryKernel)
     F_array = Ftype[]
     t = 0.0
 
-    K₀ = kernel(F₀, t)
+    K₀ = evaluate_kernel(kernel, F₀, t)
     
     kerneltype = problem.Kerneltype
     K_array = kerneltype[]
@@ -101,7 +101,7 @@ function solve(problem::MCTProblem, solver::EulerSolver, kernel::MemoryKernel)
             ∂ₜF = -β\(γ * F_old + time_integral)
             F = F_old + Δt * ∂ₜF
         end
-        K = kernel(F, t)
+        K = evaluate_kernel(kernel, F, t)
         push!(t_array, t)
         push!(K_array, K)
         push!(F_array, F)

@@ -1,6 +1,6 @@
 function solve_steady_state(γ, F₀::Union{Number,SVector}, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false)
     t = Inf
-    K = kernel(F₀, t)
+    K = evaluate_kernel(kernel, F₀, t)
     error = tolerance*2
     Fold = F₀*one(eltype(F₀))
     F = F₀
@@ -12,7 +12,7 @@ function solve_steady_state(γ, F₀::Union{Number,SVector}, kernel; tolerance=1
             error("The recursive iteration did not converge. The error is $error after $iterations iterations.")
         end
         F = (K + γ)\(K*F₀)
-        K = kernel(F, t)
+        K = evaluate_kernel(kernel, F, t)
         error = find_error(F, Fold)
         Fold = F
         if verbose 
@@ -48,7 +48,7 @@ function solve_steady_state(γ, F₀::Vector, kernel; tolerance=10^-8, max_itera
     elseif typeof(γ) <: UniformScaling
         γ = γ*I(length(F₀))
     end
-    K = kernel(F₀, t)
+    K = evaluate_kernel(kernel, F₀, t)
     error = tolerance*2
     F = K*F₀
     Fold = copy(F₀)
@@ -71,7 +71,7 @@ function solve_steady_state(γ, F₀::Vector, kernel; tolerance=10^-8, max_itera
             tempmat .= K .+ γ
             F .= tempmat\tempvec
         end
-        kernel(K, F, t)
+        evaluate_kernel!(K, kernel, F, t)
         error = find_error(F, Fold)
         Fold .= F
         if verbose 

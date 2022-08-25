@@ -51,6 +51,6 @@ kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 system = MCTProblem(α, β, γ, F0, ∂F0, kernel)
 solver = FuchsSolver(system, Δt=10^-10, t_max=10.0^10, verbose=false, N = 2, tolerance=10^-8, max_iterations=10^8)
 t , F, K = solve(system, solver, kernel);
-@test sum(F)≈13399.669989234215
+@test sum(F)≈13755.713517887398
 
 # plot(log10.(t), F[19, :]/F[19, 1], label="k = $k_array[19]", lw=3, xlabel="log10(t)", ylabel="F(k,t)")

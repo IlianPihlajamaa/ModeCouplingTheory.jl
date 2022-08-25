@@ -10,6 +10,7 @@ makedocs(
         "Problems and Solvers" => "Problems_and_Solvers.md",
         "Kernels" => "Kernels.md",
         "Scope" => "Scope.md",
+        "From Python" => "FromPython.md",
         "API Reference" => "API.md",
      ],
      format = Documenter.HTML(prettyurls = false)

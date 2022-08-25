@@ -20,10 +20,11 @@ solver2 = FuchsSolver(system2, Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, 
 
 inFS = @SVector rand(N)
 inF =  Vector(inFS)
-out0 = kernel1(inFS, 0.0)
-out1 = kernel2(inF, 0.0)
+out0 = evaluate_kernel(kernel1, inFS, 0.0)
+out1 = evaluate_kernel(kernel2, inF, 0.0)
 out2 = similar(out1)
-kernel2(out2, inF, 0.0)
+evaluate_kernel!(out2, kernel2, inF, 0.0)
+
 @test all(out0 .≈ out1 .≈ out2)
 
 t1, F1, K1 =  solve(system1, solver1, kernel1);
@@ -65,10 +66,10 @@ solver2 = FuchsSolver(system2, Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, 
 
 inFS = @SVector rand(N)
 inF =  Vector(inFS)
-out0 = kernel1(inFS, 0.0)
-out1 = kernel2(inF, 0.0)
+out0 = evaluate_kernel(kernel1, inFS, 0.0)
+out1 = evaluate_kernel(kernel2, inF, 0.0)
 out2 = similar(out1)
-kernel2(out2, inF, 0.0)
+evaluate_kernel!(out2, kernel2, inF, 0.0)
 @test all(out0 .≈ out1 .≈ out2)
 
 t1, F1, K1 =  solve(system1, solver1, kernel1);

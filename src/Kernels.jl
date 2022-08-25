@@ -10,7 +10,7 @@ struct ExponentiallyDecayingKernel{T1<:Number, T2<:Number} <: MemoryKernel
     τ::T2
 end
 
-function (kernel::ExponentiallyDecayingKernel)(F, t)
+function evaluate_kernel(kernel::ExponentiallyDecayingKernel, F::Number, t)
     return kernel.λ * exp(-t/kernel.τ)
 end
 
@@ -24,7 +24,7 @@ struct SchematicF1Kernel{T<:Number} <: MemoryKernel
     λ::T
 end
 
-function (kernel::SchematicF1Kernel)(F, t)
+function evaluate_kernel(kernel::SchematicF1Kernel, F::Number, t)
     λ = kernel.λ
     return λ * F
 end
@@ -38,7 +38,7 @@ struct SchematicF2Kernel{T<:Number} <: MemoryKernel
     λ::T
 end
 
-function (kernel::SchematicF2Kernel)(F, t)
+function evaluate_kernel(kernel::SchematicF2Kernel, F::Number, t)
     λ = kernel.λ
     return λ * F^2
 end
@@ -54,7 +54,7 @@ struct SchematicF123Kernel{T<:Number} <: MemoryKernel
     λ3::T
 end
 
-function (kernel::SchematicF123Kernel)(F, t)
+function evaluate_kernel(kernel::SchematicF123Kernel, F::Number, t)
     return kernel.λ1 * F^1 + kernel.λ2 * F^2 + kernel.λ3 * F^3
 end
 
@@ -69,12 +69,12 @@ struct SchematicDiagonalKernel{T<:Union{SVector, Vector}} <: MemoryKernel
     SchematicDiagonalKernel(λ::T) where {T<:Union{SVector,Vector}} = eltype(λ) <: Number ? new{T}(λ) : error("element type of this kernel must be a number")
 end
 
-function (kernel::SchematicDiagonalKernel)(F::Union{SVector,Vector}, t)
+function evaluate_kernel(kernel::SchematicDiagonalKernel, F::Union{SVector,Vector}, t)
     λ = kernel.λ
     return Diagonal(λ .* F .^ 2)
 end
 
-function (kernel::SchematicDiagonalKernel)(out::Diagonal, F::Vector, t)
+function evaluate_kernel!(out::Diagonal, kernel::SchematicDiagonalKernel, F::Vector, t)
     λ = kernel.λ
     diag = out.diag
     @. diag = λ * F^2
@@ -90,12 +90,12 @@ struct SchematicMatrixKernel{T<:Union{SMatrix,Matrix}} <: MemoryKernel
     SchematicMatrixKernel(λ::T) where {T<:Union{SMatrix,Matrix}} = eltype(λ) <: Number ? new{T}(λ) : error("element type of this kernel must be a number")
 end
 
-function (kernel::SchematicMatrixKernel)(F::Union{SVector,Vector}, t)
+function evaluate_kernel(kernel::SchematicMatrixKernel, F::Union{SVector,Vector}, t)
     λ = kernel.λ
     return λ * F * F'
 end
 
-function (kernel::SchematicMatrixKernel)(out::Matrix, F::Vector, t)
+function evaluate_kernel!(out::Matrix, kernel::SchematicMatrixKernel, F::Vector, t)
     λ = kernel.λ
     @tullio out[i, j] = λ[i, k] * F[k] * F[j]
 end
@@ -253,7 +253,7 @@ function fill_A!(kernel::ModeCouplingKernel, F)
 end
 
 
-function (kernel::ModeCouplingKernel)(out::Diagonal, F::Vector, t)
+function evaluate_kernel!(out::Diagonal, kernel::ModeCouplingKernel, F::Vector, t)
     A1 = kernel.A1
     A2 = kernel.A2
     A3 = kernel.A3
@@ -273,9 +273,9 @@ function (kernel::ModeCouplingKernel)(out::Diagonal, F::Vector, t)
 end
 
 
-function (kernel::ModeCouplingKernel)(F::Vector, t)
+function evaluate_kernel(kernel::ModeCouplingKernel, F::Vector, t)
     out = Diagonal(similar(kernel.T1))
-    kernel(out, F, t)
+    evaluate_kernel!(out, kernel, F, t)
     return out
 end
 
@@ -462,7 +462,7 @@ function fill_A!(kernel::MultiComponentModeCouplingKernel, F)
     end
 end
 
-function (kernel::MultiComponentModeCouplingKernel)(out::Diagonal, F::Vector, t)
+function evaluate_kernel!(out::Diagonal, kernel::MultiComponentModeCouplingKernel, F::Vector, t)
     A1 = kernel.A1
     A2 = kernel.A2
     A3 = kernel.A3
@@ -483,9 +483,9 @@ function (kernel::MultiComponentModeCouplingKernel)(out::Diagonal, F::Vector, t)
     end
 end
 
-function (kernel::MultiComponentModeCouplingKernel)(F::Vector, t)
+function evaluate_kernel(kernel::MultiComponentModeCouplingKernel, F::Vector, t)
     out = Diagonal(similar(F))
-    kernel(out, F, t)
+    evaluate_kernel!(out, kernel, F, t)
     return out
 end
 
@@ -554,7 +554,7 @@ function NaiveMultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
     return kernel
 end
 
-function (kernel::NaiveMultiComponentModeCouplingKernel)(out::Diagonal, F::Vector, t)
+function evaluate_kernel!(out::Diagonal, kernel::NaiveMultiComponentModeCouplingKernel, F::Vector, t)
     V = kernel.V
     k_array = kernel.k_array
 
@@ -571,8 +571,31 @@ function (kernel::NaiveMultiComponentModeCouplingKernel)(out::Diagonal, F::Vecto
     end
 end
 
-function (kernel::NaiveMultiComponentModeCouplingKernel)(F::Vector, t)
+function evaluate_kernel(kernel::NaiveMultiComponentModeCouplingKernel, F::Vector, t)
     out = Diagonal(similar(F))
-    kernel(out, F, t)
+    evaluate_kernel!(out, kernel, F, t)
     return out
+end
+
+
+"""
+    evaluate_kernel!(out, kernel::MemoryKernel, F, t)
+
+Evaluates the memory kernel in-place, overwriting the elements of the `out` variable. It may mutate the content of `kernel`.
+"""
+function evaluate_kernel!(out, kernel::MemoryKernel, F, t)
+    error("This memory kernel is not defined")
+end
+
+
+"""
+    evaluate_kernel(kernel::MemoryKernel, F, t)
+    
+Evaluates the memory kernel out-place. It may mutate the content of `kernel`.
+
+Returns
+* `out` the kernel evaluated at (F, t)
+"""
+function evaluate_kernel(kernel::MemoryKernel, F, t)
+    error("This memory kernel is not defined")
 end
