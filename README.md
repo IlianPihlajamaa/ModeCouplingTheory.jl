@@ -19,7 +19,7 @@ Pkg.add(url="https://github.com/IlianPihlajamaa/ModeCouplingTheory.jl")
 ```
 # Example usage:
 
-We can define one of the predefined memory kernels 
+We can use one of the predefined memory kernels 
 
 ```julia
 julia> using ModeCouplingTheory
@@ -33,7 +33,7 @@ This kernel evaluates `K(t) = λ F(t)^2` when called.
 
 We can now define the equation we want to solve as follows:
 
-```
+```julia
 julia> α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
 julia> problem = MCTProblem(α, β, γ, F0, ∂F0, kernel);
 ```
