@@ -98,7 +98,7 @@ in which the vertex $V(\textbf{k}, \textbf{q}) = (\textbf{k}\cdot\textbf{q})c(q)
 
 This memory kernel integral is discretised as follows:
 
-$$\int d\textbf{q}f(q, |\textbf{k}-\textbf{q}|) = 2\pi\int_0^\infty dq q^2 \int_0^\pi d\theta \sin \theta f(q, |\textbf{k}-\textbf{q}|) = \frac{2\pi}{k}\int_0^\infty dq \int_{|k-q|}^{k+q}dp pq f(q, p) \approx \frac{2\pi \Delta k^2}{k_i}\sum_{j=1}^{N_k} \sum_{l=|j-i|+1}^{j+i-1} \frac{p_l q_j}{k_i}f(k_j, k_l).$$
+$$\int d\textbf{q}f(q, |\textbf{k}-\textbf{q}|) = 2\pi\int_0^\infty dq q^2 \int_0^\pi d\theta \sin \theta f(q, |\textbf{k}-\textbf{q}|) = \frac{2\pi}{k}\int_0^\infty dq \int_{|k-q|}^{k+q}dp pq f(q, p) \approx \frac{2\pi \Delta k^2}{k_i}\sum_{j=1}^{N_k} \sum_{l=|j-i|+1}^{j+i-1} \frac{p_l q_j}{k_i}f(q_j, p_l).$$
  
 in which $p = |\textbf{k}-\textbf{q}|$, and wave numbers $k$, $q$ and $p$ are discretized on the equidistant grid $k_i = (i_k-\frac{1}{2})\Delta k$ where $i_k = 1, 2, 3, \ldots, N_k$. The double sum is then performed for all $k$ using Bengtzelius' trick, yielding a fast $O(N_k^2)$ algorithm.
 
@@ -314,11 +314,11 @@ tDict = Dict(zip(t, eachindex(t)))
 # tdict[t[8]] == 8
 ```
 
-Now we can construct a memory kernel like above. For performance reasons, we also implement the in-place `evaluate_kernel!(out, kernel, Fs, t)`. The discrete equation becomes 
+Now we can construct a memory kernel like above. For performance reasons, we also implement the in-place `evaluate_kernel!(out, kernel, Fs, t)`. The discrete equation that we must implement is given by 
 
 $$K(k_i,t) = \frac{\rho k_B T \Delta k^2}{4 \pi^2 m} \sum_{j=1}^{N_k} \sum_{l=|j-i|+1}^{j+i-1} \frac{p_l q_j}{k_i} V^2(k_i, q_j, p_l)F(k_j, t)F_s(k_l, t)$$
 
-The memory kernel can now be straightforwardly implemented as:
+This memory kernel can now be straightforwardly implemented as follows:
 
 ```julia
 import ModeCouplingTheory.MemoryKernel
@@ -355,9 +355,9 @@ Now to evaluate the kernel, we first write the in-place version of the code, tha
 
 ```julia
 import ModeCouplingTheory.evaluate_kernel!
-function evaluate_kernel!(out, kernel::TaggedMCTKernel, Fs, t)
-    out.diag .= 0 # set the output array to zero
-    it = kernel.tDict[t]
+function evaluate_kernel!(out::Diagonal, kernel::TaggedMCTKernel, Fs, t)
+    out.diag .= zero(eltype(out.diag)) # set the output array to zero
+    it = kernel.tDict[t] # find the correct index corresponding to t
     k_array = kernel.k_array
     Nk = length(k_array)
     for i = 1:Nk, j = 1:Nk, l = 1:Nk # loop over k, q, p
@@ -385,8 +385,8 @@ F0 = ones(Nk); ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m
 
 taggedkernel = TaggedMCTKernel(ρ, kBT, m, k_array, Cₖ, t, F)
 taggedproblem = MCTProblem(α, β, γ, F0, ∂F0, taggedkernel)
-taggedsolver = FuchsSolver(taggedproblem, Δt=10^-5, t_max=10.0^15, verbose=false, 
-                     N = 8, tolerance=10^-8) # it is important we use the same settings for Δt, t_max and N
+taggedsolver = FuchsSolver(taggedproblem, Δt=10^-5, t_max=10.0^15, 
+                           N = 8, tolerance=10^-8) # it is important we use the same settings for Δt, t_max and N
 ts, Fs, Ks = @time solve(taggedproblem, taggedsolver, taggedkernel)
 using Plots
 p = plot(xlabel="log10(t)", ylabel="Fₛ(k,t)", ylims=(0,1))
@@ -397,4 +397,4 @@ p
 ```
 ![image](images/sMCTKernel.png)
 
-This implementation of the tagged-particle memory kernel is an order of magnitude slower than the built-in collective one, and can be made much more performant by Bengtzelius' trick. For the purposes of this example, however, we do not pursue this.
+This implementation of the tagged-particle memory kernel is an order of magnitude slower than the built-in collective one, and can be made much more performant by Bengtzelius' trick. For the purposes of this example, however, we do not pursue this any further. For help with implementing your own kernel, please file an issue.

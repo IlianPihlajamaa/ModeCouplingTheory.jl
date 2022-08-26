@@ -75,7 +75,7 @@ julia> Nk = 100; kmax = 40.0; dk = kmax/Nk; k_array = dk*(collect(1:Nk) .- 0.5);
 
 We use the same functions to find the structure factor as before:
 
-```julia
+```
 """
 Finds the fourier transform of the direct correlation function given by the 
 analytical percus yevick solution of the Ornstein Zernike 
