@@ -1,5 +1,8 @@
 function solve_steady_state(γ, F₀::Union{Number,SVector}, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false)
     t = Inf
+    if typeof(γ) <: AbstractVector
+        γ = Diagonal(γ)
+    end
     K = evaluate_kernel(kernel, F₀, t)
     error = tolerance*2
     Fold = F₀*one(eltype(F₀))

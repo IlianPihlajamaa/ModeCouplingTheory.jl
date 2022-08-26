@@ -6,6 +6,14 @@ $$\alpha \ddot{F}(t) + \beta \dot{F}(t) + \gamma F(t) + \int_0^t d\tau K(t-\tau)
 
 in which $\alpha$, $\beta$, and $\gamma$ are coefficients, and $K(t) = K(F(t), t)$. This package exports some commonly used memory kernels, but it is straightforward to define your own. The solver is differentiable and works for scalar- and vector-valued functions $F(t)$. For more information see the [Documentation](https://IlianPihlajamaa.github.io/ModeCouplingTheory.jl/dev).
 
+# Installation
+
+To install the package run:
+
+```julia
+import Pkg
+Pkg.add(url="https://github.com/IlianPihlajamaa/ModeCouplingTheory.jl")
+```
 
 # Example
 

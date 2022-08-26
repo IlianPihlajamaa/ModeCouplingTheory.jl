@@ -51,7 +51,6 @@ F0 = copy(Sₖ)
 α = 0.0
 β = 1.0
 γ = @. k_array^2*kBT/(m*Sₖ)
-γ = Diagonal(γ)
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 fk = solve_steady_state(γ, F0, kernel; tolerance=10^-8, verbose=false)
