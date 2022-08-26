@@ -53,11 +53,11 @@ This package is not tested for and is not expected to work when the type of `F` 
 
 ## Solvers
 
-A `Solver` object holds the settings for a specific integration method. This package defines two solvers: `EulerSolver` and `FuchsSolver`. The `EulerSolver` implements a simple forward Euler method (with trapezoidal integration) which is wildly inefficient if the domain of $t$ spans many orders of magnitude (such as it often does in Mode-Coupling Theory). It should therefore mainly be used for testing purposes. The `FuchsSolver` should be used in almost all other cases. The scheme it implements outlined in [1] and in the appendix of [2].
+A `Solver` object holds the settings for a specific integration method. This package defines two solvers: `EulerSolver` and `FuchsSolver`. The `EulerSolver` implements a simple forward Euler method (with trapezoidal integration) which is wildly inefficient if the domain of $t$ spans many orders of magnitude (such as it often does in Mode-Coupling Theory). It should therefore mainly be used for testing purposes. The `FuchsSolver` should be used in almost all other cases. The scheme it implements is outlined in [1] and in the appendix of [2].
 
-In short, the equation is discretised and solved on a grid of `4N` time-points, which are equally spaced over an interval `Δt`. It is solved using an implicit method, and thus a fixed point has to be found for each time point. This is done by recursive iteration. When the solution is found, the interval is doubled `Δt => 2Δt` and the solution on the previous grid is mapped onto the first `2N` time points of the new grid. This is repeated until some final time `t_max` is reached.
+In short, the equation is discretised and solved on a grid of `4N` time-points, which are equally spaced over an interval `Δt`. It is solved using an implicit method, and thus a fixed point has to be found for each time point. This is done by recursive iteration. When the solution is found, the interval is doubled `Δt => 2Δt` and the solution on the previous grid is mapped onto the first `2N` time points of the new grid. The solution on the other`2N` points is again found by recursive iteration. This is repeated until some final time `t_max` is reached.
 
-A `FuchsSolver` is constructed as follows
+A `FuchsSolver` is constructed as follows:
 
 ```julia
 julia> kernel = SchematicF1Kernel(0.2);
@@ -76,6 +76,8 @@ As optional keyword arguments `FuchsSolver` accepts:
 * `tolerance`: while the error of the recursive iteration is bigger than this value, convergence is not reached. The error by default is computed as the absolute sum of squared differences. default = `10^-10`
 * `verbose`: if `true`, some information will be printed. default = `false`
 * `inplace`: if `true` and if the type of `F` is mutable, the solver will try to avoid allocating many temporaries. default = `true`
+
+Having defined a `MemoryKernel`, `MCTProblem` and a `Solver`, one can call `t, F, K = solve(problem, solver, kernel)` to solve the problem. It outputs a `Vector` of time points `t` and the solution `F` and memory kernel `K` evaluated at those times points. 
 
 ### References
 [1] Fuchs, Matthias, et al. "Comments on the alpha-peak shapes for relaxation in supercooled liquids." Journal of Physics: Condensed Matter 3.26 (1991): 5047.
