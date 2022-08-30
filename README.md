@@ -15,7 +15,7 @@ To install the package run:
 
 ```julia
 import Pkg
-Pkg.add(url="https://github.com/IlianPihlajamaa/ModeCouplingTheory.jl")
+Pkg.add("ModeCouplingTheory.jl")
 ```
 # Example usage:
 
