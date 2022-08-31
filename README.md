@@ -17,6 +17,8 @@ To install the package run:
 import Pkg
 Pkg.add("ModeCouplingTheory.jl")
 ```
+In order to install and use it from Python, see the [From Python](https://ilianpihlajamaa.github.io/ModeCouplingTheory.jl/dev/FromPython.html) page of the documentation.
+
 # Example usage:
 
 We can use one of the predefined memory kernels 
