@@ -88,7 +88,7 @@ The `SchematicMatrixKernel` implements the kernel $K_{ij}(t) = \sum_k \lambda_{i
 
 The mode-coupling theory equation reads
 
-$$\ddot{F}(k,t) + \Omega(k)F(k,t) + \int_0^td\tau K(t-\tau, k)\dot{F}(k,\tau)$$
+$$\ddot{F}(k,t) + \Omega(k)F(k,t) + \int_0^td\tau K(t-\tau, k)\dot{F}(k,\tau)=0$$
 
 in which $\Omega(k) = k^2 k_B T/mS(k)$, and
 
@@ -171,7 +171,7 @@ p
 
 The multi-component mode-coupling theory equation reads
 
-$$\ddot{F}_{\alpha\beta}(k,t) + \Omega_{\alpha\gamma}(k)F_{\gamma\beta}(k,t) + \int_0^td\tau K_{\alpha\gamma}(t-\tau, k)\dot{F}_{\gamma\beta}(k, \tau)$$
+$$\ddot{F}_{\alpha\beta}(k,t) + \Omega_{\alpha\gamma}(k)F_{\gamma\beta}(k,t) + \int_0^td\tau K_{\alpha\gamma}(t-\tau, k)\dot{F}_{\gamma\beta}(k, \tau)=0$$
 
 in which $\Omega_{\alpha\gamma} = k^2 k_B T x_\alpha/m_\alpha \cdot \left(S^{-1}\right)_{\alpha\gamma}(k)$, and
 
