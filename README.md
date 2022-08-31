@@ -15,7 +15,7 @@ To install the package run:
 
 ```julia
 import Pkg
-Pkg.add("ModeCouplingTheory.jl")
+Pkg.add("ModeCouplingTheory")
 ```
 In order to install and use it from Python, see the [From Python](https://ilianpihlajamaa.github.io/ModeCouplingTheory.jl/dev/FromPython.html) page of the documentation.
 

@@ -12,7 +12,7 @@ To install the package run:
 
 ```julia
 import Pkg
-Pkg.add("ModeCouplingTheory.jl")
+Pkg.add("ModeCouplingTheory")
 ```
 
 # Example

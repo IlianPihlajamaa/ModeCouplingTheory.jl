@@ -20,7 +20,7 @@ which will install the latest stable version of Julia the first time it is calle
 
 ```python
 from julia import Pkg
-Pkg.add("ModeCouplingTheory.jl")
+Pkg.add("ModeCouplingTheory")
 ```
 
 To import this package in order to use it we need to run:
