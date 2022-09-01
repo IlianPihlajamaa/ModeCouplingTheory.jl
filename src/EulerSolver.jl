@@ -8,19 +8,19 @@ mutable struct EulerSolver{I, F, B} <: Solver
 end
 
 """
-    EulerSolver(problem::MCTProblem; t_max=10.0^2, Δt=10^-3, verbose=false)
+    EulerSolver(problem::LinearMCTProblem; t_max=10.0^2, Δt=10^-3, verbose=false)
 
-Constructs a solver object that, when called `solve` upon will solve an `MCTProblem` using a forward Euler method.
+Constructs a solver object that, when called `solve` upon will solve an `LinearMCTProblem` using a forward Euler method.
 It will discretise the integral using a Trapezoidal rule. Use this solver only for testing purposes. It is a wildy 
 inefficient way to solve MCT-like equations.
 
 # Arguments:
-* `problem` an instance of MCTProblem
+* `problem` an instance of LinearMCTProblem
 * `t_max` when this time value is reached, the integration returns
 * `Δt` fixed time step
 * `verbose` if `true`, information will be printed to STDOUT
 """
-function EulerSolver(problem::MCTProblem; t_max=10.0^2, Δt=10^-3, verbose=false)
+function EulerSolver(problem::LinearMCTProblem; t_max=10.0^2, Δt=10^-3, verbose=false)
     Ftype = typeof(problem.F₀)
     F_element_type = eltype(problem.F₀)
     N = ceil(Int, t_max/Δt)
@@ -53,7 +53,7 @@ function trapezoidal_integration(f, δt, it)
     return result
 end
 
-function solve(problem::MCTProblem, solver::EulerSolver, kernel::MemoryKernel)
+function solve(problem::LinearMCTProblem, solver::EulerSolver, kernel::MemoryKernel)
     tstart = time()
 
     Ftype = problem.Ftype

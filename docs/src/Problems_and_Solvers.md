@@ -1,11 +1,11 @@
 
 ## Problems
 
-The most straightforward workflow for solving MCT-like equations is to first construct a `MemoryKernel`, a `MCTProblem`, and a `Solver`, in that order. The `MemoryKernel` is a function or callable object that evaluates the memory kernel when called. The `MCTProblem` holds the coefficients and initial conditions of the equations that need to be solved, and the `Solver` stores information related to the numerical integration procedure, such as the time step. Once these three objects have been defined, the function `solve` can be called on them to solve the equation
+The most straightforward workflow for solving MCT-like equations is to first construct a `MemoryKernel`, a `MCTProblem`, and a `Solver`, in that order. The `MemoryKernel` is an object that evaluates the memory kernel when passed to the function `evaluate_kernel`. The `MCTProblem` holds the coefficients and initial conditions of the equations that need to be solved, and the `Solver` stores information related to the numerical integration procedure, such as the time step. Once these three objects have been defined, the function `solve` can be called on them to solve the equation
 
 $$\alpha \ddot{F}(t) + \beta \dot{F}(t) + \gamma F(t) + \int_0^t d\tau K(t-\tau)\dot{F}(\tau) = 0$$
 
-An `MCTProblem` is constructed by the constructor `MCTProblem(α, β, γ, F₀, ∂ₜF₀, kernel::MemoryKernel)`. Here, `F₀` and `∂ₜF₀` are the initial conditions of $F$ and its time derivative. In the case of vector-valued functions `F`, this package requires that the operation `α*F` is defined and returns the same type as `F`. This means that in general, when `F` is a vector, `α` must either be a matrix with a compatible element type, or a scalar. However, because it is common in practice to find equations in which `α` and `F` are both vectors (such that the multiplication `α*F` is understood to be conducted element-wise), vector-valued `α`s will automatically be promoted to diagonal matrices. `β` and `γ` are treated in the same way. `MCTProblem` will also evaluate the `kernel` at $t=0$ to find its initial condition.
+A `LinearMCTProblem` defined by the equation above is constructed by the constructor `LinearMCTProblem(α, β, γ, F₀, ∂ₜF₀, kernel::MemoryKernel)`. Here, `F₀` and `∂ₜF₀` are the initial conditions of $F$ and its time derivative. In the case of vector-valued functions `F`, this package requires that the operation `α*F` is defined and returns the same type as `F`. This means that in general, when `F` is a vector, `α` must either be a matrix with a compatible element type, or a scalar. However, because it is common in practice to find equations in which `α` and `F` are both vectors (such that the multiplication `α*F` is understood to be conducted element-wise), vector-valued `α`s will automatically be promoted to diagonal matrices. `β` and `γ` are treated in the same way. `LinearMCTProblem` will also evaluate the `kernel` at $t=0$ to find its initial condition.
 
 ### Examples
 
@@ -15,7 +15,7 @@ Scalar problems are the most straightforward:
 kernel = SchematicF1Kernel(0.2); # in the next page of the documentation we will 
                                  # explain how to construct memory kernels
 α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
-problem = MCTProblem(α, β, γ, F0, ∂F0, kernel)
+problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel)
 ```
 
 For vector-valued problems, the coefficients can be scalar, vector or matrix-valued. They are automatically promoted to make linear algebra work:
@@ -24,7 +24,7 @@ For vector-valued problems, the coefficients can be scalar, vector or matrix-val
 julia> N = 5;
 julia> kernel = SchematicDiagonalKernel(rand(N));
 julia> α = 1.0; β = rand(N); γ = rand(N,N); F0 = ones(N); ∂F0 = zeros(N);
-julia> problem = MCTProblem(α, β, γ, F0, ∂F0, kernel);
+julia> problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel);
 
 julia> problem.α
 LinearAlgebra.UniformScaling{Float64}
@@ -62,7 +62,7 @@ A `FuchsSolver` is constructed as follows:
 ```julia
 julia> kernel = SchematicF1Kernel(0.2);
 julia> α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
-julia> problem = MCTProblem(α, β, γ, F0, ∂F0, kernel);
+julia> problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel);
 julia> solver1 = FuchsSolver(problem) # using all default parameters
 julia> solver2 = FuchsSolver(problem; N=128, Δt=10^-5, 
                             t_max=10.0^15, max_iterations=10^8, 

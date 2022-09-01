@@ -20,7 +20,7 @@ $$F(t) = \frac{e^{-\frac{t}{2}\left( \lambda + \sqrt{\lambda(\lambda+4)} + 2\rig
 F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; λ = 1.0; τ = 1.0;
 
 kernel = ExponentiallyDecayingKernel(λ, τ)
-problem = MCTProblem(α, β, γ, F0, ∂F0, kernel)
+problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel)
 solver = FuchsSolver(problem, Δt=10^-3, t_max=10.0^2, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 t, F, K =  solve(problem, solver, kernel)
 
@@ -49,7 +49,7 @@ in which $I_k$ are modified Bessel functions of the first kind.
 F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; λ = 1.0
 
 kernel = SchematicF1Kernel(λ)
-problem = MCTProblem(α, β, γ, F0, ∂F0, kernel)
+problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel)
 solver = FuchsSolver(problem, Δt=10^-3, t_max=10.0^2, verbose=false, N = 100, tolerance=10^-14, max_iterations=10^6)
 t, F, K1 =  solve(problem, solver, kernel)
 
@@ -148,7 +148,7 @@ Sₖ = find_analytical_S_k(k_array, η)
 ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ)
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = MCTProblem(α, β, γ, Sₖ, ∂F0, kernel)
+problem = LinearMCTProblem(α, β, γ, Sₖ, ∂F0, kernel)
 solver = FuchsSolver(problem, Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
 t, F, K = @time solve(problem, solver, kernel);
@@ -223,7 +223,7 @@ for ik = 1:Nk
 end
 
 kernel = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = MCTProblem(α, β, Ω, F₀, ∂ₜF₀, kernel)
+problem = LinearMCTProblem(α, β, Ω, F₀, ∂ₜF₀, kernel)
 solver = FuchsSolver(problem, verbose=false, N=16, tolerance=10^-8, max_iterations=10^8)
 t, F, K = solve(problem, solver, kernel)
 ik = 19
@@ -268,7 +268,7 @@ end
 That's it! We can now use it like any other memory kernel to solve the equation:
 
 ```julia
-problem = MCTProblem(1.0, 0.0, 1.0, 1.0, 0.0, kernel)
+problem = LinearMCTProblem(1.0, 0.0, 1.0, 1.0, 0.0, kernel)
 solver = FuchsSolver(problem, Δt = 10^-4, t_max=10.0^5)
 t, F, K = solve(problem, solver, kernel)
 using Plots
@@ -303,7 +303,7 @@ Sₖ = find_analytical_S_k(k_array, η)
 ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ)
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = MCTProblem(α, β, γ, Sₖ, ∂F0, kernel)
+problem = LinearMCTProblem(α, β, γ, Sₖ, ∂F0, kernel)
 solver = FuchsSolver(problem, Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
 t, F, K = @time solve(problem, solver, kernel);
@@ -374,7 +374,7 @@ end
 import ModeCouplingTheory.evaluate_kernel
 function evaluate_kernel(kernel::TaggedMCTKernel, Fs, t)
     out = Diagonal(similar(Fs)) # we need it to produce a diagonal matrix
-    evaluate_kernel!(out, kernel::TaggedMCTKernel, Fs, t) # call the inplace version
+    evaluate_kernel!(out, kernel, Fs, t) # call the inplace version
     return out
 end
 ```
@@ -386,7 +386,7 @@ Cₖ = find_analytical_C_k(k_array, η)
 F0 = ones(Nk); ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m
 
 taggedkernel = TaggedMCTKernel(ρ, kBT, m, k_array, Cₖ, t, F)
-taggedproblem = MCTProblem(α, β, γ, F0, ∂F0, taggedkernel)
+taggedproblem = LinearMCTProblem(α, β, γ, F0, ∂F0, taggedkernel)
 taggedsolver = FuchsSolver(taggedproblem, Δt=10^-5, t_max=10.0^15, 
                            N = 8, tolerance=10^-8) # it is important we use the same settings for Δt, t_max and N
 ts, Fs, Ks = @time solve(taggedproblem, taggedsolver, taggedkernel)
@@ -404,7 +404,7 @@ This implementation of the tagged-particle memory kernel is an order of magnitud
 
 ## Bengtzelius' Trick
 
-Bengtzelius' trick is a fast way to evaluate the integral $I(k) = \int d \mathbf{q} A(q, |\mathbf{k}-\mathbf{q}|)$. Very briefly: after discretisation of the integral, one is left with terms such as $T_{i}[A]=\sum_{j=1}^{N_k}\sum_{l=|j-i|+1}^{i+j-1}  A(p_{l},q_{j})$ which are largely independent of $i_k$. Because of this, one can calculate $T_{i}[A]$ from $T_{i-1}[A]$ in order $N_k$ operations. The recurrence relation that allows one to do so is given by 
+Bengtzelius' trick is a fast way to evaluate the integral $I(k) = \int d \mathbf{q} A(q, |\mathbf{k}-\mathbf{q}|)$. Very briefly: after discretisation of the integral, one is left with terms such as $T_{i}[A]=\sum_{j=1}^{N_k}\sum_{l=|j-i|+1}^{i+j-1}  A(p_{l},q_{j})$ which are largely independent of $i$. Because of this, one can calculate $T_{i}[A]$ from $T_{i-1}[A]$ in order $N_k$ operations. The recurrence relation that allows one to do so is given by 
 
 $$T_{i}[A] = T_{i-1}[A] + \sum_{j=1}^{N_k-i+1}(A(j, j+i-1)+A(j+i-1, j)) - \sum_{j=1}^{i-1}A(j,i-j)$$
 

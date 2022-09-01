@@ -12,6 +12,7 @@ makedocs(
         "Scope" => "Scope.md",
         "From Python" => "FromPython.md",
         "API Reference" => "API.md",
+        "Internals" => "internals.md",
      ],
      format = Documenter.HTML(prettyurls = false)
 )

@@ -37,7 +37,7 @@ We can now define the equation we want to solve as follows:
 
 ```julia
 julia> α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
-julia> problem = MCTProblem(α, β, γ, F0, ∂F0, kernel);
+julia> problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel);
 ```
 and a solver:
 
@@ -60,7 +60,7 @@ using ModeCouplingTheory, Plots
 λ = 3.999
 α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
 kernel = SchematicF2Kernel(λ)
-problem = MCTProblem(α, β, γ, F0, ∂F0, kernel);
+problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel);
 solver = FuchsSolver(problem);
 t, F, K = solve(problem, solver, kernel);
 plot(log10.(t), F)

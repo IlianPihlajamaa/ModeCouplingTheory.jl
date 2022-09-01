@@ -29,21 +29,16 @@ mutable struct FuchsSolver{I, F, T1, T2, T3, T4, T5} <: Solver
     inplace::Bool
 end
 
-function check_if_diag(::Diagonal)
-    return true
-end
-function check_if_diag(::Any)
-    return false
-end
-
+check_if_diag(::Diagonal) =  true 
+check_if_diag(::Any) = false
 
 """
-    FuchsSolver(problem; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false)
+    FuchsSolver(problem::LinearMCTProblem; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false)
 
-Uses the algorithm devised by Fuchs et al. to solve the `MCTProblem`.
+Uses the algorithm devised by Fuchs et al. to solve the `LinearMCTProblem`.
 
 # Arguments:
-* `problem`: an instance of MCTProblem
+* `problem`: an instance of LinearMCTProblem
 * `N`: The number of time points in the interval is equal to `4N`
 * `t_max`: when this time value is reached, the integration returns
 * `Δt`: starting time step, this will be doubled repeatedly
@@ -52,7 +47,7 @@ Uses the algorithm devised by Fuchs et al. to solve the `MCTProblem`.
 * `verbose`: if `true`, information will be printed to STDOUT
 * `inplace`: if `true` and the type of F is mutable, the solver will try to avoid allocating many temporaries
 """
-function FuchsSolver(problem::MCTProblem; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true)
+function FuchsSolver(problem::LinearMCTProblem; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true)
     starttime = time()
     Ftype = problem.Ftype
     Kerneltype = problem.Kerneltype
@@ -89,7 +84,14 @@ function FuchsSolver(problem::MCTProblem; N=32, Δt=10^-10, t_max=10.0^10, max_i
     return FuchsSolver(Ftype, Kerneltype, N, Δt, t_max, 0, max_iterations, tolerance, temp_arrays, second_order, verbose, starttime, inplace)
 end
 
-function initialize_F_temp!(problem::MCTProblem, solver::FuchsSolver)
+
+"""
+    initialize_F_temp!(problem::MCTProblem, solver::FuchsSolver)
+
+Fills the first 2N entries of the temporary arrays of F using forward Euler without a memory kernel in order to kickstart Fuchs' scheme.
+
+"""
+function initialize_F_temp!(problem::LinearMCTProblem, solver::FuchsSolver)
     N = solver.N
     δt = solver.Δt/(4*N)
     α = problem.α
@@ -116,6 +118,11 @@ function initialize_F_temp!(problem::MCTProblem, solver::FuchsSolver)
     end
 end
 
+"""
+    initialize_K_temp!(solver::FuchsSolver, kernel::MemoryKernel)
+
+Evaluates the memory kernel at the first 2N time points.
+"""
 function initialize_K_temp!(solver::FuchsSolver, kernel::MemoryKernel)
     N = solver.N
     δt = solver.Δt/(4*N)
@@ -131,6 +138,11 @@ end
 
 isimmutabletype(x) = !ismutabletype(x)
 
+"""
+    initialize_integrals!(problem::MCTProblem, solver::FuchsSolver)
+
+Initializes the integrals on the first 2N time points as prescribed in the literature.
+"""
 function initialize_integrals!(problem::MCTProblem, solver::FuchsSolver)
     F_I = solver.temp_arrays.F_I
     K_I = solver.temp_arrays.K_I
@@ -143,13 +155,13 @@ function initialize_integrals!(problem::MCTProblem, solver::FuchsSolver)
         F_I[1] =  (F_temp[1] + problem.F₀)/2
         K_I[1] =  (3*K_temp[1] - K_temp[2])/2
         for it = 2:2N
-            F_I[it] = (F_temp[it]+F_temp[it-1])/2
+            F_I[it] = (F_temp[it] + F_temp[it-1])/2
             K_I[it] = (K_temp[it] + K_temp[it-1])/2
         end
     else
         @. F_I[1] =  (F_temp[1] + problem.F₀)/2
         for it = 2:2N
-            @. F_I[it] = (F_temp[it]+F_temp[it-1])/2
+            @. F_I[it] = (F_temp[it] + F_temp[it-1])/2
         end
         @. K_I[1] =  (3*K_temp[1] - K_temp[2])/2
         for it = 2:2N
@@ -158,12 +170,19 @@ function initialize_integrals!(problem::MCTProblem, solver::FuchsSolver)
     end
 end
 
+
 function initialize_temporary_arrays!(problem::MCTProblem, solver::FuchsSolver, kernel::MemoryKernel)
     initialize_F_temp!(problem, solver)
     initialize_K_temp!(solver, kernel)
     initialize_integrals!(problem, solver)
 end
 
+""""
+    mymul!(c,a,b,α,β)
+
+prescribes how types used in this solver should be multiplied in place. In particular, it performs
+C.= β*C .+ α*a*b. defaults to mul!(c,a,b,α,β)
+"""
 mymul!(c,a,b,α,β) = mul!(c,a,b,α,β)
 function mymul!(c::Vector{SMatrix{Ns, Ns, T, Ns2}}, a::Number, b::Vector{SMatrix{Ns, Ns, T, Ns2}}, α::Number, β::Number) where {Ns, Ns2, T}
     α2 = T(α)
@@ -191,7 +210,18 @@ function mymul!(c::Vector{SMatrix{Ns, Ns, T, Ns2}}, a::Diagonal{SMatrix{Ns, Ns, 
     end
 end
 
-function update_Fuchs_parameters!(problem::MCTProblem, solver::FuchsSolver, it::Int) 
+
+
+"""
+    update_Fuchs_parameters!(problem::LinearMCTProblem, solver::FuchsSolver, it::Int) 
+
+Updates the parameters c1, c2, c3, according to the appendix of 
+"Flenner, Elijah, and Grzegorz Szamel. Physical Review E 72.3 (2005): 031508"
+using the naming conventions from that paper. If F is mutable (and therefore also c1,c2,c3), it will
+updata the variables in place, otherwise it will create new copies. This is controlled by the solver.inplace 
+setting.
+"""
+function update_Fuchs_parameters!(problem::LinearMCTProblem, solver::FuchsSolver, it::Int) 
     N = solver.N
     i2 = 2N
     δt = solver.Δt/(4N)
@@ -258,6 +288,11 @@ function update_Fuchs_parameters!(problem::MCTProblem, solver::FuchsSolver, it::
     return nothing
 end 
 
+"""
+    update_F!(solver::FuchsSolver, it::Int) 
+
+updates F using the formula c1*F = -K*C2 + C3.
+"""
 function update_F!(solver::FuchsSolver, it::Int) 
     c1 = solver.temp_arrays.C1 
     c1_temp = solver.temp_arrays.C1_temp 
@@ -282,6 +317,11 @@ function update_K_and_F!(solver::FuchsSolver, kernel::MemoryKernel, it::Int)
     update_F!(solver, it)
 end
 
+"""
+    update_K!(solver::FuchsSolver, kernel::MemoryKernel, it::Int) 
+
+evaluates the memory kernel, updating the value in solver.temp_arrays.K_temp    
+"""
 function update_K!(solver::FuchsSolver, kernel::MemoryKernel, it::Int) 
     N = solver.N
     δt = solver.Δt/(4N)
@@ -293,6 +333,12 @@ function update_K!(solver::FuchsSolver, kernel::MemoryKernel, it::Int)
     end
 end
 
+
+"""
+    update_integrals!(solver::FuchsSolver, it::Int)
+
+Update the discretisation of the integral of F and K, see the literature for details.
+"""
 function update_integrals!(solver::FuchsSolver, it::Int) 
     K_I = solver.temp_arrays.K_I
     F_I = solver.temp_arrays.F_I
@@ -302,6 +348,13 @@ function update_integrals!(solver::FuchsSolver, it::Int)
     K_I[it] = (K_temp[it]+K_temp[it-1])/2
 end
 
+
+"""
+    find_error(F_new::T, F_old::T) where T
+
+Finds the error between a new and old iteration of F. The returned scalar will be compared 
+to the tolerance to establish convergence. 
+"""
 function find_error(F_new::T, F_old::T) where T
     return maximum(abs.(F_new - F_old))
 end
@@ -321,7 +374,12 @@ function find_error(F_new::Number, F_old::Number)
     return abs(F_new - F_old)
 end
 
+"""
+    do_time_steps!(problem::LinearMCTProblem, solver::FuchsSolver, kernel::MemoryKernel)
 
+Solves the equation on the time points with index 2N+1 until 4N, for each point doing a recursive iteration
+to find the solution to the nonlinear equation C1 F  = -C2 M(F) + C3.
+"""
 function do_time_steps!(problem::MCTProblem, solver::FuchsSolver, kernel::MemoryKernel)
     N = solver.N
     F_temp = solver.temp_arrays.F_temp
@@ -341,7 +399,7 @@ function do_time_steps!(problem::MCTProblem, solver::FuchsSolver, kernel::Memory
             end
             update_K_and_F!(solver, kernel, it)
             error = find_error(F_temp[it], F_old)
-            if isbits(F_old)
+            if !solver.inplace
                 F_old = F_temp[it]
             else
                 F_old .= F_temp[it]
@@ -353,6 +411,12 @@ function do_time_steps!(problem::MCTProblem, solver::FuchsSolver, kernel::Memory
     return
 end
 
+
+"""
+    allocate_results!(t_array, F_array, K_array, solver; istart=2(solver.N)+1, iend=4(solver.N))
+
+pushes the found solution, stored in `solver.temp_arrays` with indices `istart` until `istop` to the output arrays.
+"""
 function allocate_results!(t_array, F_array, K_array, solver; istart=2(solver.N)+1, iend=4(solver.N))
     N = solver.N
     δt = solver.Δt/(4N)
@@ -364,6 +428,14 @@ function allocate_results!(t_array, F_array, K_array, solver; istart=2(solver.N)
     end
 end
 
+
+"""
+new_time_mapping!(problem::MCTProblem, solver::FuchsSolver)
+
+Performs the time mapping central to Fuchs' algorithm with the conventions prescribed in 
+"Flenner, Elijah, and Grzegorz Szamel. Physical Review E 72.3 (2005): 031508". 
+Performs them inplace if solver.inplace = true in order to avoid unnecessary allocations.
+"""
 function new_time_mapping!(problem::MCTProblem, solver::FuchsSolver)
     F = solver.temp_arrays.F_temp
     K = solver.temp_arrays.K_temp
@@ -432,6 +504,12 @@ function convertresults(F_array::Vector{<:Number}, K_array::Vector{<:Number})
     return F_array, K_array
 end
 
+
+"""
+    convertresults(F_array::Vector{T}, K_array::Vector{Diagonal{T, T2}}) where {T2, T}
+
+converts the arrays of arrays into multidimensional arrays for ease of use.
+"""
 function convertresults(F_array::Vector{T}, K_array::Vector{Diagonal{T, T2}}) where {T2, T}
     Nt = length(F_array)
     Nk = length(F_array[1])
@@ -464,6 +542,7 @@ end
 
 
 function solve(problem::MCTProblem, solver::FuchsSolver, kernel::MemoryKernel)
+    # Documented in src/Solvers.jl
     t₀ = 0.0
     F₀ = problem.F₀
     K₀ = problem.K₀
@@ -471,6 +550,7 @@ function solve(problem::MCTProblem, solver::FuchsSolver, kernel::MemoryKernel)
     Ftype = problem.Ftype
     kerneltype = problem.Kerneltype
 
+    #initialize the output arrays with the initial conditions
     t_array = Float64[t₀]
     F_array = Ftype[F₀]
     K_array = kerneltype[K₀]
@@ -479,8 +559,10 @@ function solve(problem::MCTProblem, solver::FuchsSolver, kernel::MemoryKernel)
     allocate_results!(t_array, F_array, K_array, solver; istart=1, iend=2(solver.N))
     startΔt = solver.Δt
     solver.kernel_evals = 1
+    # for the progressbar: (turns off in non-interactive environments such as a HPC)
     is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
     p = Progress(ceil(Int,log2(solver.t_max/solver.Δt)); output = stderr, enabled = !is_logging(stderr))
+    # main loop of the algorithm
     while solver.Δt < solver.t_max*2
         do_time_steps!(problem, solver, kernel)
         allocate_results!(t_array, F_array, K_array, solver)

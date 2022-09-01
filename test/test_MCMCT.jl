@@ -49,7 +49,7 @@ Ftest = rand(eltype(F₀), Nk)
 
 # println("Solve MCMCT with Euler")
 
-# system  = MCTProblem(α, β, γ, F₀, ∂ₜF₀, kernel)
+# system  = LinearMCTProblem(α, β, γ, F₀, ∂ₜF₀, kernel)
 # solverEuler = EulerSolver(system, verbose=true, Δt=10^-5, t_max=0.03)
 # tEuler, FEuler, KEuler = solve(system, solverEuler, kernel)
 

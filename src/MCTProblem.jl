@@ -1,4 +1,6 @@
-struct MCTProblem{T1, T2, T3, A, B}
+abstract type MCTProblem end 
+
+struct LinearMCTProblem{T1, T2, T3, A, B} <: MCTProblem
     α::T1
     β::T2
     γ::T3
@@ -12,9 +14,9 @@ end
 
 
 """
-    MCTProblem(α, β, γ, F₀::T, ∂ₜF₀::T, kernel::MemoryKernel) where T
+    LinearMCTProblem(α, β, γ, F₀::T, ∂ₜF₀::T, kernel::MemoryKernel) where T
 
-Constructor of the `MCTProblem` type. It requires that `F₀` and `∂ₜF₀` have the same type.
+Constructor of the `LinearMCTProblem` type. It requires that `F₀` and `∂ₜF₀` have the same type.
 
 # Arguments:
 * `α`: coefficient in front of the second derivative term. If `α` and `F₀` are both vectors, `α` will automatically be converted to a diagonal matrix, to make them compatible.
@@ -25,7 +27,7 @@ Constructor of the `MCTProblem` type. It requires that `F₀` and `∂ₜF₀` h
 * `kernel` instance of a `MemoryKernel` that when called on F₀ and t=0, evaluates to the initial condition of the memory kernel.
 
 """
-function MCTProblem(α, β, γ, F₀::T, ∂ₜF₀::T, kernel::MemoryKernel) where T
+function LinearMCTProblem(α, β, γ, F₀::T, ∂ₜF₀::T, kernel::MemoryKernel) where T
 
     Tnew = typeof(F₀)
     K₀ = evaluate_kernel(kernel, F₀, 0.0)
@@ -36,7 +38,7 @@ function MCTProblem(α, β, γ, F₀::T, ∂ₜF₀::T, kernel::MemoryKernel) wh
     FK_element_type = eltype(Ftype)
 
     if Tnew<:Number && α isa Number && β isa Number && γ isa Number
-        return MCTProblem(α, β, γ, F₀, ∂ₜF₀, K₀, Ftype, Ktype, FK_element_type)
+        return LinearMCTProblem(α, β, γ, F₀, ∂ₜF₀, K₀, Ftype, Ktype, FK_element_type)
     end
 
     if Tnew<:Vector 
@@ -61,7 +63,7 @@ function MCTProblem(α, β, γ, F₀::T, ∂ₜF₀::T, kernel::MemoryKernel) wh
         else
             C = copy(γ)
         end
-        return MCTProblem(A, B, C, F₀, ∂ₜF₀, K₀, Ftype, Ktype, FK_element_type)
+        return LinearMCTProblem(A, B, C, F₀, ∂ₜF₀, K₀, Ftype, Ktype, FK_element_type)
     end
     if Tnew<:SVector 
         if α isa Number
@@ -85,7 +87,7 @@ function MCTProblem(α, β, γ, F₀::T, ∂ₜF₀::T, kernel::MemoryKernel) wh
         else
             C = copy(γ)
         end
-        return MCTProblem(A, B, C, F₀, ∂ₜF₀, K₀, Ftype, Ktype, FK_element_type)
+        return LinearMCTProblem(A, B, C, F₀, ∂ₜF₀, K₀, Ftype, Ktype, FK_element_type)
     end
-    MCTProblem(α, β, γ, F₀, ∂ₜF₀, K₀, Ftype, Ktype, FK_element_type)
+    LinearMCTProblem(α, β, γ, F₀, ∂ₜF₀, K₀, Ftype, Ktype, FK_element_type)
 end

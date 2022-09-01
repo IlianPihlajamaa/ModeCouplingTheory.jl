@@ -6,7 +6,7 @@ function main_scalar(λ)
     γ = 1.0
 
     kernel1 = ExponentiallyDecayingKernel(λ, 1.0)
-    system1 = MCTProblem(α, β, γ, F0, ∂F0, kernel1)
+    system1 = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel1)
     solver1 = FuchsSolver(system1, Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
     t1, F1, K1 =  solve(system1, solver1, kernel1)
@@ -50,7 +50,7 @@ function main_vector(Λ)
     γ = [sin(i*j/π)^4 for i = 1:N, j = 1:N]/N^2
 
     kernel = SchematicMatrixKernel(λ)
-    system = MCTProblem(α, β, γ, F0, ∂F0, kernel)
+    system = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel)
     solver = FuchsSolver(system, Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
     
     t1, F1, K1 =  solve(system, solver, kernel);

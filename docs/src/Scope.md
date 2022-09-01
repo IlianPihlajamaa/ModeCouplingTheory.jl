@@ -1,6 +1,6 @@
 ## Automatic differentiation
 
-This package is compatible with forward-mode automatic differentiation. This makes it possible to calculate quatities such as $\frac{dF(t)}{d\gamma}$ for example.
+This package is compatible with forward-mode automatic differentiation. This makes it possible to calculate quatities such as $\frac{dF(t)}{d\lambda}$ for example, where $\lambda$ is a parameter of the memory kernel.
 
 ### Example
 
@@ -16,7 +16,7 @@ function my_func(λ)
     γ = 1.0
 
     kernel1 = ExponentiallyDecayingKernel(λ, 1.0)
-    system1 = MCTProblem(α, β, γ, F0, ∂F0, kernel1)
+    system1 = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel1)
     solver1 = FuchsSolver(system1, Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
     t1, F1, K1 =  solve(system1, solver1, kernel1)
@@ -129,7 +129,7 @@ Now we can use this structure factor to solve the mode-coupling equation as usua
 ∂F0 = zeros(eltype(Sₖ_uncertain), Nk)
 α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ_uncertain)
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ_uncertain)
-problem = MCTProblem(α, β, γ, Sₖ_uncertain, ∂F0, kernel)
+problem = LinearMCTProblem(α, β, γ, Sₖ_uncertain, ∂F0, kernel)
 solver = FuchsSolver(problem, Δt=10^-5, t_max=10.0^5, verbose=true, N = 8, tolerance=10^-8, max_iterations=10^8)
 t, F, K = @time solve(problem, solver, kernel);
 p = plot(xlabel="log10(t)", ylabel="F(k,t)", ylims=(0,1), xlims=(-5,5))
@@ -178,7 +178,7 @@ Sₖ = find_analytical_S_k(k_array, η)
 ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ)
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = MCTProblem(α, β, γ, Sₖ, ∂F0, kernel)
+problem = LinearMCTProblem(α, β, γ, Sₖ, ∂F0, kernel)
 solver = FuchsSolver(problem, Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
 t, F, K = @time solve(problem, solver, kernel);

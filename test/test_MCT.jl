@@ -48,7 +48,7 @@ F0 = copy(Sₖ)
 
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-system = MCTProblem(α, β, γ, F0, ∂F0, kernel)
+system = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel)
 solver = FuchsSolver(system, Δt=10^-10, t_max=10.0^10, verbose=false, N = 2, tolerance=10^-8, max_iterations=10^8)
 t , F, K = solve(system, solver, kernel);
 @test sum(F)≈13755.713517887398
