@@ -53,19 +53,6 @@ julia> t, F, K = solve(problem, solver, kernel);
 julia> plot(log10.(t), F)
 ```
 
-Full copy-pastable example:
-
-```julia
-using ModeCouplingTheory, Plots
-λ = 3.999
-α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
-kernel = SchematicF2Kernel(λ)
-problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel);
-solver = FuchsSolver(problem);
-t, F, K = solve(problem, solver, kernel);
-plot(log10.(t), F)
-```
-
 ![image](readmefig.png)
 
 Please open an issue if anything is unclear in the documentation, if any unexpected errors arise or for feature requests (such as additional kernels). PRs are of course also welcome.
