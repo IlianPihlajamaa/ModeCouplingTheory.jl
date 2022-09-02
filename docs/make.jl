@@ -11,8 +11,8 @@ makedocs(
         "Kernels" => "Kernels.md",
         "Scope" => "Scope.md",
         "From Python" => "FromPython.md",
-        "API Reference" => "API.md",
         "Internals" => "internals.md",
+        "API Reference" => "API.md",
      ],
      format = Documenter.HTML(prettyurls = false)
 )

@@ -17,3 +17,11 @@ The newly defined methods for this new equation should then work with any of the
 
 ## Internals of the Fuchs Solver
 
+The basic idea of the algorithm popularizd by Fuchs and coworkers was, that, in order to solve the equations over many orders of magnitude in time, it is helpful to periodically increase the time step of the grid on which the equation is solved. Below we give a more detailed overview of the implementation of the algorithm in this package.
+
+1. `initialize_temporary_arrays!(problem::MCTProblem, solver::FuchsSolver, kernel::MemoryKernel)`: The algorithm is started by initializing temporary variables such as $F$ and $K$ discretised on the time grid of $4N$ points on $t_i = i*\Delta t/4N$ where $i = 1,\ldots,4N$. $F(t)$ is solved by a forward Euler method on the first $2N$ points to kickstart the algorithm. The effects of the memory integral is neglected here. 
+2. `do_time_steps!(problem::MCTProblem, solver::FuchsSolver, kernel::MemoryKernel)`: The full equation is discretised on the time points between $i=2N+1$ and $i=4N$. For each of these time points, the parameters $C1$, $C2$, and $C3$ are calculated by `update_Fuchs_parameters!(problem, solver, i)` as prescribed in the literature. Now, in order to solve for $F(t_i)$, the fixed point of the mapping $C1 F  = -C2 M(F) + C3$ is found by recurstive iteration. Convergence is established if the maximimal squared error is smaller than a set tolerance.
+3. `allocate_results!(t_array, F_array, K_array, solver)` the results found by step 2, residing in temporary arrays are pushed to `t_array`, `F_array`, and `K_array`, which are returned when the program exits.
+4. `new_time_mapping!(problem, solver)`: the results stored in the temporary variables `solver.temp_arrays.F_temp`, `solver.temp_arrays.K_temp`, `solver.temp_arrays.I_F`, `solver.temp_arrays.I_K` are mapped from the time points $i=1\ldots4N$ to the points $i=1\ldots2N$ as prescribed in the literature. The time step $\Delta t$ is also doubled.
+5. If `Δt > t_max` the main loop exits and the arrays `t_array`, `F_array`, and `K_array` are returned. 
+
