@@ -1,9 +1,9 @@
-mutable struct EulerSolver{I, F, B} <: Solver
-    Ftype::DataType
+mutable struct EulerSolver{I, F} <: Solver
+    # Ftype::DataType
     N::I
     Δt::F
     t_max::F
-    temp_arrays::B
+    # temp_arrays::B
     verbose::Bool
 end
 
@@ -20,16 +20,9 @@ inefficient way to solve MCT-like equations.
 * `Δt` fixed time step
 * `verbose` if `true`, information will be printed to STDOUT
 """
-function EulerSolver(problem::LinearMCTProblem; t_max=10.0^2, Δt=10^-3, verbose=false)
-    Ftype = typeof(problem.F₀)
-    F_element_type = eltype(problem.F₀)
+function EulerSolver(; t_max=10.0^2, Δt=10^-3, verbose=false)
     N = ceil(Int, t_max/Δt)
-    temp_arrays = (∂ₜF_array_reverse = Ftype[], integrand_array = Ftype[])
-
-    for _ in 1:N
-        push!(temp_arrays.integrand_array, problem.F₀.*Ref(zero(F_element_type)))
-    end
-    return EulerSolver(Ftype, N, Δt, t_max, temp_arrays, verbose)
+    return EulerSolver(N, Δt, t_max, verbose)
 end
 
 function construct_euler_integrand!(integrand, K_array, ∂ₜF_array_reverse, it)
@@ -53,10 +46,11 @@ function trapezoidal_integration(f, δt, it)
     return result
 end
 
-function solve(problem::LinearMCTProblem, solver::EulerSolver, kernel::MemoryKernel)
+function solve(problem::LinearMCTProblem, solver::EulerSolver)
     tstart = time()
 
-    Ftype = problem.Ftype
+    kernel = problem.kernel
+    Ftype = typeof(problem.F₀)
     N = solver.N
     Δt = solver.Δt
     verbose = solver.verbose
@@ -69,22 +63,22 @@ function solve(problem::LinearMCTProblem, solver::EulerSolver, kernel::MemoryKer
     F_array = Ftype[]
     t = 0.0
 
-    K₀ = evaluate_kernel(kernel, F₀, t)
+    K₀ = problem.K₀
     
-    kerneltype = problem.Kerneltype
+    kerneltype = typeof(K₀)
     K_array = kerneltype[]
+
+    ∂ₜF_array_reverse = Ftype[]
+    integrand_array = Ftype[]
+    for _ in 1:N
+        push!(integrand_array, F₀.*Ref(zero(eltype(Ftype))))
+    end
     push!(t_array, t)
     push!(K_array, K₀)
     push!(F_array, F₀)
-    ∂ₜF_array_reverse = solver.temp_arrays.∂ₜF_array_reverse
     pushfirst!(∂ₜF_array_reverse, ∂ₜF₀)
-    integrand_array = solver.temp_arrays.integrand_array
 
-    second_order = true
-    @assert eltype(F₀) == eltype(K₀)
-    if iszero(α)
-        second_order = false
-    end
+    second_order = !iszero(α)
 
     for it = 1:N
         t += Δt

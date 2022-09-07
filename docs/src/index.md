@@ -45,7 +45,7 @@ Now we can solve the equation by calling `solve`:
 
 ```julia
 julia> using Plots
-julia> t, F, K = solve(problem, solver, kernel);
+julia> t, F, K = solve(problem, solver);
 julia> plot(log10.(t), F)
 ```
 ![image](images/readmefig.png)

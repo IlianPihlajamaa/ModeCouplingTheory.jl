@@ -44,7 +44,7 @@ dF0 = 0.0
 kernel = mct.SchematicF2Kernel(k)
 problem = mct.LinearMCTProblem(a, b, c, F0, dF0, kernel)
 solver = mct.FuchsSolver(problem)
-t, F, K = mct.solve(problem, solver, kernel)
+t, F, K = mct.solve(problem, solver)
 
 import matplotlib.pyplot as plt
 import numpy as np

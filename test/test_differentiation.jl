@@ -7,9 +7,9 @@ function main_scalar(λ)
 
     kernel1 = ExponentiallyDecayingKernel(λ, 1.0)
     system1 = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel1)
-    solver1 = FuchsSolver(system1, Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
+    solver1 = FuchsSolver(Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
-    t1, F1, K1 =  solve(system1, solver1, kernel1)
+    t1, F1, K1 =  solve(system1, solver1)
     return [t1[2:end], F1[2:end], K1[2:end]]
 end
 
@@ -51,9 +51,9 @@ function main_vector(Λ)
 
     kernel = SchematicMatrixKernel(λ)
     system = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel)
-    solver = FuchsSolver(system, Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
+    solver = FuchsSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
     
-    t1, F1, K1 =  solve(system, solver, kernel);
+    t1, F1, K1 =  solve(system, solver);
     return F1[3000]
 end
 

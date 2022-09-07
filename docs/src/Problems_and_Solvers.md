@@ -1,7 +1,7 @@
 
 ## Problems
 
-The most straightforward workflow for solving MCT-like equations is to first construct a `MemoryKernel`, a `MCTProblem`, and a `Solver`, in that order. The `MemoryKernel` is an object that evaluates the memory kernel when passed to the function `evaluate_kernel`. The `MCTProblem` holds the coefficients and initial conditions of the equations that need to be solved, and the `Solver` stores information related to the numerical integration procedure, such as the time step. Once these three objects have been defined, the function `solve` can be called on them to solve the equation
+The most straightforward workflow for solving MCT-like equations is to first construct a `MemoryKernel`, a `MCTProblem`, and optionally a `Solver`, in that order. The `MemoryKernel` is an object that evaluates the memory kernel when passed to the function `evaluate_kernel`. The `MCTProblem` holds the coefficients, initial conditions, and the just defined `MemoryKernel` belonging to the equation that need to be solved, and the `Solver` stores information related to the numerical integration procedure, such as the time step. Once these three objects have been defined, the function `solve(::MCTProblem, ::Solver)` can be called on them to solve the equation
 
 $$\alpha \ddot{F}(t) + \beta \dot{F}(t) + \gamma F(t) + \int_0^t d\tau K(t-\tau)\dot{F}(\tau) = 0$$
 
@@ -53,7 +53,7 @@ This package is not tested for and is not expected to work when the type of `F` 
 
 ## Solvers
 
-A `Solver` object holds the settings for a specific integration method. This package defines two solvers: `EulerSolver` and `FuchsSolver`. The `EulerSolver` implements a simple forward Euler method (with trapezoidal integration) which is wildly inefficient if the domain of $t$ spans many orders of magnitude (such as it often does in Mode-Coupling Theory). It should therefore mainly be used for testing purposes. The `FuchsSolver` should be used in almost all other cases. The scheme it implements is outlined in [1] and in the appendix of [2].
+A `Solver` object holds the settings for a specific integration method. This package defines two solvers: `EulerSolver` and `FuchsSolver`. The `EulerSolver` implements a simple forward Euler method (with trapezoidal integration) which is wildly inefficient if the domain of $t$ spans many orders of magnitude (such as it often does in Mode-Coupling Theory). It should therefore mainly be used for testing purposes. The `FuchsSolver` should be used in almost all other cases. The scheme it implements is outlined in [1] and in the appendix of [2]. If no solver is provided to a `solve` call, the default `FuchsSolver` is used.
 
 In short, the equation is discretised and solved on a grid of `4N` time-points, which are equally spaced over an interval `Δt`. It is solved using an implicit method, and thus a fixed point has to be found for each time point. This is done by recursive iteration. When the solution is found, the interval is doubled `Δt => 2Δt` and the solution on the previous grid is mapped onto the first `2N` time points of the new grid. The solution on the other`2N` points is again found by recursive iteration. This is repeated until some final time `t_max` is reached.
 
@@ -63,8 +63,8 @@ A `FuchsSolver` is constructed as follows:
 julia> kernel = SchematicF1Kernel(0.2);
 julia> α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
 julia> problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel);
-julia> solver1 = FuchsSolver(problem) # using all default parameters
-julia> solver2 = FuchsSolver(problem; N=128, Δt=10^-5, 
+julia> solver1 = FuchsSolver() # using all default parameters
+julia> solver2 = FuchsSolver(N=128, Δt=10^-5, 
                             t_max=10.0^15, max_iterations=10^8, 
                             tolerance=10^-6, verbose=true)
 ```
@@ -77,7 +77,7 @@ As optional keyword arguments `FuchsSolver` accepts:
 * `verbose`: if `true`, some information will be printed. default = `false`
 * `inplace`: if `true` and if the type of `F` is mutable, the solver will try to avoid allocating many temporaries. default = `true`
 
-Having defined a `MemoryKernel`, `MCTProblem` and a `Solver`, one can call `t, F, K = solve(problem, solver, kernel)` to solve the problem. It outputs a `Vector` of time points `t` and the solution `F` and memory kernel `K` evaluated at those times points. 
+Having defined a `MemoryKernel`, `MCTProblem` and a `Solver`, one can call `t, F, K = solve(problem, solver)` to solve the problem. It outputs a `Vector` of time points `t` and the solution `F` and memory kernel `K` evaluated at those times points. 
 
 ### References
 [1] Fuchs, Matthias, et al. "Comments on the alpha-peak shapes for relaxation in supercooled liquids." Journal of Physics: Condensed Matter 3.26 (1991): 5047.

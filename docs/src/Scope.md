@@ -15,11 +15,11 @@ function my_func(λ)
     β = 1.0
     γ = 1.0
 
-    kernel1 = ExponentiallyDecayingKernel(λ, 1.0)
-    system1 = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel1)
-    solver1 = FuchsSolver(system1, Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
+    kernel = ExponentiallyDecayingKernel(λ, 1.0)
+    problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel)
+    solver = FuchsSolver(Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
-    t1, F1, K1 =  solve(system1, solver1, kernel1)
+    t1, F1, K1 =  solve(problem, solver)
     return [t1[2:end], F1[2:end], K1[2:end]]
 end
 
@@ -130,8 +130,8 @@ Now we can use this structure factor to solve the mode-coupling equation as usua
 α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ_uncertain)
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ_uncertain)
 problem = LinearMCTProblem(α, β, γ, Sₖ_uncertain, ∂F0, kernel)
-solver = FuchsSolver(problem, Δt=10^-5, t_max=10.0^5, verbose=true, N = 8, tolerance=10^-8, max_iterations=10^8)
-t, F, K = @time solve(problem, solver, kernel);
+solver = FuchsSolver(Δt=10^-5, t_max=10.0^5, verbose=true, N = 8, tolerance=10^-8, max_iterations=10^8)
+t, F, K = @time solve(problem, solver);
 p = plot(xlabel="log10(t)", ylabel="F(k,t)", ylims=(0,1), xlims=(-5,5))
 plot!(p, log10.(t[2:10:end]), F[19, 2:10:end]/Sₖ_uncertain[19], label="k = $(k_array[19])", lw=3)
 ```
@@ -179,9 +179,9 @@ Sₖ = find_analytical_S_k(k_array, η)
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 problem = LinearMCTProblem(α, β, γ, Sₖ, ∂F0, kernel)
-solver = FuchsSolver(problem, Δt=10^-5, t_max=10.0^15, verbose=false, 
+solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
-t, F, K = @time solve(problem, solver, kernel);
+t, F, K = @time solve(problem, solver);
 ```
 
 We can now extract a single relaxation time by calling 

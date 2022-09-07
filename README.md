@@ -39,17 +39,11 @@ We can now define the equation we want to solve as follows:
 julia> α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
 julia> problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel);
 ```
-and a solver:
-
-```julia
-julia> solver = FuchsSolver(problem)
-```
-
-Now we can solve the equation by calling `solve`:
+Which we can solve the equation by calling `solve`:
 
 ```julia
 julia> using Plots
-julia> t, F, K = solve(problem, solver, kernel);
+julia> t, F, K = solve(problem);
 julia> plot(log10.(t), F)
 ```
 

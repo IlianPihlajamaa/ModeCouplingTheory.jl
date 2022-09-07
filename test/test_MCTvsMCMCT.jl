@@ -51,17 +51,17 @@ Ftest = rand(SMatrix{1,1,Float64, 1}, N)
 
 
 systemMCT = LinearMCTProblem(α, β, γ, F0, ∂F0, kernelMCT)
-solverMCT = FuchsSolver(systemMCT, Δt=10^-10, t_max=10.0^10, verbose=false, N = 16, tolerance=10^-10, max_iterations=10^8)
-tMCT , FMCT, KMCT = solve(systemMCT, solverMCT, kernelMCT);
+solverMCT = FuchsSolver(Δt=10^-10, t_max=10.0^10, verbose=false, N = 16, tolerance=10^-10, max_iterations=10^8)
+tMCT , FMCT, KMCT = solve(systemMCT, solverMCT);
 
 
 systemMCMCT = LinearMCTProblem(α, β, [@SMatrix([γ[ik]]) for ik = 1:N], [@SMatrix([F0[ik]]) for ik = 1:N], [@SMatrix([∂F0[ik]]) for ik = 1:N], kernelMCMCT)
-solverMCMCTEuler = EulerSolver(systemMCMCT, Δt=10^-5, t_max=2*10.0^-2, verbose=false)
-tMCMCTEuler, FMCMCTEuler, KMCMCTEuler = solve(systemMCMCT, solverMCMCTEuler, kernelMCMCT);
+solverMCMCTEuler = EulerSolver(Δt=10^-5, t_max=2*10.0^-2, verbose=false)
+tMCMCTEuler, FMCMCTEuler, KMCMCTEuler = solve(systemMCMCT, solverMCMCTEuler);
 
 
-solverMCMCTFuchs = FuchsSolver(systemMCMCT, Δt=10^-10, t_max=10.0^10, verbose=false, N = 16, tolerance=10^-10, max_iterations=10^8)
-tMCMCTFuchs, FMCMCTFuchs, KMCMCTFuchs = solve(systemMCMCT, solverMCMCTFuchs, kernelMCMCT);
+solverMCMCTFuchs = FuchsSolver(Δt=10^-10, t_max=10.0^10, verbose=false, N = 16, tolerance=10^-10, max_iterations=10^8)
+tMCMCTFuchs, FMCMCTFuchs, KMCMCTFuchs = solve(systemMCMCT, solverMCMCTFuchs);
 
 # plot(log10.(tMCT), FMCT[19,:]/Sₖ[19], lw=3, label="MCT")
 # plot!(log10.(tMCMCTEuler), getindex.(FMCMCTEuler[19, :], 1)/Sₖ[19][1], lw=3, label="MCMCT Euler", ls=:dash)

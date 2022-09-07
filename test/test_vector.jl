@@ -11,12 +11,12 @@ F0 = @SVector ones(N)
 #SMatrix
 kernel1 = SchematicDiagonalKernel(λ)
 system1 = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel1)
-solver1 = FuchsSolver(system1, Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
+solver1 = FuchsSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
 #Matrix
 kernel2 = SchematicDiagonalKernel(Vector(λ))
 system2 = LinearMCTProblem(α, β, Matrix(γ), Vector(F0), Vector(∂F0), kernel2)
-solver2 = FuchsSolver(system2, Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
+solver2 = FuchsSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
 inFS = @SVector rand(N)
 inF =  Vector(inFS)
@@ -27,14 +27,14 @@ evaluate_kernel!(out2, kernel2, inF, 0.0)
 
 @test all(out0 .≈ out1 .≈ out2)
 
-t1, F1, K1 =  solve(system1, solver1, kernel1);
-t2, F2, K2 =  solve(system2, solver2, kernel2);
+t1, F1, K1 =  solve(system1, solver1);
+t2, F2, K2 =  solve(system2, solver2);
 
 @test all(t1 .≈ t2)
 @test all(F1 .≈ F2)
 @test all(K1 .≈ K2)
-solver3 = EulerSolver(system1, Δt=10^-2, t_max=10.0^2, verbose=false)
-t3, F3, K3 = solve(system1, solver3, kernel1)
+solver3 = EulerSolver(Δt=10^-2, t_max=10.0^2, verbose=false)
+t3, F3, K3 = solve(system1, solver3)
 
 # plot()
 # for i = 1:5
@@ -57,12 +57,12 @@ F0 = @SVector ones(N)
 #SMatrix
 kernel1 = SchematicMatrixKernel(λ)
 system1 = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel1)
-solver1 = FuchsSolver(system1, Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
+solver1 = FuchsSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
 #Matrix
 kernel2 = SchematicMatrixKernel(Matrix(λ))
 system2 = LinearMCTProblem(α, β, γ, Vector(F0), Vector(∂F0), kernel2)
-solver2 = FuchsSolver(system2, Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
+solver2 = FuchsSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
 inFS = @SVector rand(N)
 inF =  Vector(inFS)
@@ -72,14 +72,14 @@ out2 = similar(out1)
 evaluate_kernel!(out2, kernel2, inF, 0.0)
 @test all(out0 .≈ out1 .≈ out2)
 
-t1, F1, K1 =  solve(system1, solver1, kernel1);
-t2, F2, K2 =  solve(system2, solver2, kernel2);
+t1, F1, K1 =  solve(system1, solver1);
+t2, F2, K2 =  solve(system2, solver2);
 
 @test all(t1 .≈ t2)
 @test all(F1 .≈ F2)
 @test all(K1 .≈ K2)
-solver3 = EulerSolver(system1, Δt=10^-3, t_max=10.0^1, verbose=false)
-t3, F3, K3 = solve(system1, solver3, kernel1)
+solver3 = EulerSolver(Δt=10^-3, t_max=10.0^1, verbose=false)
+t3, F3, K3 = solve(system1, solver3)
 
 # plot()
 # for i = 1:5
