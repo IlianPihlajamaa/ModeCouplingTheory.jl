@@ -36,7 +36,7 @@ scatter!(log10.(t_analytic), F_analytic, label="Exact solution", ylabel="F", xla
 
 ### 2. `SchematicF1Kernel`
 
-The `SchematicF1Kernel` implements the kernel $K(t) = λ F(t)$. It has one field `λ <: Number`.
+The `SchematicF1Kernel` implements the kernel $K(t) = ν F(t)$. It has one field `ν <: Number`.
 
 #### Example
 
@@ -46,9 +46,9 @@ $$F(t) =  e^{-2t}\left(I_0(2t) + I_1(2t) \right)$$
 
 in which $I_k$ are modified Bessel functions of the first kind.
 ```julia
-F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; λ = 1.0
+F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; ν = 1.0
 
-kernel = SchematicF1Kernel(λ)
+kernel = SchematicF1Kernel(ν)
 problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-3, t_max=10.0^2, verbose=false, N = 100, tolerance=10^-14, max_iterations=10^6)
 t, F, K1 =  solve(problem, solver)
@@ -63,11 +63,11 @@ scatter!(log10.(t_analytic), F_analytic, label="Exact Solution")
 
 ### 3. `SchematicF2Kernel`
 
-The `SchematicF2Kernel` implements the kernel $K(t) = λ F(t)^2$. It has one field `λ <: Number`.
+The `SchematicF2Kernel` implements the kernel $K(t) = ν F(t)^2$. It has one field `ν <: Number`.
 
 ### 4. `SchematicF123Kernel`
 
-The `SchematicF123Kernel` implements the kernel $K(t) = λ_1 F(t) + λ_2 F(t)^2 + λ_3 F(t)^3$. It has fields `λ1 <: Number`, `λ2 <: Number`, and `λ3 <: Number`.
+The `SchematicF123Kernel` implements the kernel $K(t) = \nu_1 F(t) + \nu_2 F(t)^2 + \nu_3 F(t)^3$. It has fields `ν1 <: Number`, `ν2 <: Number`, and `ν3 <: Number`.
 
 #### Example
 ```julia
@@ -78,11 +78,11 @@ evaluate_kernel(kernel, F, t) # returns 22.0 = 3*2^1 + 2*2^2 + 1*2^3
 
 ### 5. `SchematicDiagonalKernel`
 
-The `SchematicDiagonalKernel` implements the kernel $K_{ij}(t) = \delta_{ij} \lambda_i F_i(t)^2$. It has one field `λ` which must be either a `Vector` or an `SVector`. When called, it returns `Diagonal(λ .* F .^ 2)`, i.e., it implements a non-coupled system of `SchematicF2Kernels`.
+The `SchematicDiagonalKernel` implements the kernel $K_{ij}(t) = \delta_{ij} \nu_i F_i(t)^2$. It has one field `ν` which must be either a `Vector` or an `SVector`. When called, it returns `Diagonal(ν .* F .^ 2)`, i.e., it implements a non-coupled system of `SchematicF2Kernels`.
 
 ### 6. `SchematicMatrixKernel`
 
-The `SchematicMatrixKernel` implements the kernel $K_{ij}(t) = \sum_k \lambda_{ij} F_k(t) F_j(t)$. It has one field `λ` which must be either a `Matrix` or an `SMatrix`. 
+The `SchematicMatrixKernel` implements the kernel $K_{ij}(t) = \sum_k \lambda_{ij} F_k(t) F_j(t)$. It has one field `ν` which must be either a `Matrix` or an `SMatrix`. 
 
 ## Mode-Coupling Theory
 

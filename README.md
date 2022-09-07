@@ -25,13 +25,13 @@ We can use one of the predefined memory kernels
 
 ```julia
 julia> using ModeCouplingTheory
-julia> λ = 3.999
+julia> ν = 3.999
 3.999
 
-julia> kernel = SchematicF2Kernel(λ)
+julia> kernel = SchematicF2Kernel(ν)
 SchematicF2Kernel{Float64}(3.999)
 ```
-This kernel evaluates `K(t) = λ F(t)^2` when called.
+This kernel evaluates `K(t) = ν F(t)^2` when called.
 
 We can now define the equation we want to solve as follows:
 
@@ -39,11 +39,11 @@ We can now define the equation we want to solve as follows:
 julia> α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
 julia> problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel);
 ```
-Which we can solve the equation by calling `solve`:
+Which we can solve by calling `solve`:
 
 ```julia
-julia> using Plots
 julia> t, F, K = solve(problem);
+julia> using Plots
 julia> plot(log10.(t), F)
 ```
 

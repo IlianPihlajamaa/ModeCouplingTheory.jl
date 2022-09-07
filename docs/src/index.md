@@ -54,9 +54,9 @@ Full copy-pastable example:
 
 ```
 using ModeCouplingTheory, Plots
-λ = 3.999
+ν = 3.999
 α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
-kernel = SchematicF2Kernel(λ)
+kernel = SchematicF2Kernel(ν)
 problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel)
 solver = FuchsSolver(problem)
 t, F, K = solve(problem, solver, kernel);
