@@ -66,7 +66,7 @@ Matrix kernel with field `ν` which when called returns `Diagonal(ν .* F .^ 2)`
 """
 struct SchematicDiagonalKernel{T<:Union{SVector, Vector}} <: MemoryKernel
     ν::T
-    SchematicDiagonalKernel(ν::T) where {T<:Union{SVector,Vector}} = eltype(ν) <: Number ? new{T}(λ) : error("element type of this kernel must be a number")
+    SchematicDiagonalKernel(ν::T) where {T<:Union{SVector,Vector}} = eltype(ν) <: Number ? new{T}(ν) : error("element type of this kernel must be a number")
 end
 
 function evaluate_kernel(kernel::SchematicDiagonalKernel, F::Union{SVector,Vector}, t)
