@@ -16,36 +16,6 @@ mutable struct FuchsTempStruct{T,T2,T3,VT,VT2}
 end
 
 
-"""
-    allocate_temporary_arrays(problem::MCTProblem, solver::FuchsSolver)
-
-Returns a FuchsTempStruct containing several arrays that are used for intermediate calculations.
-"""
-function allocate_temporary_arrays(problem::MCTProblem, solver::FuchsSolver)
-    K₀ = problem.K₀
-    F₀ = problem.F₀
-    C1 = sum([problem.α, problem.β, problem.γ, K₀])
-    C2 = K₀ * F₀
-    C3 = K₀ * F₀
-    temp_vec = K₀ * F₀
-    F_old = K₀ * F₀
-    temp_mat = K₀ + K₀
-    Fmutable = ismutabletype(typeof(F₀))
-    inplace = Fmutable & solver.inplace
-    start_time = time()
-    F_temp = typeof(F₀)[]
-    K_temp = typeof(K₀)[]
-    F_I = typeof(F₀)[]
-    K_I = typeof(K₀)[]
-    temp_arrays = FuchsTempStruct(F_temp, K_temp, F_I, K_I, C1, C1 + C1, C2, C3, temp_vec, F_old, temp_mat, inplace, start_time)
-    for _ in 1:4*solver.N
-        push!(temp_arrays.F_temp, K₀ * F₀)
-        push!(temp_arrays.K_temp, K₀ + K₀)
-        push!(temp_arrays.F_I, K₀ * F₀)
-        push!(temp_arrays.K_I, K₀ + K₀)
-    end
-    return temp_arrays
-end
 
 mutable struct FuchsSolver{I,F} <: Solver
     N::I
@@ -78,6 +48,38 @@ Uses the algorithm devised by Fuchs et al.
 function FuchsSolver(; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true)
     return FuchsSolver(N, Δt, t_max, 0, max_iterations, tolerance, verbose, ismutable)
 end
+
+"""
+    allocate_temporary_arrays(problem::MCTProblem, solver::FuchsSolver)
+
+Returns a FuchsTempStruct containing several arrays that are used for intermediate calculations.
+"""
+function allocate_temporary_arrays(problem::MCTProblem, solver::FuchsSolver)
+    K₀ = problem.K₀
+    F₀ = problem.F₀
+    C1 = sum([problem.α, problem.β, problem.γ, K₀])
+    C2 = K₀ * F₀
+    C3 = K₀ * F₀
+    temp_vec = K₀ * F₀
+    F_old = K₀ * F₀
+    temp_mat = K₀ + K₀
+    Fmutable = ismutabletype(typeof(F₀))
+    inplace = Fmutable & solver.inplace
+    start_time = time()
+    F_temp = typeof(F₀)[]
+    K_temp = typeof(K₀)[]
+    F_I = typeof(F₀)[]
+    K_I = typeof(K₀)[]
+    temp_arrays = FuchsTempStruct(F_temp, K_temp, F_I, K_I, C1, C1 + C1, C2, C3, temp_vec, F_old, temp_mat, inplace, start_time)
+    for _ in 1:4*solver.N
+        push!(temp_arrays.F_temp, K₀ * F₀)
+        push!(temp_arrays.K_temp, K₀ + K₀)
+        push!(temp_arrays.F_I, K₀ * F₀)
+        push!(temp_arrays.K_I, K₀ + K₀)
+    end
+    return temp_arrays
+end
+
 
 
 """
