@@ -87,7 +87,7 @@ Matrix kernel with field `ν` which when called returns `ν * F * Fᵀ`, i.e., i
 """
 struct SchematicMatrixKernel{T<:Union{SMatrix,Matrix}} <: MemoryKernel
     ν::T
-    SchematicMatrixKernel(ν::T) where {T<:Union{SMatrix,Matrix}} = eltype(ν) <: Number ? new{T}(λ) : error("element type of this kernel must be a number")
+    SchematicMatrixKernel(ν::T) where {T<:Union{SMatrix,Matrix}} = eltype(ν) <: Number ? new{T}(ν) : error("element type of this kernel must be a number")
 end
 
 function evaluate_kernel(kernel::SchematicMatrixKernel, F::Union{SVector,Vector}, t)
