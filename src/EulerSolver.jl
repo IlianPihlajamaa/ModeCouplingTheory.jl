@@ -66,7 +66,6 @@ end
 function log_results(solver::EulerSolver, tstart, t, it)
     if solver.verbose && it%(solver.N÷50) == 0
         println("t = ", round(t, digits=4),"/", solver.t_max, 
-        ", percentage done = ", round(it/solver.N*100, digits=2), "%",
         ", elapsed time = ", round(time()-tstart, digits=4))
     end
 end
