@@ -80,7 +80,35 @@ function LinearMCTProblem(α, β, γ, F₀, ∂ₜF₀, kernel::MemoryKernel)
         else
             C = copy(γ)
         end
-        return LinearMCTProblem(A, B, C, F₀, ∂ₜF₀, K₀, kernel)
+        return 
     end
     LinearMCTProblem(α, β, γ, F₀, ∂ₜF₀, K₀, kernel)
+end
+
+struct StackedMCTProblem{P <: Tuple} <: MCTProblem
+    problems::P
+end
+
+import Base.+
++(a::MCTProblem, b::MCTProblem) = StackedMCTProblem((a, b))
++(a::StackedMCTProblem, b::MCTProblem) = StackedMCTProblem((a.problems..., b))
++(a::MCTProblem, b::StackedMCTProblem) = StackedMCTProblem((a, b.problems...))
++(a::StackedMCTProblem, b::StackedMCTProblem) = StackedMCTProblem((a.problems..., b.problems...))
+
+
+function Base.show(io::IO, ::MIME"text/plain", p::LinearMCTProblem) 
+    println(io, "Linear MCT equation object:")
+    println(io, "   α F̈ + β Ḟ + γF + ∫K(τ)Ḟ(t-τ) = 0")
+    println(io, "in which α is a $(typeof(p.α)),")
+    println(io, "         β is a $(typeof(p.β)),")
+    println(io, "         γ is a $(typeof(p.γ)),")
+    println(io, "  and K(t) is a $(typeof(p.kernel)).")
+end
+
+function Base.show(io::IO, t::MIME"text/plain", p::StackedMCTProblem) 
+    println(io, "Stack of $(length(p.problems)) MCT Problems:")
+    for problem in p.problems
+        println(io)
+        show(io, t, problem)
+    end
 end
