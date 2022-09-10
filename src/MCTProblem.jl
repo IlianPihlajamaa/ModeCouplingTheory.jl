@@ -80,7 +80,7 @@ function LinearMCTProblem(α, β, γ, F₀, ∂ₜF₀, kernel::MemoryKernel)
         else
             C = copy(γ)
         end
-        return 
+        return LinearMCTProblem(A, B, C, F₀, ∂ₜF₀, K₀, kernel)
     end
     LinearMCTProblem(α, β, γ, F₀, ∂ₜF₀, K₀, kernel)
 end
