@@ -412,11 +412,11 @@ end
 
 
 """
-    allocate_results!(t_array, F_array, K_array, solver, temp_arrays::FuchsTempStruct; istart=2(solver.N)+1, iend=4(solver.N))
+    allocate_results!(t_array, F_array, K_array, solver::FuchsSolver, temp_arrays::FuchsTempStruct; istart=2(solver.N)+1, iend=4(solver.N))
 
 pushes the found solution, stored in `temp_arrays` with indices `istart` until `istop` to the output arrays.
 """
-function allocate_results!(t_array, F_array, K_array, solver, temp_arrays; istart=2(solver.N) + 1, iend=4(solver.N))
+function allocate_results!(t_array, F_array, K_array, solver::FuchsSolver, temp_arrays; istart=2(solver.N) + 1, iend=4(solver.N))
     N = solver.N
     δt = solver.Δt / (4N)
     for it = istart:iend
@@ -542,30 +542,30 @@ function convertresults(F_array, K_array)
 end
 
 
+"""
+    initialize_output_arrays(problem::MCTProblem)
+
+initializes arrays that the solver will push results into.
+"""
+function initialize_output_arrays(problem::MCTProblem)
+    return typeof(0.0)[0.0], typeof(problem.F₀)[problem.F₀], typeof(problem.K₀)[problem.K₀]
+end
+
+is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
+
 function solve(problem::MCTProblem, solver::FuchsSolver)
     # Documented in src/Solvers.jl
-    t₀ = 0.0
     kernel = problem.kernel
-
-    F₀ = problem.F₀
-    K₀ = problem.K₀
-
-    Ftype = typeof(F₀)
-    kerneltype = typeof(K₀)
-
-    #initialize the output arrays with the initial conditions
-    t_array = Float64[t₀]
-    F_array = Ftype[F₀]
-    K_array = kerneltype[K₀]
-
+    t_array, F_array, K_array = initialize_output_arrays(problem)
     temp_arrays = allocate_temporary_arrays(problem, solver)
     initialize_temporary_arrays!(problem, solver, kernel, temp_arrays)
     allocate_results!(t_array, F_array, K_array, solver, temp_arrays; istart=1, iend=2(solver.N))
     startΔt = solver.Δt
     solver.kernel_evals = 1
-    # for the progressbar: (turns off in non-interactive environments such as a HPC)
-    is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
+
+    # for the progressbar: (turns off in non-interactive environments such as on a HPC)
     p = Progress(ceil(Int, log2(solver.t_max / solver.Δt)); output=stderr, enabled=!is_logging(stderr))
+    
     # main loop of the algorithm
     while solver.Δt < solver.t_max * 2
         do_time_steps!(problem, solver, kernel, temp_arrays)

@@ -95,9 +95,8 @@ import Base.+
 +(a::MCTProblem, b::StackedMCTProblem) = StackedMCTProblem((a, b.problems...))
 +(a::StackedMCTProblem, b::StackedMCTProblem) = StackedMCTProblem((a.problems..., b.problems...))
 
-
 function Base.show(io::IO, ::MIME"text/plain", p::LinearMCTProblem) 
-    println(io, "Linear MCT equation object:")
+    println(io, "Linear MCT problem object:")
     println(io, "   α F̈ + β Ḟ + γF + ∫K(τ)Ḟ(t-τ) = 0")
     println(io, "in which α is a $(typeof(p.α)),")
     println(io, "         β is a $(typeof(p.β)),")
