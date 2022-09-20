@@ -97,3 +97,20 @@ function evaluate_kernel!(out::Matrix, kernel::SchematicMatrixKernel, F::Vector,
     ν = kernel.ν
     @tullio out[i, j] = ν[i, k] * F[k] * F[j]
 end
+
+struct InterpolatingKernel{T} <: MemoryKernel
+    M :: T
+end
+
+"""
+    InterpolatingKernel(t, M; k=1)
+
+Uses the package `Dierckx` to provide a kernel that interpolates the data M defined on grid t using spline interpolation of degree `k`. 
+"""
+function InterpolatingKernel(t, M; k=1)
+    InterpolatingKernel(Spline1D(t, M, k=k))
+end
+
+function evaluate_kernel(kernel::InterpolatingKernel, F::Number, t)
+    return kernel.M(t)
+end

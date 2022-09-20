@@ -7,7 +7,7 @@ using StaticArrays
 using LinearAlgebra
 
 
-for target in ["scalar", "vector", "MCT", "MCMCT", "MCTvsMCMCT", "relaxationtime", "steady_state", "differentiation"]
+for target in ["scalar", "vector", "MCT", "MCMCT", "MCTvsMCMCT", "relaxationtime", "steady_state", "differentiation", "interpolating_kernel"]
     @testset "$target" begin
         include("test_$target.jl")
     end

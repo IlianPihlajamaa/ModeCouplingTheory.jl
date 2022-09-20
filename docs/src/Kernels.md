@@ -34,7 +34,7 @@ scatter!(log10.(t_analytic), F_analytic, label="Exact solution", ylabel="F", xla
 
 ![image](images/exponentKernel.png)
 
-### 2. `SchematicF1Kernel`
+### `SchematicF1Kernel`
 
 The `SchematicF1Kernel` implements the kernel $K(t) = ν F(t)$. It has one field `ν <: Number`.
 
@@ -61,11 +61,11 @@ scatter!(log10.(t_analytic), F_analytic, label="Exact Solution")
 ```
 ![image](images/F1Kernel.png)
 
-### 3. `SchematicF2Kernel`
+### `SchematicF2Kernel`
 
 The `SchematicF2Kernel` implements the kernel $K(t) = ν F(t)^2$. It has one field `ν <: Number`.
 
-### 4. `SchematicF123Kernel`
+### `SchematicF123Kernel`
 
 The `SchematicF123Kernel` implements the kernel $K(t) = \nu_1 F(t) + \nu_2 F(t)^2 + \nu_3 F(t)^3$. It has fields `ν1 <: Number`, `ν2 <: Number`, and `ν3 <: Number`.
 
@@ -76,11 +76,15 @@ F = 2; t = 0;
 evaluate_kernel(kernel, F, t) # returns 22.0 = 3*2^1 + 2*2^2 + 1*2^3
 ```
 
-### 5. `SchematicDiagonalKernel`
+### `InterpolatingKernel`
+
+The `InterpolatingKernel` implements a kernel that interpolates memory kernel data. It is initialized by calling `kernel = InterpolatingKernel(t, M, k=k)` where t is a `Vector` of time points, `M` is a vector of corresponding memory kernel values, and `k` is the integer degree of polynomial interpolation (default=1). This kernel is oimplemented using `Dierckx.Spline1D`. See [Dierckx.jl](https://github.com/kbarbary/Dierckx.jl) for more information.
+
+### `SchematicDiagonalKernel`
 
 The `SchematicDiagonalKernel` implements the kernel $K_{ij}(t) = \delta_{ij} \nu_i F_i(t)^2$. It has one field `ν` which must be either a `Vector` or an `SVector`. When called, it returns `Diagonal(ν .* F .^ 2)`, i.e., it implements a non-coupled system of `SchematicF2Kernels`.
 
-### 6. `SchematicMatrixKernel`
+### `SchematicMatrixKernel`
 
 The `SchematicMatrixKernel` implements the kernel $K_{ij}(t) = \sum_k \lambda_{ij} F_k(t) F_j(t)$. It has one field `ν` which must be either a `Matrix` or an `SMatrix`. 
 
