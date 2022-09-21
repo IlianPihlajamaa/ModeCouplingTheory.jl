@@ -20,7 +20,7 @@ $$F(t) = \frac{e^{-\frac{t}{2}\left( \lambda + \sqrt{\lambda(\lambda+4)} + 2\rig
 F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; λ = 1.0; τ = 1.0;
 
 kernel = ExponentiallyDecayingKernel(λ, τ)
-problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel)
+problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-3, t_max=10.0^2, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 t, F, K =  solve(problem, solver)
 
@@ -49,7 +49,7 @@ in which $I_k$ are modified Bessel functions of the first kind.
 F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; ν = 1.0
 
 kernel = SchematicF1Kernel(ν)
-problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel)
+problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-3, t_max=10.0^2, verbose=false, N = 100, tolerance=10^-14, max_iterations=10^6)
 t, F, K1 =  solve(problem, solver)
 
@@ -152,7 +152,7 @@ Sₖ = find_analytical_S_k(k_array, η)
 ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ)
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = LinearMCTProblem(α, β, γ, Sₖ, ∂F0, kernel)
+problem = LinearMCTEquation(α, β, γ, Sₖ, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
 t, F, K = @time solve(problem, solver);
@@ -227,7 +227,7 @@ for ik = 1:Nk
 end
 
 kernel = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = LinearMCTProblem(α, β, Ω, F₀, ∂ₜF₀, kernel)
+problem = LinearMCTEquation(α, β, Ω, F₀, ∂ₜF₀, kernel)
 solver = FuchsSolver(verbose=false, N=16, tolerance=10^-8, max_iterations=10^8)
 t, F, K = solve(problem, solver)
 ik = 19
@@ -272,7 +272,7 @@ end
 That's it! We can now use it like any other memory kernel to solve the equation:
 
 ```julia
-problem = LinearMCTProblem(1.0, 0.0, 1.0, 1.0, 0.0, kernel)
+problem = LinearMCTEquation(1.0, 0.0, 1.0, 1.0, 0.0, kernel)
 solver = FuchsSolver(Δt = 10^-4, t_max=10.0^5)
 t, F, K = solve(problem, solver)
 using Plots
@@ -307,7 +307,7 @@ Sₖ = find_analytical_S_k(k_array, η)
 ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ)
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = LinearMCTProblem(α, β, γ, Sₖ, ∂F0, kernel)
+problem = LinearMCTEquation(α, β, γ, Sₖ, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
 t, F, K = @time solve(problem, solver);
@@ -390,7 +390,7 @@ Cₖ = find_analytical_C_k(k_array, η)
 F0 = ones(Nk); ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m
 
 taggedkernel = TaggedMCTKernel(ρ, kBT, m, k_array, Cₖ, t, F)
-taggedproblem = LinearMCTProblem(α, β, γ, F0, ∂F0, taggedkernel)
+taggedproblem = LinearMCTEquation(α, β, γ, F0, ∂F0, taggedkernel)
 taggedsolver = FuchsSolver(Δt=10^-5, t_max=10.0^15, 
                            N = 8, tolerance=10^-8) # it is important we use the same settings for Δt, t_max and N
 ts, Fs, Ks = @time solve(taggedproblem, taggedsolver)

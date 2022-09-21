@@ -8,14 +8,14 @@ mutable struct EulerSolver{I, F} <: Solver
 end
 
 """
-    EulerSolver(problem::LinearMCTProblem; t_max=10.0^2, Δt=10^-3, verbose=false)
+    EulerSolver(equation::LinearMCTEquation; t_max=10.0^2, Δt=10^-3, verbose=false)
 
-Constructs a solver object that, when called `solve` upon will solve an `LinearMCTProblem` using a forward Euler method.
+Constructs a solver object that, when called `solve` upon will solve an `LinearMCTEquation` using a forward Euler method.
 It will discretise the integral using a Trapezoidal rule. Use this solver only for testing purposes. It is a wildy 
 inefficient way to solve MCT-like equations.
 
 # Arguments:
-* `problem` an instance of LinearMCTProblem
+* `equation` an instance of LinearMCTEquation
 * `t_max` when this time value is reached, the integration returns
 * `Δt` fixed time step
 * `verbose` if `true`, information will be printed to STDOUT
@@ -47,10 +47,10 @@ function trapezoidal_integration(f, δt, it)
 end
 
 
-function Euler_step(F_old, ∂ₜF_old, time_integral, problem, solver::EulerSolver)
-    α = problem.α
-    β = problem.β
-    γ = problem.γ
+function Euler_step(F_old, ∂ₜF_old, time_integral, equation, solver::EulerSolver)
+    α = equation.α
+    β = equation.β
+    γ = equation.γ
     Δt = solver.Δt
     if !iszero(α)
         ∂ₜₜF  = -α\(β*∂ₜF_old + γ*F_old + time_integral)
@@ -77,24 +77,24 @@ function allocate_results!(t_array, F_array, K_array, ∂ₜF_array_reverse, t, 
     pushfirst!(∂ₜF_array_reverse, ∂ₜF)
 end
 
-function initialize_output_arrays(problem::MCTProblem, solver::EulerSolver)
-    F0 = problem.F₀
-    dF0 = problem.∂ₜF₀
+function initialize_output_arrays(equation::MCTEquation, solver::EulerSolver)
+    F0 = equation.F₀
+    dF0 = equation.∂ₜF₀
     ∂ₜF_array_reverse = typeof(dF0)[dF0]
     integrand_array = typeof(F0)[]
     for _ in 1:solver.N
         push!(integrand_array, F0.*Ref(zero(eltype(F0))))
     end
-    return typeof(0.0)[0.0], typeof(F0)[F0], typeof(problem.K₀)[problem.K₀], ∂ₜF_array_reverse, integrand_array
+    return typeof(0.0)[0.0], typeof(F0)[F0], typeof(equation.K₀)[equation.K₀], ∂ₜF_array_reverse, integrand_array
 end
 
 
-function solve(problem::LinearMCTProblem, solver::EulerSolver)
+function solve(equation::LinearMCTEquation, solver::EulerSolver)
     tstart = time()
-    kernel = problem.kernel
+    kernel = equation.kernel
     N = solver.N
     Δt = solver.Δt
-    t_array, F_array, K_array, ∂ₜF_array_reverse, integrand_array = initialize_output_arrays(problem, solver)
+    t_array, F_array, K_array, ∂ₜF_array_reverse, integrand_array = initialize_output_arrays(equation, solver)
     t = 0.0
     for it = 1:N
         t += Δt
@@ -102,7 +102,7 @@ function solve(problem::LinearMCTProblem, solver::EulerSolver)
         F_old = F_array[end]
         construct_euler_integrand!(integrand_array, K_array, ∂ₜF_array_reverse, it)
         time_integral = trapezoidal_integration(integrand_array, Δt, it)
-        F, ∂ₜF = Euler_step(F_old, ∂ₜF_old, time_integral, problem, solver)
+        F, ∂ₜF = Euler_step(F_old, ∂ₜF_old, time_integral, equation, solver)
         K = evaluate_kernel(kernel, F, t)
         allocate_results!(t_array, F_array, K_array, ∂ₜF_array_reverse, t, K, F, ∂ₜF)
         log_results(solver, tstart, t, it)

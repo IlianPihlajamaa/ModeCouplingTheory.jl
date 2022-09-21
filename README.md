@@ -37,12 +37,12 @@ We can now define the equation we want to solve as follows:
 
 ```julia
 julia> α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
-julia> problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel);
+julia> equation = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel);
 ```
 Which we can solve by calling `solve`:
 
 ```julia
-julia> t, F, K = solve(problem);
+julia> t, F, K = solve(equation);
 julia> using Plots
 julia> plot(log10.(t), F)
 ```

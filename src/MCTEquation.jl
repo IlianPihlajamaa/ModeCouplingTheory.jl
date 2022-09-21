@@ -1,6 +1,6 @@
-abstract type MCTProblem end
+abstract type MCTEquation end
 
-struct LinearMCTProblem{T1,T2,T3,A,B,C} <: MCTProblem
+struct LinearMCTEquation{T1,T2,T3,A,B,C} <: MCTEquation
     α::T1
     β::T2
     γ::T3
@@ -12,7 +12,7 @@ end
 
 
 """
-    LinearMCTProblem(α, β, γ, F₀::T, ∂ₜF₀::T, kernel::MemoryKernel) where T
+    LinearMCTEquation(α, β, γ, F₀::T, ∂ₜF₀::T, kernel::MemoryKernel) where T
 
 # Arguments:
 * `α`: coefficient in front of the second derivative term. If `α` and `F₀` are both vectors, `α` will automatically be converted to a diagonal matrix, to make them compatible.
@@ -22,7 +22,7 @@ end
 * `∂ₜF₀` initial condition of the derivative of F(t)
 * `kernel` instance of a `MemoryKernel` that when called on F₀ and t=0, evaluates to the initial condition of the memory kernel.
 """
-function LinearMCTProblem(α, β, γ, F₀, ∂ₜF₀, kernel::MemoryKernel)
+function LinearMCTEquation(α, β, γ, F₀, ∂ₜF₀, kernel::MemoryKernel)
     K₀ = evaluate_kernel(kernel, F₀, 0.0)
     FKeltype = eltype(K₀ * F₀)
     F₀ = FKeltype.(F₀) # make sure F0 has the right eltype
@@ -31,7 +31,7 @@ function LinearMCTProblem(α, β, γ, F₀, ∂ₜF₀, kernel::MemoryKernel)
 
 
     if Tnew <: Number && α isa Number && β isa Number && γ isa Number
-        return LinearMCTProblem(α, β, γ, F₀, ∂ₜF₀, K₀, kernel)
+        return LinearMCTEquation(α, β, γ, F₀, ∂ₜF₀, K₀, kernel)
     end
 
     if Tnew <: Vector
@@ -56,7 +56,7 @@ function LinearMCTProblem(α, β, γ, F₀, ∂ₜF₀, kernel::MemoryKernel)
         else
             C = copy(γ)
         end
-        return LinearMCTProblem(A, B, C, F₀, ∂ₜF₀, K₀, kernel)
+        return LinearMCTEquation(A, B, C, F₀, ∂ₜF₀, K₀, kernel)
     end
     if Tnew <: SVector
         if α isa Number
@@ -80,23 +80,23 @@ function LinearMCTProblem(α, β, γ, F₀, ∂ₜF₀, kernel::MemoryKernel)
         else
             C = copy(γ)
         end
-        return LinearMCTProblem(A, B, C, F₀, ∂ₜF₀, K₀, kernel)
+        return LinearMCTEquation(A, B, C, F₀, ∂ₜF₀, K₀, kernel)
     end
-    LinearMCTProblem(α, β, γ, F₀, ∂ₜF₀, K₀, kernel)
+    LinearMCTEquation(α, β, γ, F₀, ∂ₜF₀, K₀, kernel)
 end
 
-struct StackedMCTProblem{P <: Tuple} <: MCTProblem
-    problems::P
+struct StackedMCTEquation{P <: Tuple} <: MCTEquation
+    equations::P
 end
 
 import Base.+
-+(a::MCTProblem, b::MCTProblem) = StackedMCTProblem((a, b))
-+(a::StackedMCTProblem, b::MCTProblem) = StackedMCTProblem((a.problems..., b))
-+(a::MCTProblem, b::StackedMCTProblem) = StackedMCTProblem((a, b.problems...))
-+(a::StackedMCTProblem, b::StackedMCTProblem) = StackedMCTProblem((a.problems..., b.problems...))
++(a::MCTEquation, b::MCTEquation) = StackedMCTEquation((a, b))
++(a::StackedMCTEquation, b::MCTEquation) = StackedMCTEquation((a.equations..., b))
++(a::MCTEquation, b::StackedMCTEquation) = StackedMCTEquation((a, b.equations...))
++(a::StackedMCTEquation, b::StackedMCTEquation) = StackedMCTEquation((a.equations..., b.equations...))
 
-function Base.show(io::IO, ::MIME"text/plain", p::LinearMCTProblem) 
-    println(io, "Linear MCT problem object:")
+function Base.show(io::IO, ::MIME"text/plain", p::LinearMCTEquation) 
+    println(io, "Linear MCT equation object:")
     println(io, "   α F̈ + β Ḟ + γF + ∫K(τ)Ḟ(t-τ) = 0")
     println(io, "in which α is a $(typeof(p.α)),")
     println(io, "         β is a $(typeof(p.β)),")
@@ -104,10 +104,10 @@ function Base.show(io::IO, ::MIME"text/plain", p::LinearMCTProblem)
     println(io, "  and K(t) is a $(typeof(p.kernel)).")
 end
 
-function Base.show(io::IO, t::MIME"text/plain", p::StackedMCTProblem) 
-    println(io, "Stack of $(length(p.problems)) MCT Problems:")
-    for problem in p.problems
+function Base.show(io::IO, t::MIME"text/plain", p::StackedMCTEquation) 
+    println(io, "Stack of $(length(p.equations)) MCT Equations:")
+    for equation in p.equations
         println(io)
-        show(io, t, problem)
+        show(io, t, equation)
     end
 end

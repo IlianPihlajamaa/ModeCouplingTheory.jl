@@ -10,12 +10,12 @@ F0 = @SVector ones(N)
 
 #SMatrix
 kernel1 = SchematicDiagonalKernel(λ)
-system1 = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel1)
+system1 = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel1)
 solver1 = FuchsSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
 #Matrix
 kernel2 = SchematicDiagonalKernel(Vector(λ))
-system2 = LinearMCTProblem(α, β, Matrix(γ), Vector(F0), Vector(∂F0), kernel2)
+system2 = LinearMCTEquation(α, β, Matrix(γ), Vector(F0), Vector(∂F0), kernel2)
 solver2 = FuchsSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
 inFS = @SVector rand(N)
@@ -56,12 +56,12 @@ F0 = @SVector ones(N)
 
 #SMatrix
 kernel1 = SchematicMatrixKernel(λ)
-system1 = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel1)
+system1 = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel1)
 solver1 = FuchsSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
 #Matrix
 kernel2 = SchematicMatrixKernel(Matrix(λ))
-system2 = LinearMCTProblem(α, β, γ, Vector(F0), Vector(∂F0), kernel2)
+system2 = LinearMCTEquation(α, β, γ, Vector(F0), Vector(∂F0), kernel2)
 solver2 = FuchsSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
 inFS = @SVector rand(N)
