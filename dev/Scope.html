@@ -8,7 +8,7 @@ function my_func(λ)
     γ = 1.0
 
     kernel = ExponentiallyDecayingKernel(λ, 1.0)
-    problem = LinearMCTProblem(α, β, γ, F0, ∂F0, kernel)
+    problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
     solver = FuchsSolver(Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
     t1, F1, K1 =  solve(problem, solver)
@@ -87,7 +87,7 @@ julia&gt; plot(k_array, Sₖ_uncertain, xlabel=&quot;k&quot;, ylabel=&quot;S(k)&
 ∂F0 = zeros(eltype(Sₖ_uncertain), Nk)
 α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ_uncertain)
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ_uncertain)
-problem = LinearMCTProblem(α, β, γ, Sₖ_uncertain, ∂F0, kernel)
+problem = LinearMCTEquation(α, β, γ, Sₖ_uncertain, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-5, t_max=10.0^5, verbose=true, N = 8, tolerance=10^-8, max_iterations=10^8)
 t, F, K = @time solve(problem, solver);
 p = plot(xlabel=&quot;log10(t)&quot;, ylabel=&quot;F(k,t)&quot;, ylims=(0,1), xlims=(-5,5))
@@ -108,9 +108,9 @@ Sₖ = find_analytical_S_k(k_array, η)
 ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ)
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = LinearMCTProblem(α, β, γ, Sₖ, ∂F0, kernel)
+problem = LinearMCTEquation(α, β, γ, Sₖ, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
 t, F, K = @time solve(problem, solver);</code></pre><p>We can now extract a single relaxation time by calling </p><pre><code class="language-julia hljs">julia&gt; find_relaxation_time(t, F[18, :]) # at k k_array[18]
 4.232796654132995e11</code></pre><p>To extract all relaxation times as a function of <span>$k$</span>:</p><pre><code class="language-julia hljs">julia&gt; t_R = [find_relaxation_time(t, F[ik, :]) for ik in eachindex(k_array)]; 
-julia&gt; p = plot(k_array, log10.(t_R), xlabel=&quot;k&quot;, ylabel=&quot;log10(relaxation time)&quot;, legend=false)</code></pre><p><img src="images/tr.png" alt="image"/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="Kernels.html">« Kernels</a><a class="docs-footer-nextpage" href="FromPython.html">From Python »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Tuesday 20 September 2022 10:48">Tuesday 20 September 2022</span>. Using Julia version 1.8.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+julia&gt; p = plot(k_array, log10.(t_R), xlabel=&quot;k&quot;, ylabel=&quot;log10(relaxation time)&quot;, legend=false)</code></pre><p><img src="images/tr.png" alt="image"/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="Kernels.html">« Kernels</a><a class="docs-footer-nextpage" href="FromPython.html">From Python »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Wednesday 21 September 2022 12:45">Wednesday 21 September 2022</span>. Using Julia version 1.8.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
