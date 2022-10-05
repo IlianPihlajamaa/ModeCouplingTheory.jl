@@ -31,7 +31,7 @@ end
 
 
 """
-    FuchsSolver(N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false)
+    FuchsSolver(N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true)
 
 Uses the algorithm devised by Fuchs et al.
 
@@ -43,7 +43,7 @@ Uses the algorithm devised by Fuchs et al.
 * `max_iterations`: the maximal number of iterations before convergence is reached for each time doubling step
 * `tolerance`: while the error is bigger than this value, convergence is not reached. The error by default is computed as the absolute sum of squares
 * `verbose`: if `true`, information will be printed to STDOUT
-* `inplace`: if `true` and if the type of F is mutable, the solver will try to avoid allocating many temporaries
+* `ismutable`: if `true` and if the type of F is mutable, the solver will try to avoid allocating many temporaries
 """
 function FuchsSolver(; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true)
     return FuchsSolver(N, Δt, t_max, 0, max_iterations, tolerance, verbose, ismutable)
