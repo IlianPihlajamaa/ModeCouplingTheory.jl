@@ -1,4 +1,4 @@
-function solve_steady_state(γ, F₀::Union{Number,SVector}, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false)
+function solve_steady_state_immutable(γ, F₀, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false)
     t = Inf
     if typeof(γ) <: AbstractVector
         γ = Diagonal(γ)
@@ -29,7 +29,7 @@ function solve_steady_state(γ, F₀::Union{Number,SVector}, kernel; tolerance=1
 end
 
 """
-    solve_steady_state(γ, F₀, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false)
+    solve_steady_state(γ, F₀, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false, inplace=true)
 
 Finds the steady-state solution (non-ergodicity parameter) of the generalized Langevin equation by recursive iteration of F = (K + γ)⁻¹ * K(F) * F₀
 
@@ -40,11 +40,22 @@ Finds the steady-state solution (non-ergodicity parameter) of the generalized La
 * `max_iterations`: the maximal number of iterations before convergence is reached
 * `tolerance`: while the error is bigger than this value, convergence is not reached. The error by default is computed as the absolute sum of squares between successive iterations
 * `verbose`: if `true`, information will be printed to `STDOUT`
+* `inplace``: if true and if the type of F is mutable, the solver will try to avoid allocating many temporaries. default = `true``
 
 # Returns:
 * The steady state solution
 """
-function solve_steady_state(γ, F₀::Vector, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false)
+function solve_steady_state(γ, F₀, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false, inplace=true)
+    if ismutable(F₀) && inplace
+        return solve_steady_state_mutable(γ, F₀, kernel; tolerance=tolerance, max_iterations=max_iterations, verbose=verbose)
+    else 
+        return solve_steady_state_immutable(γ, F₀, kernel; tolerance=tolerance, max_iterations=max_iterations, verbose=verbose)
+    end
+end
+
+
+
+function solve_steady_state_mutable(γ, F₀, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false)
     t = Inf
     if typeof(γ) <: AbstractVector
         γ = Diagonal(γ)
