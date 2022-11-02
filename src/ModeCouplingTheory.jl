@@ -3,7 +3,8 @@
 Package to solve mode-coupling theory like equations
 """
 module ModeCouplingTheory
-    using StaticArrays, SparseArrays, LinearAlgebra, Random, Tullio, LoopVectorization, ProgressMeter, Dierckx
+    using StaticArrays, SparseArrays, LinearAlgebra, Random, LoopVectorization, ProgressMeter, Dierckx
+    import LinearSolve
     export solve, FuchsSolver, EulerSolver
     export ModeCouplingKernel, MultiComponentModeCouplingKernel, ExponentiallyDecayingKernel, SchematicDiagonalKernel, SchematicF123Kernel, SchematicF1Kernel, SchematicF2Kernel, SchematicMatrixKernel
     export InterpolatingKernel

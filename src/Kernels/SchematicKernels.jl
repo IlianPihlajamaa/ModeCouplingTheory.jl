@@ -83,9 +83,9 @@ end
 
 Matrix kernel with field `ν` which when called returns `ν * F * Fᵀ`, i.e., it implements Kαβ = ν*Fα*Fβ.
 """
-struct SchematicMatrixKernel{T<:Union{SMatrix,Matrix}} <: MemoryKernel
+struct SchematicMatrixKernel{T<:AbstractMatrix} <: MemoryKernel
     ν::T
-    SchematicMatrixKernel(ν::T) where {T<:Union{SMatrix,Matrix}} = eltype(ν) <: Number ? new{T}(ν) : error("element type of this kernel must be a number")
+    SchematicMatrixKernel(ν::T) where {T} = eltype(ν) <: Number ? new{T}(ν) : error("element type of this kernel must be a number")
 end
 
 function evaluate_kernel(kernel::SchematicMatrixKernel, F::Union{SVector,Vector}, t)
@@ -95,7 +95,14 @@ end
 
 function evaluate_kernel!(out::Matrix, kernel::SchematicMatrixKernel, F::Vector, t)
     ν = kernel.ν
-    @tullio out[i, j] = ν[i, k] * F[k] * F[j]
+    out .= zero(eltype(out))
+    for i in eachindex(F)
+        for j in eachindex(F)
+            for k in eachindex(F)
+                out[i, j] += ν[i, k] * F[k] * F[j]
+            end
+        end
+    end
 end
 
 struct InterpolatingKernel{T} <: MemoryKernel
