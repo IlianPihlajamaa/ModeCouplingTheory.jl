@@ -1,5 +1,5 @@
 
-mutable struct FuchsTempStruct{T,T2,T3,VT,VT2}
+mutable struct FuchsTempStruct{T,T2,T3,VT,VT2, SC}
     F_temp::VT
     K_temp::VT2
     F_I::VT
@@ -11,6 +11,7 @@ mutable struct FuchsTempStruct{T,T2,T3,VT,VT2}
     temp_vec::T
     F_old::T
     temp_mat::T2
+    solve_cache::SC
     inplace::Bool
     start_time::Float64
 end
@@ -62,7 +63,7 @@ function allocate_temporary_arrays(equation::MCTEquation, solver::FuchsSolver)
     C3 = K₀ * F₀
     temp_vec = K₀ * F₀
     F_old = K₀ * F₀
-    temp_mat = K₀ + K₀
+    temp_mat = sum([equation.α, equation.β, equation.γ, K₀])
     Fmutable = ismutabletype(typeof(F₀))
     inplace = Fmutable & solver.inplace
     start_time = time()
@@ -70,7 +71,14 @@ function allocate_temporary_arrays(equation::MCTEquation, solver::FuchsSolver)
     K_temp = typeof(K₀)[]
     F_I = typeof(F₀)[]
     K_I = typeof(K₀)[]
-    temp_arrays = FuchsTempStruct(F_temp, K_temp, F_I, K_I, C1, C1 + C1, C2, C3, temp_vec, F_old, temp_mat, inplace, start_time)
+    if inplace && !check_if_diag(temp_mat)
+        prob = LinearSolve.LinearProblem(temp_mat, temp_vec)
+        cache1 = LinearSolve.init(prob)
+        sol = LinearSolve.solve(cache1)
+        temp_arrays = FuchsTempStruct(F_temp, K_temp, F_I, K_I, C1, C1 + C1, C2, C3, temp_vec, F_old, temp_mat, sol.cache, inplace, start_time)
+    else
+        temp_arrays = FuchsTempStruct(F_temp, K_temp, F_I, K_I, C1, C1 + C1, C2, C3, temp_vec, F_old, temp_mat, false, inplace, start_time)
+    end
     for _ in 1:4*solver.N
         push!(temp_arrays.F_temp, K₀ * F₀)
         push!(temp_arrays.K_temp, K₀ + K₀)
@@ -306,7 +314,12 @@ function update_F!(::FuchsSolver, temp_arrays::FuchsTempStruct, it::Int)
             temp_arrays.F_temp[it] .= c1.diag .\ temp_arrays.temp_vec
         else
             c1_temp .= c1
-            ldiv!(temp_arrays.F_temp[it], qr!(c1_temp, ColumnNorm()), temp_arrays.temp_vec)
+
+            cache = LinearSolve.set_b(temp_arrays.solve_cache, temp_arrays.temp_vec)
+            cache = LinearSolve.set_A(cache, c1_temp)
+            sol = LinearSolve.solve(cache)
+            temp_arrays.F_temp[it] .= sol.u
+            # ldiv!(temp_arrays.F_temp[it], qr!(c1_temp, ColumnNorm()), temp_arrays.temp_vec)
         end
     end
 end

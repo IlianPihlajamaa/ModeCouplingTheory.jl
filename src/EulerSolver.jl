@@ -1,9 +1,7 @@
 mutable struct EulerSolver{I, F} <: Solver
-    # Ftype::DataType
     N::I
     Δt::F
     t_max::F
-    # temp_arrays::B
     verbose::Bool
 end
 
