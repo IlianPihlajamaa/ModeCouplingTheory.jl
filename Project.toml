@@ -1,7 +1,7 @@
 name = "ModeCouplingTheory"
 uuid = "6cad4188-63cb-4528-a10f-dbb409b456c6"
 authors = ["s158686 "]
-version = "0.5.0"
+version = "0.5.1"
 
 [deps]
 Dierckx = "39dd38d3-220a-591b-8e3c-4c3a8c710a94"
