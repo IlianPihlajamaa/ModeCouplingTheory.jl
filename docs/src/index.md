@@ -45,8 +45,8 @@ Now we can solve the equation by calling `solve`:
 
 ```julia
 julia> using Plots
-julia> t, F, K = solve(problem, solver);
-julia> plot(log10.(t), F)
+julia> sol = solve(problem, solver);
+julia> plot(log10.(sol.t), sol.F)
 ```
 ![image](images/readmefig.png)
 
@@ -59,7 +59,7 @@ using ModeCouplingTheory, Plots
 kernel = SchematicF2Kernel(ν)
 problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
 solver = FuchsSolver(problem)
-t, F, K = solve(problem, solver, kernel);
-plot(log10.(t), F)
+sol = solve(problem, solver);
+plot(log10.(sol.t), sol.F)
 ```
 

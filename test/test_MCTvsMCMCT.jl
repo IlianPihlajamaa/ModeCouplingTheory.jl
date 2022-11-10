@@ -52,16 +52,16 @@ Ftest = rand(SMatrix{1,1,Float64, 1}, N)
 
 systemMCT = LinearMCTEquation(α, β, γ, F0, ∂F0, kernelMCT)
 solverMCT = FuchsSolver(Δt=10^-10, t_max=10.0^10, verbose=false, N = 16, tolerance=10^-10, max_iterations=10^8)
-tMCT , FMCT, KMCT = solve(systemMCT, solverMCT);
+solMCT = solve(systemMCT, solverMCT);
 
 
 systemMCMCT = LinearMCTEquation(α, β, [@SMatrix([γ[ik]]) for ik = 1:N], [@SMatrix([F0[ik]]) for ik = 1:N], [@SMatrix([∂F0[ik]]) for ik = 1:N], kernelMCMCT)
 solverMCMCTEuler = EulerSolver(Δt=10^-5, t_max=2*10.0^-2, verbose=false)
-tMCMCTEuler, FMCMCTEuler, KMCMCTEuler = solve(systemMCMCT, solverMCMCTEuler);
+solMCMCTEuler = solve(systemMCMCT, solverMCMCTEuler);
 
 
 solverMCMCTFuchs = FuchsSolver(Δt=10^-10, t_max=10.0^10, verbose=false, N = 16, tolerance=10^-10, max_iterations=10^8)
-tMCMCTFuchs, FMCMCTFuchs, KMCMCTFuchs = solve(systemMCMCT, solverMCMCTFuchs);
+solMCMCTFuchs = solve(systemMCMCT, solverMCMCTFuchs);
 
 # plot(log10.(tMCT), FMCT[19,:]/Sₖ[19], lw=3, label="MCT")
 # plot!(log10.(tMCMCTEuler), getindex.(FMCMCTEuler[19, :], 1)/Sₖ[19][1], lw=3, label="MCMCT Euler", ls=:dash)
@@ -69,9 +69,9 @@ tMCMCTFuchs, FMCMCTFuchs, KMCMCTFuchs = solve(systemMCMCT, solverMCMCTFuchs);
 
 using Dierckx
 t_test = 10.0^-2
-a = Spline1D(tMCT, FMCT[19, :]/Sₖ[19])(t_test)
-b = Spline1D(tMCMCTEuler, getindex.(FMCMCTEuler[19, :], 1)/Sₖ[19][1])(t_test)
-c = Spline1D(tMCMCTFuchs, getindex.(FMCMCTFuchs[19, :], 1)/Sₖ[19][1])(t_test)
+a = Spline1D(solMCT.t, solMCT[19]/Sₖ[19])(t_test)
+b = Spline1D(solMCMCTEuler.t, getindex.(solMCMCTEuler[19], 1)/Sₖ[19][1])(t_test)
+c = Spline1D(solMCMCTFuchs.t, getindex.(solMCMCTFuchs[19], 1)/Sₖ[19][1])(t_test)
 @test(a ≈ c)
 @test(abs(b-c) < 10^-3)
 

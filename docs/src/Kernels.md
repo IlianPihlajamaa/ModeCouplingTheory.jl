@@ -22,13 +22,13 @@ F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; λ = 1.0; τ = 1.0;
 kernel = ExponentiallyDecayingKernel(λ, τ)
 problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-3, t_max=10.0^2, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
-t, F, K =  solve(problem, solver)
+sol =  solve(problem, solver)
 
 t_analytic = 10 .^ range(-3, 2, length=50)
 F_analytic = @. (exp(-0.5*(3+sqrt(5))* t_analytic)*(exp(sqrt(5)*t_analytic) * (1+sqrt(5))-1+sqrt(5)))/(2sqrt(5))
 
 using Plots
-p = plot(log10.(t), F, label="Numeric solution", lw=3)
+p = plot(log10.(sol.t), sol.F, label="Numeric solution", lw=3)
 scatter!(log10.(t_analytic), F_analytic, label="Exact solution", ylabel="F", xlabel="log10(t)")
 ```
 
@@ -51,12 +51,12 @@ F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; ν = 1.0
 kernel = SchematicF1Kernel(ν)
 problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-3, t_max=10.0^2, verbose=false, N = 100, tolerance=10^-14, max_iterations=10^6)
-t, F, K1 =  solve(problem, solver)
+sol =  solve(problem, solver)
 
 using Plots, SpecialFunctions
 t_analytic = 10 .^ range(-3, 2, length=50)
 F_analytic = @. exp(-2*t_analytic)*(besseli(0, 2t_analytic) + besseli(1, 2t_analytic))
-plot(log10.(t), F, label="Numerical Solution", ylabel="F", xlabel="log10(t)", lw=3)
+plot(log10.(sol.t), sol.F, label="Numerical Solution", ylabel="F", xlabel="log10(t)", lw=3)
 scatter!(log10.(t_analytic), F_analytic, label="Exact Solution")
 ```
 ![image](images/F1Kernel.png)
@@ -155,11 +155,11 @@ kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 problem = LinearMCTEquation(α, β, γ, Sₖ, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
-t, F, K = @time solve(problem, solver);
+sol = @time solve(problem, solver);
     # 3.190870 seconds (377.93 k allocations: 106.456 MiB, 0.42% gc time)
 p = plot(xlabel="log10(t)", ylabel="F(k,t)", ylims=(0,1))
 for ik = [7, 18, 25, 39]
-    plot!(p, log10.(t), F[ik, :]/Sₖ[ik], label="k = $(k_array[ik])", lw=3)
+    plot!(p, log10.(sol.t), sol[ik]/Sₖ[ik], label="k = $(k_array[ik])", lw=3)
 end
 p
 ```
@@ -177,7 +177,7 @@ The multi-component mode-coupling theory equation reads
 
 $$\ddot{F}_{\alpha\beta}(k,t) + \Omega_{\alpha\gamma}(k)F_{\gamma\beta}(k,t) + \int_0^td\tau K_{\alpha\gamma}(t-\tau, k)\dot{F}_{\gamma\beta}(k, \tau)=0$$
 
-in which $\Omega_{\alpha\gamma} = k^2 k_B T x_\alpha/m_\alpha \cdot \left(S^{-1}\right)_{\alpha\gamma}(k)$, and
+in which $\Omega_{\alpha\gamma} = k^2 k_B T x_\alpha/m_\alpha \cdot \left(S^{-1}\right)_{\alpha\gamma}(k)$, and $\textbf{S}(k) = (\frac{\delta_{\alpha\beta}}{x_\alpha} - \rho c_{\alpha\gamma}(k))$. The memory kernel is given by
 
 $$K_{\alpha\beta}(k,t) =\frac{k_B T \rho}{2 x_\beta m_\alpha (2\pi)^3} \int d\mathbf{q} V_{\mu'\nu'\alpha}(\mathbf{k}, \mathbf{q})F_{\mu\mu'}(q, t)F_{\nu\nu'}(|\mathbf{k}-\mathbf{q}|,t)V_{\mu\nu\beta}(\mathbf{k}, \mathbf{q})$$
 
@@ -229,13 +229,14 @@ end
 kernel = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 problem = LinearMCTEquation(α, β, Ω, F₀, ∂ₜF₀, kernel)
 solver = FuchsSolver(verbose=false, N=16, tolerance=10^-8, max_iterations=10^8)
-t, F, K = solve(problem, solver)
+sol = solve(problem, solver)
 ik = 19
 k = k_array[ik]
-p = plot(log10.(t), getindex.(F[ik,:], 1,1)/Sₖ[ik][1,1], ls=:dash, lw=2, color=1, label="Faa(k=$k, t)") 
-plot!(log10.(t), getindex.(F[ik,:], 1,2)/Sₖ[ik][1,2], lw=2, color=2, label="Fab(k=$k, t)") 
-plot!(log10.(t), getindex.(F[ik,:], 2,1)/Sₖ[ik][2,1], ls=:dash, lw=2, color=3, label="Fba(k=$k, t)") 
-plot!(log10.(t), getindex.(F[ik,:], 2,2)/Sₖ[ik][2,2], ls=:dash, lw=2, color=4, label="Fbb(k=$k, t)")
+t = sol.t
+p = plot(log10.(t), getindex.(sol[ik], 1,1)/Sₖ[ik][1,1], ls=:dash, lw=2, color=1, label="Faa(k=$k, t)") 
+plot!(log10.(t), getindex.(sol[ik], 1,2)/Sₖ[ik][1,2], lw=2, color=2, label="Fab(k=$k, t)") 
+plot!(log10.(t), getindex.(sol[ik], 2,1)/Sₖ[ik][2,1], ls=:dash, lw=2, color=3, label="Fba(k=$k, t)") 
+plot!(log10.(t), getindex.(sol[ik], 2,2)/Sₖ[ik][2,2], ls=:dash, lw=2, color=4, label="Fbb(k=$k, t)")
 ```
 
 ![image](images/MCMCTKernel.png)
@@ -274,9 +275,9 @@ That's it! We can now use it like any other memory kernel to solve the equation:
 ```julia
 problem = LinearMCTEquation(1.0, 0.0, 1.0, 1.0, 0.0, kernel)
 solver = FuchsSolver(Δt = 10^-4, t_max=10.0^5)
-t, F, K = solve(problem, solver)
+sol = solve(problem, solver)
 using Plots
-p = plot(log10.(t), F, ylims=(0,1), ylabel="F(t)", xlabel="log10(t)")
+p = plot(log10.(sol.t), sol.F, ylims=(0,1), ylabel="F(t)", xlabel="log10(t)")
 ```
 ![image](images/FFKernel.png)
 
@@ -310,7 +311,7 @@ kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 problem = LinearMCTEquation(α, β, γ, Sₖ, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
-t, F, K = @time solve(problem, solver);
+sol = @time solve(problem, solver);
 ```
 
 Now, we need to construct the tagged-particle memory kernel for the self intermediate scattering function `Fs`. When called with `evaluate_kernel(kernel, Fs, t)` it needs some way to access the collective `F` at the right time. To make that easy, we create a dictionary that maps the values in `t` to their respective indices.
@@ -393,11 +394,11 @@ taggedkernel = TaggedMCTKernel(ρ, kBT, m, k_array, Cₖ, t, F)
 taggedproblem = LinearMCTEquation(α, β, γ, F0, ∂F0, taggedkernel)
 taggedsolver = FuchsSolver(Δt=10^-5, t_max=10.0^15, 
                            N = 8, tolerance=10^-8) # it is important we use the same settings for Δt, t_max and N
-ts, Fs, Ks = @time solve(taggedproblem, taggedsolver)
+sol_s = @time solve(taggedproblem, taggedsolver)
 using Plots
 p = plot(xlabel="log10(t)", ylabel="Fₛ(k,t)", ylims=(0,1))
 for ik = [7, 18, 25, 39]
-    plot!(p, log10.(t), Fs[ik, :], label="k = $(k_array[ik])", lw=3)
+    plot!(p, log10.(sol_s.t), sol_s[ik], label="k = $(k_array[ik])", lw=3)
 end
 p
 ```
