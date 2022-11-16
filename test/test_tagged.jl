@@ -76,6 +76,6 @@ F0 = ones(Nk); ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m
 
 taggedkernel = ModeCouplingTheory.TaggedModeCouplingKernel(ρ, kBT, m, k_array, Cₖ, sol)
 taggedproblem = LinearMCTEquation(α, β, γ, F0, ∂F0, taggedkernel)
-sols = @profview solve(taggedproblem, solver)
+sols = solve(taggedproblem, solver)
 
 @test sum(sum(sol.F)) ≈ 25593.438983792006
