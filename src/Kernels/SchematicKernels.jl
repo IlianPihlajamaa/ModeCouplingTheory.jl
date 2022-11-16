@@ -42,6 +42,43 @@ function evaluate_kernel(kernel::SchematicF2Kernel, F::Number, t)
 end
 
 """
+    SchematicF2Kernel{T<:Number} <: MemoryKernel
+
+Scalar tagged particle kernel with field `ν` which when called returns `ν F*Fs`.
+"""
+struct TaggedSchematicF2Kernel{T1, T2, T3} <: MemoryKernel
+    ν::T1
+    tDict::T2
+    F::T3
+end
+
+function TaggedSchematicF2Kernel(ν, sol)
+    tDict = Dict(zip(sol.t, eachindex(sol.t)))
+    return TaggedSchematicF2Kernel(ν, tDict, sol.F)
+end
+
+function evaluate_kernel(kernel::TaggedSchematicF2Kernel, Fs::Number, t)
+    ν = kernel.ν
+    F = kernel.F[kernel.tDict[t]]
+    return ν * F * Fs
+end
+
+"""
+    SjogrenKernel
+
+Memory kernel that implements the kernel `K[1] = ν1 F[1]^2`, `K[2] = ν2 F[1] F[2]`. Consider using Static Vectors for performance. 
+"""
+struct SjogrenKernel{T} <: MemoryKernel
+    ν1::T
+    ν2::T
+end
+
+function evaluate_kernel(kernel::SjogrenKernel, F, t)
+    return Diagonal(@SVector [kernel.ν1*F[1]^2, kernel.ν2*F[1]*F[2]])
+end
+
+
+"""
     SchematicF1Kernel{T<:Number} <: MemoryKernel
 
 Scalar kernel with fields `ν1`, `ν2`, and `ν3` which when called returns `ν1 * F^1 + ν2 * F^2 + ν3 * F^3`.

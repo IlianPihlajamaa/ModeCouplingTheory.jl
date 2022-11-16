@@ -4,6 +4,7 @@ authors = ["s158686 "]
 version = "0.5.1"
 
 [deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 Dierckx = "39dd38d3-220a-591b-8e3c-4c3a8c710a94"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LinearSolve = "7ed4a6bd-45f5-4d41-b270-4a48e9bafcae"

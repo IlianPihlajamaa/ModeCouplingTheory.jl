@@ -19,8 +19,8 @@ function my_func(λ)
     problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
     solver = FuchsSolver(Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
-    t1, F1, K1 =  solve(problem, solver)
-    return [t1[2:end], F1[2:end], K1[2:end]]
+    sol =  solve(problem, solver)
+    return [sol.t[2:end], sol.F[2:end], sol.K[2:end]]
 end
 
 function exact_func(λ, t)
@@ -29,11 +29,11 @@ function exact_func(λ, t)
     return [t, F]
 end
 
-t, F, K = my_func(5.0)
+sol = my_func(5.0)
 texact, Fexact = exact_func(5.0, t)
 
 p = plot(log10.(texact), Fexact, label="Exact", lw=4) 
-scatter!(log10.(t[1:100:end]), F[1:100:end], label="Numerical solution", ls=:dash, lw=4) 
+scatter!(log10.(sol.t[1:100:end]), sol.F[1:100:end], label="Numerical solution", ls=:dash, lw=4) 
 ```
 ![image](images/deriv1.png)
 
@@ -42,10 +42,10 @@ Now we can take the derivative with respect to the argument of the functions we 
 ```julia
 using ForwardDiff
 _, dF_exact = ForwardDiff.derivative(y -> exact_func(y, t), 5.0)
-_, dF, _ = ForwardDiff.derivative(my_func, 5.0)
+sol = ForwardDiff.derivative(my_func, 5.0)
 
 p = plot(log10.(texact), dF_exact, lw=3, label="Exact", ylabel="dF/dλ(λ=5,t)", xlabel="log10(t)") 
-plot!(log10.(t), dF, ls=:dash, lw=3, label="Numerical solution", legend=:topleft)
+plot!(log10.(sol.t), sol.dF, ls=:dash, lw=3, label="Numerical solution", legend=:topleft)
 ```
 ![image](images/deriv2.png)
 
@@ -131,9 +131,9 @@ Now we can use this structure factor to solve the mode-coupling equation as usua
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ_uncertain)
 problem = LinearMCTEquation(α, β, γ, Sₖ_uncertain, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-5, t_max=10.0^5, verbose=true, N = 8, tolerance=10^-8, max_iterations=10^8)
-t, F, K = @time solve(problem, solver);
+sol = @time solve(problem, solver);
 p = plot(xlabel="log10(t)", ylabel="F(k,t)", ylims=(0,1), xlims=(-5,5))
-plot!(p, log10.(t[2:10:end]), F[19, 2:10:end]/Sₖ_uncertain[19], label="k = $(k_array[19])", lw=3)
+plot!(p, log10.(sol.t[2:10:end]), sol[19]/Sₖ_uncertain[19], label="k = $(k_array[19])", lw=3)
 ```
 
 ![image](images/uncertainF.png)
@@ -181,13 +181,13 @@ kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 problem = LinearMCTEquation(α, β, γ, Sₖ, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
-t, F, K = @time solve(problem, solver);
+sol = @time solve(problem, solver);
 ```
 
 We can now extract a single relaxation time by calling 
 
 ```julia
-julia> find_relaxation_time(t, F[18, :]) # at k k_array[18]
+julia> find_relaxation_time(sol.t, sol[18]) # at k k_array[18]
 4.232796654132995e11
 ```
 To extract all relaxation times as a function of $k$:

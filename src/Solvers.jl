@@ -1,4 +1,28 @@
 abstract type Solver end
+
+
+"""
+    MCTSolution
+
+solution object that holds the solution of an MCTEquation. It has 4 fields
+    t: array of t values
+    F: array of F for all t
+    K: array of K for all T
+    solver: solver object that holds the solver settings
+
+an MCT object can be indexed such that 
+    sol=MCTSolution
+    sol[2]  
+gives the F[2] for all t.
+
+"""
+struct MCTSolution{T1, T2, T3, T4}
+    t::T1
+    F::T2
+    K::T3
+    solver::T4
+end
+
 include("EulerSolver.jl")
 include("FuchsSolver.jl")
 
@@ -18,3 +42,8 @@ If no solver is provided, it uses the default FuchsSolver.
 function solve(::MCTEquation, ::Solver); error("This solver is not known"); end
 
 solve(p::MCTEquation) = solve(p, FuchsSolver())
+
+
+
+import Base.getindex
+getindex(sol::MCTSolution, I...) = getindex.(sol.F, I...)

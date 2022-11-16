@@ -43,11 +43,11 @@ F0 = 1.0
 dF0 = 0.0
 kernel = mct.SchematicF2Kernel(k)
 problem = mct.LinearMCTEquation(a, b, c, F0, dF0, kernel)
-t, F, K = mct.solve(problem)
+sol = mct.solve(problem)
 
 import matplotlib.pyplot as plt
 import numpy as np
-plt.plot(np.log10(t), F)
+plt.plot(np.log10(sol.t), sol.F)
 plt.show()
 ```
 

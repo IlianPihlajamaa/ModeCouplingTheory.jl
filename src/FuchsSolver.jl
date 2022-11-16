@@ -1,5 +1,4 @@
-
-mutable struct FuchsTempStruct{T,T2,T3,VT,VT2, SC}
+mutable struct FuchsTempStruct{T,T2,T3,VT,VT2,SC}
     F_temp::VT
     K_temp::VT2
     F_I::VT
@@ -17,7 +16,6 @@ mutable struct FuchsTempStruct{T,T2,T3,VT,VT2, SC}
 end
 
 
-
 mutable struct FuchsSolver{I,F} <: Solver
     N::I
     Δt::F
@@ -28,7 +26,6 @@ mutable struct FuchsSolver{I,F} <: Solver
     verbose::Bool
     inplace::Bool
 end
-
 
 
 """
@@ -87,7 +84,6 @@ function allocate_temporary_arrays(equation::MCTEquation, solver::FuchsSolver)
     end
     return temp_arrays
 end
-
 
 
 """
@@ -538,21 +534,6 @@ function convertresults(F_array::Vector{T}, K_array::Vector{Diagonal{T,T2}}) whe
     return F, K
 end
 
-function convertresults(F_array, K_array)
-    Nt = length(F_array)
-    Nk = length(F_array[1])
-    F = zeros(eltype(F_array[1]), Nk, Nt)
-    K = zeros(eltype(K_array[1]), Nk, Nk, Nt)
-    for it in 1:Nt
-        for ik1 = 1:Nk
-            F[ik1, it] = F_array[it][ik1]
-            for ik2 = 1:Nk
-                K[ik1, ik2, it] = K_array[it][ik1, ik2]
-            end
-        end
-    end
-    return F, K
-end
 
 
 """
@@ -578,7 +559,7 @@ function solve(equation::MCTEquation, solver::FuchsSolver)
 
     # for the progressbar: (turns off in non-interactive environments such as on a HPC)
     p = Progress(ceil(Int, log2(solver.t_max / solver.Δt)); output=stderr, enabled=!is_logging(stderr))
-    
+
     # main loop of the algorithm
     while solver.Δt < solver.t_max * 2
         do_time_steps!(equation, solver, kernel, temp_arrays)
@@ -587,6 +568,6 @@ function solve(equation::MCTEquation, solver::FuchsSolver)
         new_time_mapping!(equation, solver, temp_arrays)
     end
     solver.Δt = startΔt
-    F_array, K_array = convertresults(F_array, K_array)
-    return t_array, F_array, K_array
+    sol = MCTSolution(t_array, F_array, K_array, solver)
+    return sol
 end

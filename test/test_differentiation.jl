@@ -9,8 +9,8 @@ function main_scalar(λ)
     system1 = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel1)
     solver1 = FuchsSolver(Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
-    t1, F1, K1 =  solve(system1, solver1)
-    return [t1[2:end], F1[2:end], K1[2:end]]
+    sol =  solve(system1, solver1)
+    return [sol.t[2:end], sol.F[2:end], sol.K[2:end]]
 end
 
 function exactf(λ, t)
@@ -38,8 +38,6 @@ dF = ForwardDiff.derivative(main_scalar, 5.0)
 
 @test all(abs.(dF[2] .- dF_exact[2]) .< 10^-4)
 
-
-
 function main_vector(Λ)
     N = 10
     λ = [sin(i*j/π)^4 for i = 1:N, j = 1:N]*Λ
@@ -53,8 +51,8 @@ function main_vector(Λ)
     system = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
     solver = FuchsSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
     
-    t1, F1, K1 =  solve(system, solver);
-    return F1[3000]
+    sol =  solve(system, solver);
+    return sol.F[3000]
 end
 
 Λ = 0.1

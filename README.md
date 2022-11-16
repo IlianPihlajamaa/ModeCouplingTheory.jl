@@ -42,9 +42,9 @@ julia> equation = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel);
 Which we can solve by calling `solve`:
 
 ```julia
-julia> t, F, K = solve(equation);
+julia> sol = solve(equation);
 julia> using Plots
-julia> plot(log10.(t), F)
+julia> plot(log10.(sol.t), sol.F)
 ```
 
 ![image](readmefig.png)

@@ -105,6 +105,6 @@ function solve(equation::LinearMCTEquation, solver::EulerSolver)
         allocate_results!(t_array, F_array, K_array, ∂ₜF_array_reverse, t, K, F, ∂ₜF)
         log_results(solver, tstart, t, it)
     end
-    F_array, K_array = convertresults(F_array, K_array)
-    return t_array, F_array, K_array
+    sol = MCTSolution(t_array, F_array, K_array, solver)
+    return sol
 end
