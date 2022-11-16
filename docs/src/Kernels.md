@@ -40,7 +40,7 @@ The `SchematicF1Kernel` implements the kernel $K(t) = ν F(t)$. It has one field
 
 #### Example
 
-The integro-differential equation with this memory kernel also has an analytic solution for $\alpha=0$ , $\beta=1$, and $\gamma=1$. It is given by
+The integro-differential equation with this memory kernel also has an analytic solution for $\alpha=0$ , $\beta=1$, and $\nu=1$. It is given by
 
 $$F(t) =  e^{-2t}\left(I_0(2t) + I_1(2t) \right)$$
 
@@ -78,7 +78,7 @@ evaluate_kernel(kernel, F, t) # returns 22.0 = 3*2^1 + 2*2^2 + 1*2^3
 
 ### `InterpolatingKernel`
 
-The `InterpolatingKernel` implements a kernel that interpolates memory kernel data. It is initialized by calling `kernel = InterpolatingKernel(t, M, k=k)` where t is a `Vector` of time points, `M` is a vector of corresponding memory kernel values, and `k` is the integer degree of polynomial interpolation (default=1). This kernel is oimplemented using `Dierckx.Spline1D`. See [Dierckx.jl](https://github.com/kbarbary/Dierckx.jl) for more information.
+The `InterpolatingKernel` implements a kernel that interpolates memory kernel data. It is initialized by calling `kernel = InterpolatingKernel(t, M, k=k)` where t is a `Vector` of time points, `M` is a vector of corresponding memory kernel values, and `k` is the integer degree of polynomial interpolation (default=1). This kernel is implemented using `Dierckx.Spline1D`. See [Dierckx.jl](https://github.com/kbarbary/Dierckx.jl) for more information.
 
 ### `SchematicDiagonalKernel`
 
@@ -86,11 +86,13 @@ The `SchematicDiagonalKernel` implements the kernel $K_{ij}(t) = \delta_{ij} \nu
 
 ### `SchematicMatrixKernel`
 
-The `SchematicMatrixKernel` implements the kernel $K_{ij}(t) = \sum_k \lambda_{ij} F_k(t) F_j(t)$. It has one field `ν` which must be either a `Matrix` or an `SMatrix`. 
+The `SchematicMatrixKernel` implements the kernel $K_{ij}(t) = \sum_k \nu_{ij} F_k(t) F_j(t)$. It has one field `ν` which must be either a `Matrix` or an `SMatrix`. 
 
-## `SjogrenKernel`
+### `SjogrenKernel`
 
-The `SjogrenKernel` implements the kernel $K_{1}(t) = \nu_1 F_1(t)^2$, $K_{2}(t) = \nu_2 F_1(t) F_2(t)$. It has two fields `ν1` and `ν2` which must both be of the same type. Consider using Static Vectors for performance. Example:
+The `SjogrenKernel` implements the kernel $K_{1}(t) = \nu_1 F_1(t)^2$, $K_{2}(t) = \nu_2 F_1(t) F_2(t)$. It has two fields `ν1` and `ν2` which must both be of the same type. Consider using Static Vectors for performance.
+
+Example:
 
 ```julia
 using StaticArrays

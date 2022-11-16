@@ -192,7 +192,7 @@ julia> find_relaxation_time(sol.t, sol[18]) # at k k_array[18]
 ```
 To extract all relaxation times as a function of $k$:
 ```julia
-julia> t_R = [find_relaxation_time(t, F[ik, :]) for ik in eachindex(k_array)]; 
+julia> t_R = [find_relaxation_time(t, sol[ik]) for ik in eachindex(k_array)]; 
 julia> p = plot(k_array, log10.(t_R), xlabel="k", ylabel="log10(relaxation time)", legend=false)
 ```
 
