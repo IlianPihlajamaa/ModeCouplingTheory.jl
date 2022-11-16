@@ -336,8 +336,8 @@ $$K(k,t) = \frac{\rho k_BT}{8\pi^2 m}\int d\mathbf{q} V(\mathbf{k}, \mathbf{q})^
  
 where
 
-$V(\textbf{k}, \textbf{q}) = (\textbf{k}\cdot\textbf{q})c(q)/k = \frac{k^2+q^2-p^2}{2k} \cdot c(q).$
-
+$V(\textbf{k}, \textbf{q}) = (\textbf{k}\cdot\textbf{q})c(q)/k = \frac{k^2+q^2-p^2}{2k} \cdot c(q),$
+where $p = |\textbf{k} - \textbf{q}|$.
 Note that in the equation for the memory kernel, the solution of collective mode-coupling theory $F(k,t)$ appears (without subscript $s$). The most straightforward way of solving the tagged-particle equation therefore is to solve the full collective equation first, and use the result in the memory kernel of the tagged-particle motion. So, first we quickly solve MCT:
 
 ```julia
@@ -366,7 +366,7 @@ tDict = Dict(zip(t, eachindex(t)))
 
 Now we can construct a memory kernel like above. For performance reasons, we also implement the in-place `evaluate_kernel!(out, kernel, Fs, t)`. The discrete equation that we must implement is given by 
 
-$$K(k_i,t) = \frac{\rho k_B T \Delta k^2}{4 \pi^2 m} \sum_{j=1}^{N_k} \sum_{l=|j-i|+1}^{j+i-1} \frac{p_l q_j}{k_i} V^2(k_i, q_j, p_l)F(k_j, t)F_s(k_l, t)$$
+$$K(k_i,t) = \frac{\rho k_B T \Delta k^2}{4 \pi^2 m} \sum_{j=1}^{N_k} \sum_{l=|j-i|+1}^{j+i-1} \frac{p_l q_j}{k_i} V^2(k_i, q_j, p_l)F(k_j, t)F_s(k_l, t).$$
 
 This memory kernel can now be straightforwardly implemented as follows:
 
@@ -401,7 +401,7 @@ function TaggedMCTKernel(ρ, kBT, m, k_array, Cₖ, t, F)
 end
 
 ```
-Now to evaluate the kernel, we first write the in-place version of the code, that mutates its first argument. Note also that, since the mermory kernel is multiplied with a vector `F` to produce something of the same type of `F`, it has to be encoded as a diagonal matrix, with on the diagonal the dicretised wave-number dependent memory kernel.
+Now to evaluate the kernel, we first write the in-place version of the code, that mutates its first argument. Note also that, since the mermory kernel is multiplied with a vector `F` to produce something of the same type of `F`, it has to be encoded as a matrix, with on the diagonal the discretised wave-number dependent memory kernel.
 
 ```julia
 import ModeCouplingTheory.evaluate_kernel!
