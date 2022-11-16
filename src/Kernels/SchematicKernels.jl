@@ -63,6 +63,20 @@ function evaluate_kernel(kernel::TaggedSchematicF2Kernel, Fs::Number, t)
     return ν * F * Fs
 end
 
+"""
+    SjogrenKernel
+
+Memory kernel that implements the kernel `K[1] = ν1 F[1]^2`, `K[2] = ν2 F[1] F[2]`. Consider using Static Vectors for performance. 
+"""
+struct SjogrenKernel{T} <: MemoryKernel
+    ν1::T
+    ν2::T
+end
+
+function evaluate_kernel(kernel::SjogrenKernel, F, t)
+    return Diagonal(@SVector [kernel.ν1*F[1]^2, kernel.ν2*F[1]*F[2]])
+end
+
 
 """
     SchematicF1Kernel{T<:Number} <: MemoryKernel

@@ -88,6 +88,49 @@ The `SchematicDiagonalKernel` implements the kernel $K_{ij}(t) = \delta_{ij} \nu
 
 The `SchematicMatrixKernel` implements the kernel $K_{ij}(t) = \sum_k \lambda_{ij} F_k(t) F_j(t)$. It has one field `ν` which must be either a `Matrix` or an `SMatrix`. 
 
+## `SjogrenKernel`
+
+The `SjogrenKernel` implements the kernel $K_{1}(t) = \nu_1 F_1(t)^2$, $K_{2}(t) = \nu_2 F_1(t) F_2(t)$. It has two fields `ν1` and `ν2` which must both be of the same type. Consider using Static Vectors for performance. Example:
+
+```julia
+using StaticArrays
+α = 1.0
+β = 0.0
+γ = 1.0
+ν1 = 2.0
+ν2 = 1.0
+F0 = @SVector [1.0, 1.0]
+∂F0 = @SVector [0.0, 0.0]
+kernel = SjogrenKernel(ν1, ν2)
+eq = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
+sol = solve(eq)
+```
+
+### `TaggedSchematicF2Kernel`
+
+The `TaggedSchematicF2Kernel` implements a memory kernel $K(t) = \nu F(t) F_c(t)$, where $F_c(t)$ is a correlator that the tagged one couples to. It must be a solution of an earlier schematic MCT equation. Make sure to use the same solver settings for both solves. 
+
+Example:
+
+```julia
+F0 = 1.0
+∂F0 = 0.0
+α = 1.0
+β = 0.0
+γ = 1.0
+ν1 = 2.0
+ν2 = 1.0
+kernel = SchematicF2Kernel(ν1)
+eq = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
+sol = solve(eq)
+
+taggedkernel = TaggedSchematicF2Kernel(ν2, sol)
+tagged_eq = LinearMCTEquation(α, β, γ, F0, ∂F0, taggedkernel)
+tagged_sol = solve(tagged_eq);
+```
+
+This example is (less performantly) equivalent to the example of the Sjogren kernel above. 
+
 ## Mode-Coupling Theory
 
 The mode-coupling theory equation reads

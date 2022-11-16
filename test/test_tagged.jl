@@ -1,4 +1,3 @@
-
 F0 = 1.0
 ∂F0 = 0.0
 α = 1.0
@@ -16,16 +15,6 @@ tagged_sol = solve(tagged_eq);
 
 F0 = @SVector [1.0, 1.0]
 ∂F0 = @SVector [0.0, 0.0]
-import ModeCouplingTheory.MemoryKernel
-import ModeCouplingTheory.evaluate_kernel
-struct SjogrenKernel <: MemoryKernel
-    ν1::Float64
-    ν2::Float64
-end
-
-function evaluate_kernel(kernel::SjogrenKernel, F, t)
-    return Diagonal(@SVector [kernel.ν1*F[1]^2, kernel.ν2*F[1]*F[2]])
-end
 
 kernel = SjogrenKernel(λ1, λ2)
 eq = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
