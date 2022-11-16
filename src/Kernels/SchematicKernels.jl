@@ -42,6 +42,29 @@ function evaluate_kernel(kernel::SchematicF2Kernel, F::Number, t)
 end
 
 """
+    SchematicF2Kernel{T<:Number} <: MemoryKernel
+
+Scalar tagged particle kernel with field `ν` which when called returns `ν F*Fs`.
+"""
+struct TaggedSchematicF2Kernel{T1, T2, T3} <: MemoryKernel
+    ν::T1
+    tDict::T2
+    F::T3
+end
+
+function TaggedSchematicF2Kernel(ν, sol)
+    tDict = Dict(zip(sol.t, eachindex(sol.t)))
+    return TaggedSchematicF2Kernel(ν, tDict, sol.F)
+end
+
+function evaluate_kernel(kernel::TaggedSchematicF2Kernel, Fs::Number, t)
+    ν = kernel.ν
+    F = kernel.F[kernel.tDict[t]]
+    return ν * F * Fs
+end
+
+
+"""
     SchematicF1Kernel{T<:Number} <: MemoryKernel
 
 Scalar kernel with fields `ν1`, `ν2`, and `ν3` which when called returns `ν1 * F^1 + ν2 * F^2 + ν3 * F^3`.

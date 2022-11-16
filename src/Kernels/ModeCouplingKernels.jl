@@ -176,3 +176,119 @@ function evaluate_kernel(kernel::ModeCouplingKernel, F::Vector, t)
     evaluate_kernel!(out, kernel, F, t)
     return out
 end
+
+struct TaggedModeCouplingKernel{F,V,M, M2,Fc,TDICT} <: MemoryKernel
+    ρ::F
+    kBT::F
+    m::F
+    Nk::Int
+    k_array::V
+    A1::M2
+    A2::M2
+    A3::M2
+    T1::V
+    T2::V
+    T3::V
+    V1::M
+    V2::M
+    V3::M
+    F::Fc
+    tDict::TDICT
+end
+
+"""
+    ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
+
+Constructor of a ModeCouplingKernel. It implements the kernel
+K(k,t) = ρ kBT / (16π^3m) ∫dq V^2(k,q) F(q,t) F(k-q,t)
+in which k and q are vectors. 
+
+# Arguments:
+
+* `ρ`: number density
+* `kBT`: Thermal energy
+* `m` : particle mass
+* `k_array`: vector of wavenumbers at which the structure factor is known
+* `Sₖ`: structure factor
+
+# Returns:
+
+an instance `k` of `ModeCouplingKernel <: MemoryKernel`, which can be called both in-place and out-of-place:
+`k`(out, F, t)
+out = `k`(F, t)
+"""
+function TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
+    Nk = length(k_array)
+    T = promote_type(eltype(Sₖ), eltype(k_array), typeof(ρ), typeof(kBT), typeof(m))
+    ρ, kBT, m = T(ρ), T(kBT), T(m)
+    k_array, Sₖ = T.(k_array), T.(Sₖ)
+    Δk = k_array[2] - k_array[1]
+    @assert k_array[1] ≈ Δk / 2
+    @assert all(diff(k_array) .≈ Δk)
+    Cₖ = @. (Sₖ - 1) / (ρ * Sₖ)
+    T1 = similar(k_array)
+    T2 = similar(k_array)
+    T3 = similar(k_array)
+    A1 = similar(k_array, (Nk, Nk))
+    A2 = similar(k_array, (Nk, Nk))
+    A3 = similar(k_array, (Nk, Nk))
+    V1 = similar(k_array, (Nk, Nk))
+    V2 = similar(k_array, (Nk, Nk))
+    V3 = similar(k_array, (Nk, Nk))
+    D₀ = kBT / m
+    for iq = 1:Nk
+        for ip = 1:Nk
+            p = k_array[ip]
+            q = k_array[iq]
+            cp = Cₖ[ip]
+            cq = Cₖ[iq]
+            V1[iq, ip] = p * q * (cp + cq)^2 / 4 * D₀ * ρ / (8 * π^2) * Δk * Δk
+            V2[iq, ip] = p * q * (q^2 - p^2)^2 * (cq - cp)^2 / 4 * D₀ * ρ / (8 * π^2) * Δk * Δk
+            V3[iq, ip] = p * q * (q^2 - p^2) * (cq^2 - cp^2) / 2 * D₀ * ρ / (8 * π^2) * Δk * Δk
+        end
+    end
+    tDict = Dict(zip(t, eachindex(t)))
+
+    kernel = TaggedModeCouplingKernel(ρ, kBT, m, Nk, k_array, A1, A2, A3, T1, T2, T3, V1, V2, V3, tDict, sol.F)
+    return kernel
+end
+
+function fill_A!(kernel::TaggedModeCouplingKernel, F)
+    A1 = kernel.A1
+    A2 = kernel.A2
+    A3 = kernel.A3
+    V1 = kernel.V1
+    V2 = kernel.V2
+    V3 = kernel.V3
+    Nk = kernel.Nk
+    @turbo for iq = 1:Nk
+        for ip = 1:Nk
+            fq = F[iq]
+            fp = F[ip]
+            f4 = fp * fq
+            A1[iq, ip] = V1[iq, ip] * f4
+            A2[iq, ip] = V2[iq, ip] * f4
+            A3[iq, ip] = V3[iq, ip] * f4
+        end
+    end
+end
+
+
+function evaluate_kernel!(out::Diagonal, kernel::TaggedModeCouplingKernel, F::Vector, t)
+    A1 = kernel.A1
+    A2 = kernel.A2
+    A3 = kernel.A3
+    T1 = kernel.T1
+    T2 = kernel.T2
+    T3 = kernel.T3
+    k_array = kernel.k_array
+
+    Nk = kernel.Nk
+    fill_A!(kernel, F)
+    bengtzelius3!(T1, T2, T3, A1, A2, A3, Nk)
+
+    @inbounds for ik = 1:Nk
+        k = k_array[ik]
+        out.diag[ik] = k * kernel.T1[ik] + kernel.T2[ik] / k^3 + kernel.T3[ik] / k
+    end
+end
