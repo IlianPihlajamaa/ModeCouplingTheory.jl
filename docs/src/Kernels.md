@@ -211,10 +211,34 @@ p
 
 ![image](images/MCTKernel.png)
 
-### References
+#### References
 [1] Reichman, David R., and Patrick Charbonneau. "Mode-coupling theory." Journal of Statistical Mechanics: Theory and Experiment 2005.05 (2005): P05013.
 
 [2] Janssen, Liesbeth MC. "Mode-coupling theory of the glass transition: A primer." Frontiers in Physics 6 (2018): 97.
+
+### TaggedModeCouplingKernel
+
+Let's say we have just solved the mode-coupling equations, and we now want to include also a tagged particle solution (to find the self-intermediate scattering function). This function satisfies
+
+$$\ddot{F}_s(k,t) + \frac{k^2 k_BT}{m} F_s(k,t) + \int_0^t d\tau K(k, t-\tau)\dot{F}_s(k, \tau)=0,$$
+
+in which
+
+$$K(k,t) = \frac{\rho k_BT}{8\pi^2 m}\int d\mathbf{q} V(\mathbf{k}, \mathbf{q})^2 F(q, t)F_s(|\mathbf{k}-\mathbf{q}|,t)$$
+ 
+where
+
+$V(\textbf{k}, \textbf{q}) = (\textbf{k}\cdot\textbf{q})c(q)/k = \frac{k^2+q^2-p^2}{2k} \cdot c(q),$
+are the tagged vertices. This is done using the `TaggedModeCouplingKernel`.
+
+Example:
+```julia
+taggedF0 = ones(Nk); tagged∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m
+
+taggedkernel = ModeCouplingTheory.TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
+taggedproblem = LinearMCTEquation(α, β, γ, taggedF0, tagged∂F0, taggedkernel)
+taggedsol = solve(taggedproblem, solver)
+```
 
 ## Multi-component Mode-Coupling Theory
 
