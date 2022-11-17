@@ -177,19 +177,30 @@ function evaluate_kernel(kernel::ModeCouplingKernel, F::Vector, t)
     return out
 end
 
-struct TaggedModeCouplingKernel{T1, T2, T3, T4, T5} <: MemoryKernel
-    V²::T1
-    k_array::T2
-    prefactor::T3
-    F::T4
+struct TaggedModeCouplingKernel{F, V, M2, M, T5, FF} <: MemoryKernel
+    ρ::F
+    kBT::F
+    m::F
+    Nk::Int
+    k_array::V
+    A1::M2
+    A2::M2
+    A3::M2
+    T1::V
+    T2::V
+    T3::V
+    V1::M
+    V2::M
+    V3::M
     tDict::T5
+    F::FF
 end
 
 """
 TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 
 Constructor of a Tagged ModeCouplingKernel. It implements the kernel
-K(k,t) = ρ kBT / (8π^2m) ∫dq V^2(k,q) F(q,t) Fs(k-q,t)
+K(k,t) = ρ kBT / (8π^3m) ∫dq V^2(k,q) F(q,t) Fs(k-q,t)
 in which k and q are vectors. 
 
 # Arguments:
@@ -198,6 +209,7 @@ in which k and q are vectors.
 * `kBT`: Thermal energy
 * `m` : particle mass
 * `k_array`: vector of wavenumbers at which the structure factor is known
+* `Sₖ`: vector with the elements of the structure factor 
 
 # Returns:
 
@@ -205,43 +217,80 @@ an instance `k` of `TaggedModeCouplingKernel <: MemoryKernel`, which can be call
 `k`(out, F, t)
 out = `k`(F, t)
 """
-function TaggedModeCouplingKernel(ρ, kBT, m, k_array, Cₖ, sol)
+function TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
+    tDict = Dict(zip(sol.t, eachindex(sol.t)))
     Nk = length(k_array)
-    T = promote_type(eltype(Cₖ), eltype(k_array), typeof(ρ), typeof(kBT), typeof(m))
+    T = promote_type(eltype(Sₖ), eltype(k_array), typeof(ρ), typeof(kBT), typeof(m))
     ρ, kBT, m = T(ρ), T(kBT), T(m)
-    k_array, Cₖ = T.(k_array), T.(Cₖ)
+    k_array, Sₖ = T.(k_array), T.(Sₖ)
     Δk = k_array[2] - k_array[1]
     @assert k_array[1] ≈ Δk / 2
     @assert all(diff(k_array) .≈ Δk)
-    tDict = Dict(zip(sol.t, eachindex(sol.t)))
-    prefactor = ρ*kBT*Δk^2/(4*π^2*m)
-    V² = zeros(Nk, Nk, Nk)
-
-    for i = 1:Nk, j = 1:Nk, l = 1:Nk # loop over k, q, p
-        k = k_array[i]
-        q = k_array[j]
-        cq = Cₖ[j]
-        p = k_array[l]
-        if abs(j-i)+1 <= l <= j+i-1
-            V²[l, j, i] = (cq * (k^2  + q^2 - p^2)/(2k))^2
+    Cₖ = @. (Sₖ - 1) / (ρ * Sₖ)
+    T1 = similar(k_array)
+    T2 = similar(k_array)
+    T3 = similar(k_array)
+    A1 = similar(k_array, (Nk, Nk))
+    A2 = similar(k_array, (Nk, Nk))
+    A3 = similar(k_array, (Nk, Nk))
+    V1 = similar(k_array, (Nk, Nk))
+    V2 = similar(k_array, (Nk, Nk))
+    V3 = similar(k_array, (Nk, Nk))
+    D₀ = kBT / m
+    for iq = 1:Nk
+        for ip = 1:Nk
+            p = k_array[ip]
+            q = k_array[iq]
+            cq = Cₖ[iq]
+            V1[iq, ip] = p * q * (cq)^2 / 4 * D₀ * ρ / (4 * π^2) * Δk ^ 2
+            V2[iq, ip] = p * q * (q^2 - p^2)^2 * (cq)^2 / 4 * D₀ * ρ / (4 * π^2) * Δk^ 2
+            V3[iq, ip] = p * q * (q^2 - p^2) * (cq^2) / 2 * D₀ * ρ / (4 * π^2) * Δk ^ 2
         end
     end
+    kernel = TaggedModeCouplingKernel(ρ, kBT, m, Nk, k_array, A1, A2, A3, T1, T2, T3, V1, V2, V3, tDict, sol.F)
 
-    return TaggedModeCouplingKernel(V², k_array, prefactor, sol.F, tDict)
+    return kernel
+end
+
+function fill_A!(kernel::TaggedModeCouplingKernel, F, t)
+    A1 = kernel.A1
+    A2 = kernel.A2
+    A3 = kernel.A3
+    V1 = kernel.V1
+    V2 = kernel.V2
+    V3 = kernel.V3
+    Nk = kernel.Nk
+    it = kernel.tDict[t]
+    Fc = kernel.F[it]
+    @turbo for iq = 1:Nk
+        for ip = 1:Nk
+            fq = Fc[iq]
+            fp = F[ip]
+            f4 = fp * fq
+            A1[iq, ip] = V1[iq, ip] * f4
+            A2[iq, ip] = V2[iq, ip] * f4
+            A3[iq, ip] = V3[iq, ip] * f4
+        end
+    end
 end
 
 function evaluate_kernel!(out::Diagonal, kernel::TaggedModeCouplingKernel, Fs, t)
-    out.diag .= zero(eltype(out.diag)) # set the output array to zero
-    it = kernel.tDict[t] # find the correct index corresponding to t
+    A1 = kernel.A1
+    A2 = kernel.A2
+    A3 = kernel.A3
+    T1 = kernel.T1
+    T2 = kernel.T2
+    T3 = kernel.T3
     k_array = kernel.k_array
-    Nk = length(k_array)
-    for i = 1:Nk, j = 1:Nk, l = 1:Nk # loop over k, q, p
-        k = k_array[i]
-        q = k_array[j]
-        p = k_array[l]
-        out.diag[i] += p*q/k * kernel.V²[l, j, i] * kernel.F[it][j] * Fs[l]
+
+    Nk = kernel.Nk
+    fill_A!(kernel, Fs, t)
+    bengtzelius3!(T1, T2, T3, A1, A2, A3, Nk)
+
+    @inbounds for ik = 1:Nk
+        k = k_array[ik]
+        out.diag[ik] = k * kernel.T1[ik] + kernel.T2[ik] / k^3 + kernel.T3[ik] / k
     end
-    out.diag .*= kernel.prefactor
 end
 
 function evaluate_kernel(kernel::TaggedModeCouplingKernel, Fs, t)

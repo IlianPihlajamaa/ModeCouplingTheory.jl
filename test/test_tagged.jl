@@ -66,15 +66,15 @@ Sₖ = find_analytical_S_k(k_array, η)
 
 ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ)
 
-kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
+kernel =  ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 problem = LinearMCTEquation(α, β, γ, Sₖ, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-5, t_max=10.0^5, N = 8, tolerance=10^-8)
-sol = @time solve(problem, solver);
+sol = solve(problem, solver);
 
 Cₖ = find_analytical_C_k(k_array, η)
 F0 = ones(Nk); ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m
 
-taggedkernel = ModeCouplingTheory.TaggedModeCouplingKernel(ρ, kBT, m, k_array, Cₖ, sol)
+taggedkernel = ModeCouplingTheory.TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
 taggedproblem = LinearMCTEquation(α, β, γ, F0, ∂F0, taggedkernel)
 sols = solve(taggedproblem, solver)
 
