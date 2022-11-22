@@ -231,7 +231,7 @@ where
 $V(\textbf{k}, \textbf{q}) = (\textbf{k}\cdot\textbf{q})c(q)/k = \frac{k^2+q^2-p^2}{2k} \cdot c(q),$
 are the tagged vertices. This is done using the `TaggedModeCouplingKernel`.
 
-Example:
+Example (excluding the code from collective MCT):
 ```julia
 taggedF0 = ones(Nk); tagged∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m
 
@@ -244,15 +244,15 @@ taggedsol = solve(taggedproblem, solver)
 
 The multi-component mode-coupling theory equation reads
 
-$$\ddot{F}_{\alpha\beta}(k,t) + \Omega_{\alpha\gamma}(k)F_{\gamma\beta}(k,t) + \int_0^td\tau K_{\alpha\gamma}(t-\tau, k)\dot{F}_{\gamma\beta}(k, \tau)=0$$
+$$\ddot{F}_{\alpha\beta}(k,t) + \Omega^2_{\alpha\gamma}(k)F_{\gamma\beta}(k,t) + \int_0^td\tau K_{\alpha\gamma}(t-\tau, k)\dot{F}_{\gamma\beta}(k, \tau)=0$$
 
-in which $\Omega_{\alpha\gamma} = k^2 k_B T x_\alpha/m_\alpha \cdot \left(S^{-1}\right)_{\alpha\gamma}(k)$, and $\textbf{S}(k) = (\frac{\delta_{\alpha\beta}}{x_\alpha} - \rho c_{\alpha\gamma}(k))$. The memory kernel is given by
+in which $\Omega^2_{\alpha\gamma} = k^2 k_B T x_\alpha/m_\alpha \cdot \left(S^{-1}\right)_{\alpha\gamma}(k)$, and $\textbf{S}(k) = (\frac{\delta_{\alpha\beta}}{x_\alpha} - \rho c_{\alpha\gamma}(k))$. The memory kernel is given by
 
 $$K_{\alpha\beta}(k,t) =\frac{k_B T \rho}{2 x_\beta m_\alpha (2\pi)^3} \int d\mathbf{q} V_{\mu'\nu'\alpha}(\mathbf{k}, \mathbf{q})F_{\mu\mu'}(q, t)F_{\nu\nu'}(|\mathbf{k}-\mathbf{q}|,t)V_{\mu\nu\beta}(\mathbf{k}, \mathbf{q})$$
 
 in which the vertex $V_{\mu\nu\alpha}(\mathbf{k}, \mathbf{q}) = (\textbf{k}\cdot\textbf{q})c_{\alpha\mu}(q)\delta_{\alpha\nu}/k+(\textbf{k}\cdot(\textbf{k}-\textbf{q})c_{\alpha\nu}(|\textbf{k}-\textbf{q}|)\delta_{\alpha\mu}/k$. Here, the Greek indices indicate species labels, and we have adopted the convention that we sum over repeated indices. This memory kernel has also been implemented using the Bengtzelius' trick. It requires $O(N_k^2 N_s^2)$ storage and runs in $O(N_k^2 N_s^4)$ in which $N_s$ is the number of species.
 
-Numerically, the correlator $F_{\alpha\beta}(k)$ is implemented as a `Vector` of length `Nk` of which each of the elements is a small `Ns` x `Ns` static matrix. This means that this is also the expected form of the initial condition.
+Numerically, the correlator $F_{\alpha\beta}(k)$ is implemented as a `Vector` of length `Nk` of which each of the elements is a small `Ns` x `Ns` static matrix. This means that this is also the expected form of the initial condition. All symbols have the same meaning as those presented in "Weysser, F., Puertas, A. M., Fuchs, M., & Voigtmann, T. (2010). Structural relaxation of polydisperse hard spheres: Comparison of the mode-coupling theory to a Langevin dynamics simulation. Physical review E, 82(1), 011504."
 
 ### Example
 
@@ -287,16 +287,16 @@ end
 
 F₀ = copy(Sₖ)
 ∂ₜF₀ = [@SMatrix(zeros(Ns, Ns)) for i = 1:Nk]
-α = 0.0
-β = 1.0
-Ω = similar(Sₖ)
-Ω .*= 0.0
+α = 1.0
+β = 0.0
+Ω2 = similar(Sₖ)
+Ω2 .*= 0.0
 for ik = 1:Nk
-    Ω .= J.*S⁻¹
+    Ω2 .= J.*S⁻¹
 end
 
 kernel = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = LinearMCTEquation(α, β, Ω, F₀, ∂ₜF₀, kernel)
+problem = LinearMCTEquation(α, β, Ω2, F₀, ∂ₜF₀, kernel)
 solver = FuchsSolver(verbose=false, N=16, tolerance=10^-8, max_iterations=10^8)
 sol = solve(problem, solver)
 ik = 19
@@ -309,6 +309,32 @@ plot!(log10.(t), getindex.(sol[ik], 2,2)/Sₖ[ik][2,2], ls=:dash, lw=2, color=4,
 ```
 
 ![image](images/MCMCTKernel.png)
+
+### Tagged multi-compontent mode-coupling theory
+
+The tagged multi-component mode-coupling theory equation reads
+
+$$\dot{F}_{s}(k,t) + \Omega_s^2(k)F_{s}(k,t) + \int_0^td\tau K_{s}(t-\tau, k)\dot{F}_{s}(k, \tau)=0$$
+ 
+for a particle of species $s$ in which $\Omega_{s}^2 = k^2 k_B T/m_s$. The memory kernel is given by
+
+$$K_{s}(k,t) =\frac{k_B T \rho}{k^3m_s (2\pi)^3} \sum_{\alpha\beta}\int d\mathbf{q} \left(\textbf{k}\cdot\textbf{q}\right)F_{\alpha\beta}(q, t)F_{s}(|\mathbf{k}-\mathbf{q}|,t)$$. Here $F_{s}$ is the tagged correlator, with initial condition $F_{s}(t=0)=1$, and $F_{\alpha\beta}$ is the collective correlator which can be obtained as explained in the previous section.
+
+#### Example
+```julia 
+# we look for the tagged correlator of the second species.
+s = 2
+α = 1.0
+β = 0.0
+γ = [kBT * k_array[ik]^2 ./ m[s] for ik = 1:Nk]
+F0 = [1.0 for ik = 1:Nk]
+dF0 = [0.0 for ik = 1:Nk]
+
+taggedkernel = TaggedMultiComponentModeCouplingKernel(s, ρ, kBT, m, k_array, Sₖ, sol);
+taggedSystem = LinearMCTEquation(α, β, γ, F0, dF0, taggedkernel);
+taggedsol = solve(taggedSystem, solverFuchs)
+```
+In order to solve the tagged particle equation for all species, one should loop over the above code, changing specie index $s$ from 1 to the number of species.
 
 ## Defining custom kernels
 
@@ -352,7 +378,7 @@ p = plot(log10.(sol.t), sol.F, ylims=(0,1), ylabel="F(t)", xlabel="log10(t)")
 
 ### Example 2
 
-For a slightly more complex example, let's define the tagged-particle mode-coupling theory memory kernel. The equation is given by:
+For a slightly more complex example, let's define the tagged-particle mode-coupling theory memory kernel (say we forgot that it is also a built-in kernel). The equation is given by:
 
 $$\ddot{F}_s(k,t) + \frac{k^2 k_BT}{m} F_s(k,t) + \int_0^t d\tau K(k, t-\tau)\dot{F}_s(k, \tau)=0,$$
 

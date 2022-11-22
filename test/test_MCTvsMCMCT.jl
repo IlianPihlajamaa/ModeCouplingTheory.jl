@@ -42,7 +42,7 @@ F0 = copy(Sₖ)
 γ = @. k_array^2*kBT/(m*Sₖ)
 
 
-kernelnaive = ModeCouplingTheory.NaiveMultiComponentModeCouplingKernel([ρ], kBT, [m], k_array, [@SMatrix([Sₖ[ik]]) for ik = 1:N])
+kernelnaive = NaiveMultiComponentModeCouplingKernel([ρ], kBT, [m], k_array, [@SMatrix([Sₖ[ik]]) for ik = 1:N])
 kernelMCMCT = MultiComponentModeCouplingKernel([ρ], kBT, [m], k_array, [@SMatrix([Sₖ[ik]]) for ik = 1:N])
 kernelMCT = ModeCouplingKernel(ρ, kBT,m, k_array, Sₖ)
 

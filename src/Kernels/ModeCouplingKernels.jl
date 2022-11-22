@@ -197,7 +197,7 @@ struct TaggedModeCouplingKernel{F, V, M2, M, T5, FF} <: MemoryKernel
 end
 
 """
-TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
+TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
 
 Constructor of a Tagged ModeCouplingKernel. It implements the kernel
 K(k,t) = ρ kBT / (8π^3m) ∫dq V^2(k,q) F(q,t) Fs(k-q,t)
@@ -210,6 +210,7 @@ in which k and q are vectors.
 * `m` : particle mass
 * `k_array`: vector of wavenumbers at which the structure factor is known
 * `Sₖ`: vector with the elements of the structure factor 
+* `sol`: a solution object of an equation with a ModeCouplingKernel.
 
 # Returns:
 

@@ -1,13 +1,13 @@
 
 function bengtzelius3!(T1, T2, T3, A1, A2, A3, Nk, Ns)
     @assert size(T1) == size(T2) == size(T3) == (Nk,)
-    @assert size(T1[1]) == size(T2[1]) == size(T3[1]) == (Ns,Ns)
+    @assert size(T1[1]) == size(T2[1]) == size(T3[1]) == (Ns, Ns)
     @assert size(A1) == size(A2) == size(A3) == (Ns, Ns, Nk, Nk)
 
     T01 = zero(eltype(T1))
     T02 = zero(eltype(T2))
     T03 = zero(eltype(T3))
-    @inbounds @views  for iq = 1:Nk
+    @inbounds @views for iq = 1:Nk
         T01 += A1[:, :, iq, iq]
         T02 += A2[:, :, iq, iq]
         T03 += A3[:, :, iq, iq]
@@ -15,18 +15,18 @@ function bengtzelius3!(T1, T2, T3, A1, A2, A3, Nk, Ns)
     T1[1] = T01
     T2[1] = T02
     T3[1] = T03
-    
+
     @inbounds @views for ik = 2:Nk
         Tik1 = T1[ik-1]
         Tik2 = T2[ik-1]
         Tik3 = T3[ik-1]
-        for iq = 1:(Nk - ik + 1)
+        for iq = 1:(Nk-ik+1)
             ip = iq + ik - 1
-            Tik1 += A1[:, :, iq, ip] 
+            Tik1 += A1[:, :, iq, ip]
             Tik1 += A1[:, :, ip, iq]
-            Tik2 += A2[:, :, iq, ip] 
+            Tik2 += A2[:, :, iq, ip]
             Tik2 += A2[:, :, ip, iq]
-            Tik3 += A3[:, :, iq, ip] 
+            Tik3 += A3[:, :, iq, ip]
             Tik3 += A3[:, :, ip, iq]
         end
         for iq = 1:ik-1
@@ -102,7 +102,7 @@ function MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
     Cₖ = similar(Sₖ)
     δαβ = Matrix(I(Ns))
     for i = 1:Nk
-        Cₖ[i] = (δαβ./x - S⁻¹[i]) /ρ_all
+        Cₖ[i] = (δαβ ./ x - S⁻¹[i]) / ρ_all
     end
 
     T1 = similar(Cₖ)
@@ -119,7 +119,7 @@ function MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
     prefactor = zeros(T, Ns, Ns)
     for α = 1:Ns
         for β = 1:Ns
-            prefactor[α, β] = ρ_all * kBT / (2 * m[α] * x[β]) * (Δk / 2 / π)^2
+            prefactor[α, β] = ρ_all * kBT / (8 * m[α] * x[β]) * (Δk / 2 / π)^2
         end
     end
 
@@ -131,7 +131,7 @@ end
 function fill_A!(kernel::MultiComponentModeCouplingKernel, F)
 
     Nk = kernel.Nk
-    Ns = size(F[1],1)
+    Ns = size(F[1], 1)
     k_array = kernel.k_array
     C = kernel.C
     prefactor = kernel.prefactor
@@ -139,8 +139,13 @@ function fill_A!(kernel::MultiComponentModeCouplingKernel, F)
     A1 = kernel.A1
     A2 = kernel.A2
     A3 = kernel.A3
-    @inbounds @fastmath for α = 1:Ns
+    x = kernel.ρ/sum(kernel.ρ)
+    m = kernel.m
+    @fastmath @inbounds for α = 1:Ns
         for β = 1:Ns
+            # if β > α 
+            #     continue
+            # end
             prefactor_αβ = prefactor[α, β]
             for iq = 1:Nk
                 q = k_array[iq]
@@ -153,21 +158,27 @@ function fill_A!(kernel::MultiComponentModeCouplingKernel, F)
                     A2αβqp = zero(eltype(A2))
                     A3αβqp = zero(eltype(A3))
                     p = k_array[ip]
-                    A_prefactor1 = p * q / 4
-                    A_prefactor2 = p * q / 4 * (p^2 - q^2)^2
-                    A_prefactor3 = p * q / 2 * (p^2 - q^2)
+                    A_prefactor1 = p * q
+                    A_prefactor2 = p * q * (p^2 - q^2)^2
+                    A_prefactor3 = 2 * p * q * (p^2 - q^2)
                     # We sum over 2 dummy indices. dummy1 is always the primed variable (mu', nu') 
                     # and dummy2 is the unprimed counterpart.
-                    for dummy1 = 1:Ns 
+                    fqab = Fq[α, β]
+                    fpab = Fp[α, β]
+                    for dummy1 = 1:Ns
+                        cp1a = Cp[dummy1, α]
+                        cq1a = Cq[dummy1, α]
+                        fq1b = Fq[dummy1, β]
+                        fp1b = Fp[dummy1, β]
                         for dummy2 = 1:Ns
-                            V_dummy1dummy2αβ_pp = Cp[dummy1, α] * Cp[dummy2, β]
-                            V_dummy1dummy2αβ_pq = Cp[dummy1, α] * Cq[dummy2, β]
-                            V_dummy1dummy2αβ_qp = Cq[dummy1, α] * Cp[dummy2, β]
-                            V_dummy1dummy2αβ_qq = Cq[dummy1, α] * Cq[dummy2, β]
-                            term1 = V_dummy1dummy2αβ_pp * Fq[α, β]           * Fp[dummy1, dummy2]
-                            term2 = V_dummy1dummy2αβ_pq * Fq[α, dummy2]      * Fp[dummy1, β]
-                            term3 = V_dummy1dummy2αβ_qp * Fq[dummy1, β]      * Fp[α, dummy2]
-                            term4 = V_dummy1dummy2αβ_qq * Fq[dummy1, dummy2] * Fp[α, β]
+                            V_dummy1dummy2αβ_pp = cp1a * Cp[dummy2, β]
+                            V_dummy1dummy2αβ_pq = cp1a * Cq[dummy2, β]
+                            V_dummy1dummy2αβ_qp = cq1a * Cp[dummy2, β]
+                            V_dummy1dummy2αβ_qq = cq1a * Cq[dummy2, β]
+                            term1 = V_dummy1dummy2αβ_pp * fqab * Fp[dummy1, dummy2]
+                            term2 = V_dummy1dummy2αβ_pq * Fq[α, dummy2] * fp1b
+                            term3 = V_dummy1dummy2αβ_qp * fq1b * Fp[α, dummy2]
+                            term4 = V_dummy1dummy2αβ_qq * Fq[dummy1, dummy2] * fpab
                             A1αβqp += term1 + term2 + term3 + term4
                             A2αβqp += term1 - term2 - term3 + term4
                             A3αβqp += term1 - term4
@@ -180,6 +191,7 @@ function fill_A!(kernel::MultiComponentModeCouplingKernel, F)
             end
         end
     end
+
 end
 
 function evaluate_kernel!(out::Diagonal, kernel::MultiComponentModeCouplingKernel, F::Vector, t)
@@ -209,26 +221,57 @@ function evaluate_kernel(kernel::MultiComponentModeCouplingKernel, F::Vector, t)
     return out
 end
 
-struct NaiveMultiComponentModeCouplingKernel{F,AF1,AF2,AF3,AF4, AS1} <: MemoryKernel
-    ρ::AF1
+struct TaggedMultiComponentModeCouplingKernel{F,V,M2,M,T5,FF, V1, FFF} <: MemoryKernel
+    s::Int
+    ρ::V1
     kBT::F
-    m::AF1
+    m::V1
     Nk::Int
-    Ns::Int
-    k_array::AF1
-    prefactor::AF2
-    C::AS1
-    P::AF3
-    V::AF4
+    k_array::V
+    Ck::FF
+    A1::M2
+    A2::M2
+    A3::M2
+    T1::V
+    T2::V
+    T3::V
+    V1::M
+    V2::M
+    V3::M
+    tDict::T5
+    F::FFF
 end
 
-function NaiveMultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
+"""
+TaggedMultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
+
+Constructor of a Tagged ModeCouplingKernel. It implements the kernel
+K(k,t) = ρ kBT / (8π^3 mₛ) Σαβ ∫dq V^2sαβ(k,q) Fαβ(q,t) Fₛ(k-q,t)
+in which k and q are vectors. 
+
+# Arguments:
+
+* `s`: index of the sepcies to tag
+* `ρ`: number density
+* `kBT`: Thermal energy
+* `m` : particle mass
+* `k_array`: vector of wavenumbers at which the structure factor is known
+* `Sₖ`: vector with the elements of the structure factor 
+* `sol`: a solution object of an equation with a MultiComponentModeCouplingKernel.
+
+# Returns:
+
+an instance `k` of `TaggedMultiComponentModeCouplingKernel <: MemoryKernel`, which can be called both in-place and out-of-place:
+`k`(out, F, t)
+out = `k`(F, t)
+"""
+function TaggedMultiComponentModeCouplingKernel(s::Int, ρ, kBT, m, k_array, Sₖ, sol)
+    tDict = Dict(zip(sol.t, eachindex(sol.t)))
     Nk = length(k_array)
     Ns = size(Sₖ[1], 2)
     @assert size(Sₖ) == (Nk,)
     @assert size(Sₖ[1]) == (Ns, Ns)
     @assert size(m) == size(ρ) == (Ns,)
-
     T = promote_type(eltype(Sₖ[1]), eltype(k_array), eltype(ρ), typeof(kBT), eltype(m))
     ρ, kBT, m = T.(ρ), T(kBT), T.(m)
     k_array = T.(k_array)
@@ -238,61 +281,109 @@ function NaiveMultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 
     ρ_all = sum(ρ)
     x = ρ / sum(ρ)
-
     S⁻¹ = inv.(Sₖ)
-    
     Cₖ = similar(Sₖ)
     δαβ = Matrix(I(Ns))
     for i = 1:Nk
-        Cₖ[i] = (δαβ./x - S⁻¹[i]) /ρ_all
+        Cₖ[i] = (δαβ ./ x - S⁻¹[i]) / ρ_all
     end
 
-    prefactor = zeros(T, Ns, Ns)
-    for α = 1:Ns
-        for β = 1:Ns
-            prefactor[α, β] = ρ_all * kBT / (2 * m[α] * x[β]) * (Δk / 2 / π)^2
+    T1 = similar(k_array)
+    T2 = similar(k_array)
+    T3 = similar(k_array)
+    A1 = similar(k_array, (Nk, Nk))
+    A2 = similar(k_array, (Nk, Nk))
+    A3 = similar(k_array, (Nk, Nk))
+    V1 = similar(k_array, (Nk, Nk))
+    V2 = similar(k_array, (Nk, Nk))
+    V3 = similar(k_array, (Nk, Nk)) 
+    prefactor = kBT * Δk^2 * ρ_all / (4 * m[s] * (2π)^2)
+    for iq = 1:Nk
+        for ip = 1:Nk
+
+            p = k_array[ip]
+            q = k_array[iq]
+
+            V1[iq, ip] = prefactor * p * q
+            V2[iq, ip] = prefactor * p * q * (q^2 - p^2)^2
+            V3[iq, ip] = prefactor * 2 * p * q * (q^2 - p^2)
+
         end
     end
-
-    P = zeros(T, Ns, Ns, Nk)
-
-    V = zeros(T, Ns, Ns, Ns, Nk, Nk, Nk)
-    for α = 1:Ns, β = 1:Ns, γ = 1:Ns, ik = 1:Nk, iq = 1:Nk, ip = 1:Nk
-        q = k_array[iq]
-        p = k_array[ip]
-        k = k_array[ik]
-        δβγ = I[β, γ]
-        δαγ = I[α, γ]
-        cαγ_q = Cₖ[iq][α, γ]
-        cβγ_p = Cₖ[ip][β, γ]
-        if abs(iq - ik) + 1 <= ip <= min(Nk, ik + iq - 1)
-            V[α, β, γ, iq, ip, ik] = 1 / (2k) * ((k^2 + q^2 - p^2) * δβγ * cαγ_q + (k^2 + p^2 - q^2) * δαγ * cβγ_p)
+    # converting c and F to base arrays so that LoopVectorization can use them
+    c = zeros(T, Ns, Ns, Nk)
+    Fc = [zeros(T, Ns, Ns, Nk) for i in eachindex(sol.F)]
+    for a=1:Ns, b = 1:Ns, ik=1:Nk
+        c[a,b,ik] = Cₖ[ik][a,b]
+        for i = eachindex(sol.F)
+            Fc[i][a,b,ik] = sol.F[i][ik][a,b]
         end
     end
-    kernel = NaiveMultiComponentModeCouplingKernel(ρ, kBT, m, Nk, Ns, k_array, prefactor, Cₖ, P, V)
+    # c = reshape(reinterpret(reshape, eltype(eltype(Cₖ)), Cₖ),Ns,Ns,Nk)
+    # Fc = [reshape(reinterpret(reshape, eltype(eltype(F)), F),Ns,Ns,Nk) for F in sol.F]
+    kernel = TaggedMultiComponentModeCouplingKernel(s, ρ, kBT, m, Nk, k_array, c, A1, A2, A3, T1, T2, T3, V1, V2, V3, tDict, Fc)
 
     return kernel
 end
 
-function evaluate_kernel!(out::Diagonal, kernel::NaiveMultiComponentModeCouplingKernel, F::Vector, t)
-    V = kernel.V
-    k_array = kernel.k_array
-
+function fill_A!(kernel::TaggedMultiComponentModeCouplingKernel, F, t)
+    A1 = kernel.A1
+    A2 = kernel.A2
+    A3 = kernel.A3
+    V1 = kernel.V1
+    V2 = kernel.V2
+    V3 = kernel.V3
     Nk = kernel.Nk
-    Ns = kernel.Ns
-
-    prefactor = kernel.prefactor
-
-    @inbounds for α = 1:Ns, β = 1:Ns, μ2 = 1:Ns, μ = 1:Ns, ν2 = 1:Ns, ν = 1:Ns, ik = 1:Nk, iq = 1:Nk, ip = 1:Nk
-        kernel.P[α, β, ik] += prefactor[α, β] * k_array[ip] * k_array[iq] * V[μ2, ν2, α, iq, ip, ik] * F[iq][μ2, μ] * F[ip][ν2, ν] * V[μ, ν, β, iq, ip, ik] / k_array[ik]
-    end
-    for ik = 1:Nk
-        @views out.diag[ik] = kernel.P[:, :, ik]
+    it = kernel.tDict[t]
+    Fc = kernel.F[it]
+    Ns = size(Fc, 1)
+    Ck = kernel.Ck
+    s = kernel.s
+    @turbo for iq = 1:Nk
+        for ip = 1:Nk
+            fp = F[ip]
+            A1new = zero(eltype(A1))
+            A2new = zero(eltype(A2))
+            A3new = zero(eltype(A3))
+            for α = 1:Ns
+                for β = 1:Ns
+                    csα_q = Ck[s, α, iq]
+                    csβ_q = Ck[s, β, iq]
+                    fq = Fc[α, β, iq]
+                    f4c2 = fp * fq * csα_q * csβ_q
+                    A1new += V1[iq, ip] * f4c2
+                    A2new += V2[iq, ip] * f4c2
+                    A3new += V3[iq, ip] * f4c2
+                end
+            end
+            A1[iq, ip] = A1new
+            A2[iq, ip] = A2new
+            A3[iq, ip] = A3new
+        end
     end
 end
 
-function evaluate_kernel(kernel::NaiveMultiComponentModeCouplingKernel, F::Vector, t)
-    out = Diagonal(similar(F))
-    evaluate_kernel!(out, kernel, F, t)
+function evaluate_kernel!(out::Diagonal, kernel::TaggedMultiComponentModeCouplingKernel, Fs, t)
+    A1 = kernel.A1
+    A2 = kernel.A2
+    A3 = kernel.A3
+    T1 = kernel.T1
+    T2 = kernel.T2
+    T3 = kernel.T3
+    k_array = kernel.k_array
+
+    Nk = kernel.Nk
+    fill_A!(kernel, Fs, t)
+    bengtzelius3!(T1, T2, T3, A1, A2, A3, Nk)
+
+    @inbounds for ik = 1:Nk
+        k = k_array[ik]
+        out.diag[ik] = k * kernel.T1[ik] + kernel.T2[ik] / k^3 + kernel.T3[ik] / k
+    end
+end
+
+function evaluate_kernel(kernel::TaggedMultiComponentModeCouplingKernel, Fs, t)
+    out = Diagonal(similar(Fs)) # we need it to produce a diagonal matrix
+    evaluate_kernel!(out, kernel, Fs, t) # call the inplace version
     return out
 end

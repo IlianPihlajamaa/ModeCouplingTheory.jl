@@ -6,6 +6,7 @@ using DelimitedFiles
 using StaticArrays
 using LinearAlgebra
 using SparseArrays
+using QuadGK
 
 
 for target in ["scalar", "vector", "MCT", "MCMCT", "MCTvsMCMCT", "relaxationtime", "steady_state", "differentiation", "interpolating_kernel", "tagged"]

@@ -204,6 +204,7 @@ function mymul!(c::Vector{SMatrix{Ns,Ns,T,Ns2}}, a::UniformScaling, b::Vector{SM
     end
 end
 
+
 function mymul!(c::Vector{SMatrix{Ns,Ns,T,Ns2}}, a::Diagonal{SMatrix{Ns,Ns,T,Ns2},Vector{SMatrix{Ns,Ns,T,Ns2}}}, b::Vector{SMatrix{Ns,Ns,T,Ns2}}, α::Number, β::Number) where {Ns,Ns2,T}
     α2 = T(α)
     β2 = T(β)
@@ -503,17 +504,19 @@ function new_time_mapping!(equation::MCTEquation, solver::FuchsSolver, temp_arra
     solver.Δt *= 2
 end
 
-function log_results(solver, p)
+function log_results(solver, temp_arrays)
     if solver.verbose
-        next!(p)
+        @printf("elapsed time = %5.2fs, t = %6.2e / %5.2e, kernel evals = %i.\n",
+        time()-temp_arrays.start_time,
+        solver.Δt,
+        solver.t_max, 
+        solver.kernel_evals)
     end
 end
-
 
 function convertresults(F_array::Vector{<:Number}, K_array::Vector{<:Number})
     return F_array, K_array
 end
-
 
 """
     convertresults(F_array::Vector{T}, K_array::Vector{Diagonal{T, T2}}) where {T2, T}
@@ -545,8 +548,6 @@ function initialize_output_arrays(equation::MCTEquation)
     return typeof(0.0)[0.0], typeof(equation.F₀)[equation.F₀], typeof(equation.K₀)[equation.K₀]
 end
 
-is_logging(io) = isa(io, Base.TTY) == false || (get(ENV, "CI", nothing) == "true")
-
 function solve(equation::MCTEquation, solver::FuchsSolver)
     # Documented in src/Solvers.jl
     kernel = equation.kernel
@@ -557,14 +558,12 @@ function solve(equation::MCTEquation, solver::FuchsSolver)
     startΔt = solver.Δt
     solver.kernel_evals = 1
 
-    # for the progressbar: (turns off in non-interactive environments such as on a HPC)
-    p = Progress(ceil(Int, log2(solver.t_max / solver.Δt)); output=stderr, enabled=!is_logging(stderr))
 
     # main loop of the algorithm
     while solver.Δt < solver.t_max * 2
         do_time_steps!(equation, solver, kernel, temp_arrays)
         allocate_results!(t_array, F_array, K_array, solver, temp_arrays)
-        log_results(solver, p)
+        log_results(solver, temp_arrays)
         new_time_mapping!(equation, solver, temp_arrays)
     end
     solver.Δt = startΔt
