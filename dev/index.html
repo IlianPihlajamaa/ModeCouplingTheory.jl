@@ -4,10 +4,16 @@ Pkg.add(&quot;ModeCouplingTheory&quot;)</code></pre><h1 id="Example"><a class="d
 julia&gt; λ = 3.999
 3.999
 julia&gt; kernel = SchematicF2Kernel(λ)
-SchematicF2Kernel{Float64}(3.999)</code></pre><p>This kernel evaluates <span>$K(t)=\lambda F(t)^2$</span>.</p><p>We can now define the equation we want to solve as follows:</p><pre><code class="nohighlight hljs">julia&gt; α = 1.0; β = 0.0; γ = 2.0; F0 = 1.0; ∂F0 = 0.0;
-julia&gt; problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
-LinearMCTEquation{Float64, Float64, Float64, Float64, Float64}(1.0, 0.0, 2.0, 1.0, 0.0, 3.999, Float64, Float64, Float64)</code></pre><p>and a solver:</p><pre><code class="language-julia hljs">julia&gt; solver = FuchsSolver(problem)</code></pre><p>Now we can solve the equation by calling <code>solve</code>:</p><pre><code class="language-julia hljs">julia&gt; using Plots
-julia&gt; sol = solve(problem, solver);
+SchematicF2Kernel{Float64}(3.999)</code></pre><p>This kernel evaluates <span>$K(t)=\lambda F(t)^2$</span>.</p><p>We can now define the equation we want to solve as follows:</p><pre><code class="nohighlight hljs">julia&gt; α = 1.0; β = 0.0; γ = 2.0; δ = 0.0; F0 = 1.0; ∂F0 = 0.0;
+julia&gt; equation = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
+Linear MCT equation object:
+   α F̈ + β Ḟ + γF + δ + ∫K(τ)Ḟ(t-τ) = 0
+in which α is a Float64,
+         β is a Float64,
+         γ is a Float64,
+         δ is a Float64,
+  and K(t) is a SchematicF2Kernel{Float64}.</code></pre><p>and a solver:</p><pre><code class="language-julia hljs">julia&gt; solver = FuchsSolver()</code></pre><p>Now we can solve the equation by calling <code>solve</code>:</p><pre><code class="language-julia hljs">julia&gt; using Plots
+julia&gt; sol = solve(equation, solver);
 julia&gt; plot(log10.(sol.t), sol.F)</code></pre><p><img src="images/readmefig.png" alt="image"/></p><p>Full copy-pastable example:</p><pre><code class="nohighlight hljs">using ModeCouplingTheory, Plots
 ν = 3.999
 α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
@@ -15,4 +21,4 @@ kernel = SchematicF2Kernel(ν)
 problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
 solver = FuchsSolver(problem)
 sol = solve(problem, solver);
-plot(log10.(sol.t), sol.F)</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="Problems_and_Solvers.html">Problems and Solvers »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Wednesday 23 November 2022 08:31">Wednesday 23 November 2022</span>. Using Julia version 1.8.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+plot(log10.(sol.t), sol.F)</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="Problems_and_Solvers.html">Problems and Solvers »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Wednesday 23 November 2022 12:26">Wednesday 23 November 2022</span>. Using Julia version 1.8.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
