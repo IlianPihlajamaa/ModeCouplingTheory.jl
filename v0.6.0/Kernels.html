@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Kernels · ModeCouplingTheory</title><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="index.html">ModeCouplingTheory</a></span></div><form class="docs-search" action="search.html"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="index.html">Introduction</a></li><li><a class="tocitem" href="Problems_and_Solvers.html">Problems and Solvers</a></li><li class="is-active"><a class="tocitem" href="Kernels.html">Kernels</a><ul class="internal"><li><a class="tocitem" href="#Schematic-Kernels"><span>Schematic Kernels</span></a></li><li><a class="tocitem" href="#Mode-Coupling-Theory"><span>Mode-Coupling Theory</span></a></li><li><a class="tocitem" href="#Multi-component-Mode-Coupling-Theory"><span>Multi-component Mode-Coupling Theory</span></a></li><li><a class="tocitem" href="#Defining-custom-kernels"><span>Defining custom kernels</span></a></li><li><a class="tocitem" href="#Bengtzelius&#39;-Trick"><span>Bengtzelius&#39; Trick</span></a></li></ul></li><li><a class="tocitem" href="Scope.html">Scope</a></li><li><a class="tocitem" href="FromPython.html">From Python</a></li><li><a class="tocitem" href="internals.html">Internals</a></li><li><a class="tocitem" href="API.html">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href="Kernels.html">Kernels</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href="Kernels.html">Kernels</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/IlianPihlajamaa/ModeCouplingTheory.jl/blob/main/docs/src/Kernels.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Kernels"><a class="docs-heading-anchor" href="#Kernels">Kernels</a><a id="Kernels-1"></a><a class="docs-heading-anchor-permalink" href="#Kernels" title="Permalink"></a></h1><p>A memory kernel <code>kernel</code> is an instance of a type of which <code>MemoryKernel</code> is a supertype. It can be called like <code>out = evaluate_kernel(kernel, F, t)</code>. Additionally, when <code>F</code> is a mutable container like a <code>Vector</code>, it can be called like <code>evaluate_kernel!(out, kernel, F, t)</code> in which case it will mutate the elements of the temporary array <code>out</code>. Below we list the memory kernels that this package defines and give some examples of how to use them.</p><h2 id="Schematic-Kernels"><a class="docs-heading-anchor" href="#Schematic-Kernels">Schematic Kernels</a><a id="Schematic-Kernels-1"></a><a class="docs-heading-anchor-permalink" href="#Schematic-Kernels" title="Permalink"></a></h2><p>This package includes a couple of schematic memory kernels.</p><h3 id=".-ExponentiallyDecayingKernel"><a class="docs-heading-anchor" href="#.-ExponentiallyDecayingKernel">1. <code>ExponentiallyDecayingKernel</code></a><a id=".-ExponentiallyDecayingKernel-1"></a><a class="docs-heading-anchor-permalink" href="#.-ExponentiallyDecayingKernel" title="Permalink"></a></h3><p>The <code>ExponentiallyDecayingKernel</code> implements the kernel <span>$K(t) = λ \exp(-t/τ)$</span>. It has fields <code>λ &lt;: Number</code> and <code>τ &lt;: Number</code>.</p><h4 id="Example"><a class="docs-heading-anchor" href="#Example">Example</a><a id="Example-1"></a><a class="docs-heading-anchor-permalink" href="#Example" title="Permalink"></a></h4><p>The integro-differential equation with this memory kernel actually has an analytic solution for <span>$\tau=1$</span>, <span>$\alpha=0$</span> , <span>$\beta=1$</span>, and <span>$\gamma=1$</span>. It is given by</p><p class="math-container">\[F(t) = \frac{e^{-\frac{t}{2}\left( \lambda + \sqrt{\lambda(\lambda+4)} + 2\right)}}{2 \sqrt{\lambda  (\lambda +4)}}\left(\sqrt{\lambda(\lambda+4)} \left(e^{\sqrt{\lambda(\lambda+4)} t}+1\right)+\lambda  \left(e^{\sqrt{\lambda(\lambda+4)} t}-1\right)\right)\]</p><pre><code class="language-julia hljs">F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; δ = 0.0; λ = 1.0; τ = 1.0;
+
+kernel = ExponentiallyDecayingKernel(λ, τ)
+problem = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
+solver = FuchsSolver(Δt=10^-3, t_max=10.0^2, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
+sol =  solve(problem, solver)
+
+t_analytic = 10 .^ range(-3, 2, length=50)
+F_analytic = @. (exp(-0.5*(3+sqrt(5))* t_analytic)*(exp(sqrt(5)*t_analytic) * (1+sqrt(5))-1+sqrt(5)))/(2sqrt(5))
+
+using Plots
+p = plot(log10.(sol.t), sol.F, label=&quot;Numeric solution&quot;, lw=3)
+scatter!(log10.(t_analytic), F_analytic, label=&quot;Exact solution&quot;, ylabel=&quot;F&quot;, xlabel=&quot;log10(t)&quot;)</code></pre><p><img src="images/exponentKernel.png" alt="image"/></p><h3 id="SchematicF1Kernel"><a class="docs-heading-anchor" href="#SchematicF1Kernel"><code>SchematicF1Kernel</code></a><a id="SchematicF1Kernel-1"></a><a class="docs-heading-anchor-permalink" href="#SchematicF1Kernel" title="Permalink"></a></h3><p>The <code>SchematicF1Kernel</code> implements the kernel <span>$K(t) = ν F(t)$</span>. It has one field <code>ν &lt;: Number</code>.</p><h4 id="Example-2"><a class="docs-heading-anchor" href="#Example-2">Example</a><a class="docs-heading-anchor-permalink" href="#Example-2" title="Permalink"></a></h4><p>The integro-differential equation with this memory kernel also has an analytic solution for <span>$\alpha=0$</span> , <span>$\beta=1$</span>, and <span>$\nu=1$</span>. It is given by</p><p class="math-container">\[F(t) =  e^{-2t}\left(I_0(2t) + I_1(2t) \right)\]</p><p>in which <span>$I_k$</span> are modified Bessel functions of the first kind.</p><pre><code class="language-julia hljs">F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; ν = 1.0
+
+kernel = SchematicF1Kernel(ν)
+problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
+solver = FuchsSolver(Δt=10^-3, t_max=10.0^2, verbose=false, N = 100, tolerance=10^-14, max_iterations=10^6)
+sol =  solve(problem, solver)
+
+using Plots, SpecialFunctions
+t_analytic = 10 .^ range(-3, 2, length=50)
+F_analytic = @. exp(-2*t_analytic)*(besseli(0, 2t_analytic) + besseli(1, 2t_analytic))
+plot(log10.(sol.t), sol.F, label=&quot;Numerical Solution&quot;, ylabel=&quot;F&quot;, xlabel=&quot;log10(t)&quot;, lw=3)
+scatter!(log10.(t_analytic), F_analytic, label=&quot;Exact Solution&quot;)</code></pre><p><img src="images/F1Kernel.png" alt="image"/></p><h3 id="SchematicF2Kernel"><a class="docs-heading-anchor" href="#SchematicF2Kernel"><code>SchematicF2Kernel</code></a><a id="SchematicF2Kernel-1"></a><a class="docs-heading-anchor-permalink" href="#SchematicF2Kernel" title="Permalink"></a></h3><p>The <code>SchematicF2Kernel</code> implements the kernel <span>$K(t) = ν F(t)^2$</span>. It has one field <code>ν &lt;: Number</code>.</p><h3 id="SchematicF123Kernel"><a class="docs-heading-anchor" href="#SchematicF123Kernel"><code>SchematicF123Kernel</code></a><a id="SchematicF123Kernel-1"></a><a class="docs-heading-anchor-permalink" href="#SchematicF123Kernel" title="Permalink"></a></h3><p>The <code>SchematicF123Kernel</code> implements the kernel <span>$K(t) = \nu_1 F(t) + \nu_2 F(t)^2 + \nu_3 F(t)^3$</span>. It has fields <code>ν1 &lt;: Number</code>, <code>ν2 &lt;: Number</code>, and <code>ν3 &lt;: Number</code>.</p><h4 id="Example-3"><a class="docs-heading-anchor" href="#Example-3">Example</a><a class="docs-heading-anchor-permalink" href="#Example-3" title="Permalink"></a></h4><pre><code class="language-julia hljs">kernel = SchematicF123Kernel(3.0, 2.0, 1.0);
+F = 2; t = 0;
+evaluate_kernel(kernel, F, t) # returns 22.0 = 3*2^1 + 2*2^2 + 1*2^3</code></pre><h3 id="InterpolatingKernel"><a class="docs-heading-anchor" href="#InterpolatingKernel"><code>InterpolatingKernel</code></a><a id="InterpolatingKernel-1"></a><a class="docs-heading-anchor-permalink" href="#InterpolatingKernel" title="Permalink"></a></h3><p>The <code>InterpolatingKernel</code> implements a kernel that interpolates memory kernel data. It is initialized by calling <code>kernel = InterpolatingKernel(t, M, k=k)</code> where t is a <code>Vector</code> of time points, <code>M</code> is a vector of corresponding memory kernel values, and <code>k</code> is the integer degree of polynomial interpolation (default=1). This kernel is implemented using <code>Dierckx.Spline1D</code>. See <a href="https://github.com/kbarbary/Dierckx.jl">Dierckx.jl</a> for more information.</p><h3 id="SchematicDiagonalKernel"><a class="docs-heading-anchor" href="#SchematicDiagonalKernel"><code>SchematicDiagonalKernel</code></a><a id="SchematicDiagonalKernel-1"></a><a class="docs-heading-anchor-permalink" href="#SchematicDiagonalKernel" title="Permalink"></a></h3><p>The <code>SchematicDiagonalKernel</code> implements the kernel <span>$K_{ij}(t) = \delta_{ij} \nu_i F_i(t)^2$</span>. It has one field <code>ν</code> which must be either a <code>Vector</code> or an <code>SVector</code>. When called, it returns <code>Diagonal(ν .* F .^ 2)</code>, i.e., it implements a non-coupled system of <code>SchematicF2Kernels</code>.</p><h3 id="SchematicMatrixKernel"><a class="docs-heading-anchor" href="#SchematicMatrixKernel"><code>SchematicMatrixKernel</code></a><a id="SchematicMatrixKernel-1"></a><a class="docs-heading-anchor-permalink" href="#SchematicMatrixKernel" title="Permalink"></a></h3><p>The <code>SchematicMatrixKernel</code> implements the kernel <span>$K_{ij}(t) = \sum_k \nu_{ij} F_k(t) F_j(t)$</span>. It has one field <code>ν</code> which must be either a <code>Matrix</code> or an <code>SMatrix</code>. </p><h3 id="SjogrenKernel"><a class="docs-heading-anchor" href="#SjogrenKernel"><code>SjogrenKernel</code></a><a id="SjogrenKernel-1"></a><a class="docs-heading-anchor-permalink" href="#SjogrenKernel" title="Permalink"></a></h3><p>The <code>SjogrenKernel</code> implements the kernel <span>$K_{1}(t) = \nu_1 F_1(t)^2$</span>, <span>$K_{2}(t) = \nu_2 F_1(t) F_2(t)$</span>. It has two fields <code>ν1</code> and <code>ν2</code> which must both be of the same type. Consider using Static Vectors for performance.</p><p>Example:</p><pre><code class="language-julia hljs">using StaticArrays
+α = 1.0
+β = 0.0
+γ = 1.0
+δ = 0.0
+ν1 = 2.0
+ν2 = 1.0
+F0 = @SVector [1.0, 1.0]
+∂F0 = @SVector [0.0, 0.0]
+kernel = SjogrenKernel(ν1, ν2)
+eq = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
+sol = solve(eq)</code></pre><h3 id="TaggedSchematicF2Kernel"><a class="docs-heading-anchor" href="#TaggedSchematicF2Kernel"><code>TaggedSchematicF2Kernel</code></a><a id="TaggedSchematicF2Kernel-1"></a><a class="docs-heading-anchor-permalink" href="#TaggedSchematicF2Kernel" title="Permalink"></a></h3><p>The <code>TaggedSchematicF2Kernel</code> implements a memory kernel <span>$K(t) = \nu F(t) F_c(t)$</span>, where <span>$F_c(t)$</span> is a correlator that the tagged one couples to. It must be a solution of an earlier schematic MCT equation. Make sure to use the same solver settings for both solves. </p><p>Example:</p><pre><code class="language-julia hljs">F0 = 1.0
+∂F0 = 0.0
+α = 1.0
+β = 0.0
+γ = 1.0
+δ = 0.0
+ν1 = 2.0
+ν2 = 1.0
+kernel = SchematicF2Kernel(ν1)
+eq = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
+sol = solve(eq)
+
+taggedkernel = TaggedSchematicF2Kernel(ν2, sol)
+tagged_eq = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, taggedkernel)
+tagged_sol = solve(tagged_eq);</code></pre><p>This example is (less performantly) equivalent to the example of the Sjogren kernel above. </p><h2 id="Mode-Coupling-Theory"><a class="docs-heading-anchor" href="#Mode-Coupling-Theory">Mode-Coupling Theory</a><a id="Mode-Coupling-Theory-1"></a><a class="docs-heading-anchor-permalink" href="#Mode-Coupling-Theory" title="Permalink"></a></h2><p>The mode-coupling theory equation reads</p><p class="math-container">\[\ddot{F}(k,t) + \Omega(k)F(k,t) + \int_0^td\tau K(t-\tau, k)\dot{F}(k,\tau)=0\]</p><p>in which <span>$\Omega(k) = k^2 k_B T/mS(k)$</span>, and</p><p class="math-container">\[K(k,t) =\frac{\rho k_BT}{16\pi^3 m} \int d\mathbf{q} V(\mathbf{k}, \mathbf{q})^2F(q, t)F(|\mathbf{k}-\mathbf{q}|,t)\]</p><p>in which the vertex <span>$V(\textbf{k}, \textbf{q}) = (\textbf{k}\cdot\textbf{q})c(q)/k+(\textbf{k}\cdot(\textbf{k}-\textbf{q})c(|\textbf{k}-\textbf{q}|)/k$</span>. For more details and the meaning of the symbols, see [1, 2].</p><p>This memory kernel integral is discretised as follows:</p><p class="math-container">\[\int d\textbf{q}f(q, |\textbf{k}-\textbf{q}|) = 2\pi\int_0^\infty dq q^2 \int_0^\pi d\theta \sin \theta f(q, |\textbf{k}-\textbf{q}|) = \frac{2\pi}{k}\int_0^\infty dq \int_{|k-q|}^{k+q}dp pq f(q, p) \approx \frac{2\pi \Delta k^2}{k_i}\sum_{j=1}^{N_k} \sum_{l=|j-i|+1}^{j+i-1} \frac{p_l q_j}{k_i}f(q_j, p_l).\]</p><p>in which <span>$p = |\textbf{k}-\textbf{q}|$</span>, and wave numbers <span>$k$</span>, <span>$q$</span> and <span>$p$</span> are discretized on the equidistant grid <span>$k_i = (i_k-\frac{1}{2})\Delta k$</span> where <span>$i_k = 1, 2, 3, \ldots, N_k$</span>. The double sum is then performed for all <span>$k$</span> using Bengtzelius&#39; trick, yielding a fast <span>$O(N_k^2)$</span> algorithm.</p><h3 id="Example-4"><a class="docs-heading-anchor" href="#Example-4">Example</a><a class="docs-heading-anchor-permalink" href="#Example-4" title="Permalink"></a></h3><pre><code class="language-julia hljs">&quot;&quot;&quot;
+    find_analytical_C_k(k, η)
+Finds the direct correlation function given by the 
+analytical Percus-Yevick solution of the Ornstein-Zernike 
+equation for hard spheres for a given volume fraction η.
+
+Reference: Wertheim, M. S. &quot;Exact solution of the Percus-Yevick integral equation 
+for hard spheres.&quot; Physical Review Letters 10.8 (1963): 321.
+&quot;&quot;&quot; 
+function find_analytical_C_k(k, η)
+    A = -(1 - η)^-4 *(1 + 2η)^2
+    B = (1 - η)^-4*  6η*(1 + η/2)^2
+    D = -(1 - η)^-4 * 1/2 * η*(1 + 2η)^2
+    Cₖ = @. 4π/k^6 * 
+    (
+        24*D - 2*B * k^2 - (24*D - 2 * (B + 6*D) * k^2 + (A + B + D) * k^4) * cos(k)
+     + k * (-24*D + (A + 2*B + 4*D) * k^2) * sin(k)
+     )
+    return Cₖ
+end
+
+&quot;&quot;&quot;
+    find_analytical_S_k(k, η)
+Finds the static structure factor given by the 
+analytical Percus-Yevick solution of the Ornstein-Zernike 
+equation for hard spheres for a given volume fraction η.
+&quot;&quot;&quot; 
+function find_analytical_S_k(k, η)
+        Cₖ = find_analytical_C_k(k, η)
+        ρ = 6/π * η
+        Sₖ = @. 1 + ρ*Cₖ / (1 - ρ*Cₖ)
+    return Sₖ
+end
+
+# We solve MCT for hard spheres at a volume fraction of 0.51591
+η = 0.51591; ρ = η*6/π; kBT = 1.0; m = 1.0
+
+Nk = 100; kmax = 40.0; dk = kmax/Nk; k_array = dk*(collect(1:Nk) .- 0.5)
+Sₖ = find_analytical_S_k(k_array, η)
+
+∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ); δ = 0.0
+
+kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
+problem = LinearMCTEquation(α, β, γ, δ, Sₖ, ∂F0, kernel)
+solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
+                     N = 8, tolerance=10^-8)
+sol = @time solve(problem, solver);
+    # 3.190870 seconds (377.93 k allocations: 106.456 MiB, 0.42% gc time)
+p = plot(xlabel=&quot;log10(t)&quot;, ylabel=&quot;F(k,t)&quot;, ylims=(0,1))
+for ik = [7, 18, 25, 39]
+    plot!(p, log10.(sol.t), sol[ik]/Sₖ[ik], label=&quot;k = $(k_array[ik])&quot;, lw=3)
+end
+p</code></pre><p><img src="images/MCTKernel.png" alt="image"/></p><h4 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h4><p>[1] Reichman, David R., and Patrick Charbonneau. &quot;Mode-coupling theory.&quot; Journal of Statistical Mechanics: Theory and Experiment 2005.05 (2005): P05013.</p><p>[2] Janssen, Liesbeth MC. &quot;Mode-coupling theory of the glass transition: A primer.&quot; Frontiers in Physics 6 (2018): 97.</p><h3 id="TaggedModeCouplingKernel"><a class="docs-heading-anchor" href="#TaggedModeCouplingKernel">TaggedModeCouplingKernel</a><a id="TaggedModeCouplingKernel-1"></a><a class="docs-heading-anchor-permalink" href="#TaggedModeCouplingKernel" title="Permalink"></a></h3><p>Let&#39;s say we have just solved the mode-coupling equations, and we now want to include also a tagged particle solution (to find the self-intermediate scattering function). This function satisfies</p><p class="math-container">\[\ddot{F}_s(k,t) + \frac{k^2 k_BT}{m} F_s(k,t) + \int_0^t d\tau K(k, t-\tau)\dot{F}_s(k, \tau)=0,\]</p><p>in which</p><p class="math-container">\[K(k,t) = \frac{\rho k_BT}{8\pi^2 m}\int d\mathbf{q} V(\mathbf{k}, \mathbf{q})^2 F(q, t)F_s(|\mathbf{k}-\mathbf{q}|,t)\]</p><p>where</p><p class="math-container">\[V(\textbf{k}, \textbf{q}) = (\textbf{k}\cdot\textbf{q})c(q)/k = \frac{k^2+q^2-p^2}{2k} \cdot c(q),\]</p><p>are the tagged vertices. This is done using the <code>TaggedModeCouplingKernel</code>.</p><p>Example (excluding the code from collective MCT):</p><pre><code class="language-julia hljs">taggedF0 = ones(Nk); tagged∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m; δ = 0.0
+
+taggedkernel = ModeCouplingTheory.TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
+taggedproblem = LinearMCTEquation(α, β, γ, δ, taggedF0, tagged∂F0, taggedkernel)
+taggedsol = solve(taggedproblem, solver)</code></pre><h2 id="Multi-component-Mode-Coupling-Theory"><a class="docs-heading-anchor" href="#Multi-component-Mode-Coupling-Theory">Multi-component Mode-Coupling Theory</a><a id="Multi-component-Mode-Coupling-Theory-1"></a><a class="docs-heading-anchor-permalink" href="#Multi-component-Mode-Coupling-Theory" title="Permalink"></a></h2><p>The multi-component mode-coupling theory equation reads</p><p class="math-container">\[\ddot{F}_{\alpha\beta}(k,t) + \Omega^2_{\alpha\gamma}(k)F_{\gamma\beta}(k,t) + \int_0^td\tau K_{\alpha\gamma}(t-\tau, k)\dot{F}_{\gamma\beta}(k, \tau)=0\]</p><p>in which <span>$\Omega^2_{\alpha\gamma} = k^2 k_B T x_\alpha/m_\alpha \cdot \left(S^{-1}\right)_{\alpha\gamma}(k)$</span>, and <span>$\textbf{S}(k) = (\frac{\delta_{\alpha\beta}}{x_\alpha} - \rho c_{\alpha\gamma}(k))$</span>. The memory kernel is given by</p><p class="math-container">\[K_{\alpha\beta}(k,t) =\frac{k_B T \rho}{2 x_\beta m_\alpha (2\pi)^3} \int d\mathbf{q} V_{\mu&#39;\nu&#39;\alpha}(\mathbf{k}, \mathbf{q})F_{\mu\mu&#39;}(q, t)F_{\nu\nu&#39;}(|\mathbf{k}-\mathbf{q}|,t)V_{\mu\nu\beta}(\mathbf{k}, \mathbf{q})\]</p><p>in which the vertex <span>$V_{\mu\nu\alpha}(\mathbf{k}, \mathbf{q}) = (\textbf{k}\cdot\textbf{q})c_{\alpha\mu}(q)\delta_{\alpha\nu}/k+(\textbf{k}\cdot(\textbf{k}-\textbf{q})c_{\alpha\nu}(|\textbf{k}-\textbf{q}|)\delta_{\alpha\mu}/k$</span>. Here, the Greek indices indicate species labels, and we have adopted the convention that we sum over repeated indices. This memory kernel has also been implemented using the Bengtzelius&#39; trick. It requires <span>$O(N_k^2 N_s^2)$</span> storage and runs in <span>$O(N_k^2 N_s^4)$</span> in which <span>$N_s$</span> is the number of species.</p><p>Numerically, the correlator <span>$F_{\alpha\beta}(k)$</span> is implemented as a <code>Vector</code> of length <code>Nk</code> of which each of the elements is a small <code>Ns</code> x <code>Ns</code> static matrix. This means that this is also the expected form of the initial condition. All symbols have the same meaning as those presented in &quot;Weysser, F., Puertas, A. M., Fuchs, M., &amp; Voigtmann, T. (2010). Structural relaxation of polydisperse hard spheres: Comparison of the mode-coupling theory to a Langevin dynamics simulation. Physical review E, 82(1), 011504.&quot;</p><h3 id="Example-5"><a class="docs-heading-anchor" href="#Example-5">Example</a><a class="docs-heading-anchor-permalink" href="#Example-5" title="Permalink"></a></h3><pre><code class="language-julia hljs">using StaticArrays, LinearAlgebra, DelimitedFiles
+# number of species Ns, number of wave numbers Nk, volume fraction η
+# thermal energy kBT and mass m
+Ns = 2; Nk = 100; η  = 0.515; kBT = 1.0; m = ones(Ns)
+particle_diameters = [0.8,1.0]
+x = [0.2,0.8] # concentration fraction
+
+# total density
+ρ_all = 6η/(π*sum(x .* particle_diameters .^3))
+ρ = ρ_all * x
+
+kmax = 40.0; dk = kmax/Nk
+k_array = dk*(collect(1:Nk) .- 0.5)
+
+# data can be found in the \test\ folder of the source code
+Sₖdata = reshape(readdlm(&quot;Sk_MC.txt&quot;), (2,2,100))
+# convert the data to the Vector of SMatrix format
+Sₖ = [@SMatrix(zeros(Ns, Ns)) for i = 1:Nk]
+for i = 1:Nk
+    Sₖ[i] = Sₖdata[:, :, i]
+end
+S⁻¹ = inv.(Sₖ)
+
+J = similar(Sₖ) .* 0.0
+for ik = 1:Nk
+    J[ik] = kBT*k_array[ik]^2 * x ./ m .* I(Ns)
+end
+
+F₀ = copy(Sₖ)
+∂ₜF₀ = [@SMatrix(zeros(Ns, Ns)) for i = 1:Nk]
+α = 1.0
+β = 0.0
+Ω2 = similar(Sₖ)
+Ω2 .*= 0.0
+for ik = 1:Nk
+    Ω2 .= J.*S⁻¹
+end
+δ = @SMatrix zeros(Ns, Ns)
+
+kernel = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
+problem = LinearMCTEquation(α, β, Ω2, δ, F₀, ∂ₜF₀, kernel)
+solver = FuchsSolver(verbose=false, N=16, tolerance=10^-8, max_iterations=10^8)
+sol = solve(problem, solver)
+ik = 19
+k = k_array[ik]
+t = sol.t
+p = plot(log10.(t), getindex.(sol[ik], 1,1)/Sₖ[ik][1,1], ls=:dash, lw=2, color=1, label=&quot;Faa(k=$k, t)&quot;) 
+plot!(log10.(t), getindex.(sol[ik], 1,2)/Sₖ[ik][1,2], lw=2, color=2, label=&quot;Fab(k=$k, t)&quot;) 
+plot!(log10.(t), getindex.(sol[ik], 2,1)/Sₖ[ik][2,1], ls=:dash, lw=2, color=3, label=&quot;Fba(k=$k, t)&quot;) 
+plot!(log10.(t), getindex.(sol[ik], 2,2)/Sₖ[ik][2,2], ls=:dash, lw=2, color=4, label=&quot;Fbb(k=$k, t)&quot;)</code></pre><p><img src="images/MCMCTKernel.png" alt="image"/></p><h3 id="Tagged-multi-compontent-mode-coupling-theory"><a class="docs-heading-anchor" href="#Tagged-multi-compontent-mode-coupling-theory">Tagged multi-compontent mode-coupling theory</a><a id="Tagged-multi-compontent-mode-coupling-theory-1"></a><a class="docs-heading-anchor-permalink" href="#Tagged-multi-compontent-mode-coupling-theory" title="Permalink"></a></h3><p>The tagged multi-component mode-coupling theory equation reads</p><p class="math-container">\[\dot{F}_{s}(k,t) + \Omega_s^2(k)F_{s}(k,t) + \int_0^td\tau K_{s}(t-\tau, k)\dot{F}_{s}(k, \tau)=0\]</p><p>for a particle of species <span>$s$</span> in which <span>$\Omega_{s}^2 = k^2 k_B T/m_s$</span>. The memory kernel is given by</p><p class="math-container">\[K_{s}(k,t) =\frac{k_B T \rho}{k^3m_s (2\pi)^3} \sum_{\alpha\beta}\int d\mathbf{q} \left(\textbf{k}\cdot\textbf{q}\right)F_{\alpha\beta}(q, t)F_{s}(|\mathbf{k}-\mathbf{q}|,t)\]</p><p>. Here <span>$F_{s}$</span> is the tagged correlator, with initial condition <span>$F_{s}(t=0)=1$</span>, and <span>$F_{\alpha\beta}$</span> is the collective correlator which can be obtained as explained in the previous section.</p><h4 id="Example-6"><a class="docs-heading-anchor" href="#Example-6">Example</a><a class="docs-heading-anchor-permalink" href="#Example-6" title="Permalink"></a></h4><pre><code class="language-julia hljs"># we look for the tagged correlator of the second species.
+s = 2
+α = 1.0
+β = 0.0
+γ = [kBT * k_array[ik]^2 ./ m[s] for ik = 1:Nk]
+δ = 0.0
+F0 = [1.0 for ik = 1:Nk]
+dF0 = [0.0 for ik = 1:Nk]
+
+taggedkernel = TaggedMultiComponentModeCouplingKernel(s, ρ, kBT, m, k_array, Sₖ, sol);
+taggedSystem = LinearMCTEquation(α, β, γ, δ, F0, dF0, taggedkernel);
+taggedsol = solve(taggedSystem, solverFuchs)</code></pre><p>In order to solve the tagged particle equation for all species, one should loop over the above code, changing specie index <span>$s$</span> from 1 to the number of species.</p><h2 id="Defining-custom-kernels"><a class="docs-heading-anchor" href="#Defining-custom-kernels">Defining custom kernels</a><a id="Defining-custom-kernels-1"></a><a class="docs-heading-anchor-permalink" href="#Defining-custom-kernels" title="Permalink"></a></h2><p>In order to define a custom kernel, one has to overload <code>ModeCouplingTheory.evaluate_kernel(k::MyCustomKernel, F, t)</code>, and optionally  <code>ModeCouplingTheory.evaluate_kernel!(out, k::MyCustomKernel, F, t)</code> for better performance for mutable <code>F</code>.</p><h3 id="Example-1"><a class="docs-heading-anchor" href="#Example-1">Example 1</a><a id="Example-1-1"></a><a class="docs-heading-anchor-permalink" href="#Example-1" title="Permalink"></a></h3><p>Let&#39;s define a custom scalar kernel that evaluates <span>$K(t) = \alpha F(t)^{F(t)}$</span>. First, we define a <code>MyWeirdKernel&lt;:MemoryKernel</code> type that holds the value of the parameter:</p><pre><code class="language-julia hljs">using ModeCouplingTheory
+import ModeCouplingTheory.MemoryKernel
+
+struct MyWeirdKernel &lt;: MemoryKernel
+    α :: Float64
+end
+
+kernel = MyWeirdKernel(2.5)</code></pre><p>Now, we can define the evaluation of this memory kernel</p><pre><code class="language-julia hljs">import ModeCouplingTheory.evaluate_kernel
+
+function evaluate_kernel(kernel::MyWeirdKernel, F, t)
+    return kernel.α*F^F
+end</code></pre><p>That&#39;s it! We can now use it like any other memory kernel to solve the equation:</p><pre><code class="language-julia hljs">problem = LinearMCTEquation(1.0, 0.0, 1.0, 0.0, 1.0, 0.0, kernel)
+solver = FuchsSolver(Δt = 10^-4, t_max=10.0^5)
+sol = solve(problem, solver)
+using Plots
+p = plot(log10.(sol.t), sol.F, ylims=(0,1), ylabel=&quot;F(t)&quot;, xlabel=&quot;log10(t)&quot;)</code></pre><p><img src="images/FFKernel.png" alt="image"/></p><h3 id="Example-2"><a class="docs-heading-anchor" href="#Example-2">Example 2</a><a id="Example-2-1"></a><a class="docs-heading-anchor-permalink" href="#Example-2" title="Permalink"></a></h3><p>For a slightly more complex example, let&#39;s define the tagged-particle mode-coupling theory memory kernel (say we forgot that it is also a built-in kernel). The equation is given by:</p><p class="math-container">\[\ddot{F}_s(k,t) + \frac{k^2 k_BT}{m} F_s(k,t) + \int_0^t d\tau K(k, t-\tau)\dot{F}_s(k, \tau)=0,\]</p><p>in which</p><p class="math-container">\[K(k,t) = \frac{\rho k_BT}{8\pi^2 m}\int d\mathbf{q} V(\mathbf{k}, \mathbf{q})^2 F(q, t)F_s(|\mathbf{k}-\mathbf{q}|,t)\]</p><p>where</p><p class="math-container">\[V(\textbf{k}, \textbf{q}) = (\textbf{k}\cdot\textbf{q})c(q)/k = \frac{k^2+q^2-p^2}{2k} \cdot c(q),\]</p><p>where <span>$p = |\textbf{k} - \textbf{q}|$</span>. Note that in the equation for the memory kernel, the solution of collective mode-coupling theory <span>$F(k,t)$</span> appears (without subscript <span>$s$</span>). The most straightforward way of solving the tagged-particle equation therefore is to solve the full collective equation first, and use the result in the memory kernel of the tagged-particle motion. So, first we quickly solve MCT:</p><pre><code class="language-julia hljs">using ModeCouplingTheory, LinearAlgebra
+η = 0.51591; ρ = η*6/π; kBT = 1.0; m = 1.0
+
+Nk = 100; kmax = 40.0; dk = kmax/Nk; k_array = dk*(collect(1:Nk) .- 0.5)
+# We use the Percus-Yevick solution to the structure factor that can be found above.
+Sₖ = find_analytical_S_k(k_array, η)
+
+∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ); δ = 0.0
+
+kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
+problem = LinearMCTEquation(α, β, γ, δ, Sₖ, ∂F0, kernel)
+solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
+                     N = 8, tolerance=10^-8)
+sol = @time solve(problem, solver);</code></pre><p>Now, we need to construct the tagged-particle memory kernel for the self intermediate scattering function <code>Fs</code>. When called with <code>evaluate_kernel(kernel, Fs, t)</code> it needs some way to access the collective <code>F</code> at the right time. To make that easy, we create a dictionary that maps the values in <code>t</code> to their respective indices.</p><pre><code class="language-julia hljs">tDict = Dict(zip(t, eachindex(t)))
+# tdict[t[8]] == 8</code></pre><p>Now we can construct a memory kernel like above. For performance reasons, we also implement the in-place <code>evaluate_kernel!(out, kernel, Fs, t)</code>. The discrete equation that we must implement is given by </p><p class="math-container">\[K(k_i,t) = \frac{\rho k_B T \Delta k^2}{4 \pi^2 m} \sum_{j=1}^{N_k} \sum_{l=|j-i|+1}^{j+i-1} \frac{p_l q_j}{k_i} V^2(k_i, q_j, p_l)F(k_j, t)F_s(k_l, t).\]</p><p>This memory kernel can now be straightforwardly implemented as follows:</p><pre><code class="language-julia hljs">import ModeCouplingTheory.MemoryKernel
+struct TaggedMCTKernel &lt;: MemoryKernel
+    V²::Array{Float64, 3}
+    k_array::Vector{Float64}
+    prefactor::Float64
+    F::Matrix{Float64}
+    tDict::Dict{Float64, Int64}
+end
+
+# The constructor for the TaggedMCTKernel
+function TaggedMCTKernel(ρ, kBT, m, k_array, Cₖ, t, F)
+    tDict = Dict(zip(t, eachindex(t)))
+    Δk = k_array[2] - k_array[1]
+    prefactor = ρ*kBT*Δk^2/(4*π^2*m)
+    Nk = length(k_array)
+    # calculate the vertices
+    V² = zeros(Nk, Nk, Nk)
+    for i = 1:Nk, j = 1:Nk, l = 1:Nk # loop over k, q, p
+        k = k_array[i]
+        q = k_array[j]
+        cq = Cₖ[j]
+        p = k_array[l]
+        if abs(j-i)+1 &lt;= l &lt;= j+i-1
+            V²[l, j, i] = (cq * (k^2  + q^2 - p^2)/(2k))^2
+        end
+    end
+    return TaggedMCTKernel(V², k_array, prefactor, F, tDict)
+end
+</code></pre><p>Now to evaluate the kernel, we first write the in-place version of the code, that mutates its first argument. Note also that, since the mermory kernel is multiplied with a vector <code>F</code> to produce something of the same type of <code>F</code>, it has to be encoded as a matrix, with on the diagonal the discretised wave-number dependent memory kernel.</p><pre><code class="language-julia hljs">import ModeCouplingTheory.evaluate_kernel!
+function evaluate_kernel!(out::Diagonal, kernel::TaggedMCTKernel, Fs, t)
+    out.diag .= zero(eltype(out.diag)) # set the output array to zero
+    it = kernel.tDict[t] # find the correct index corresponding to t
+    k_array = kernel.k_array
+    Nk = length(k_array)
+    for i = 1:Nk, j = 1:Nk, l = 1:Nk # loop over k, q, p
+        k = k_array[i]
+        q = k_array[j]
+        p = k_array[l]
+        out.diag[i] += p*q/k * kernel.V²[l, j, i] * kernel.F[j, it] * Fs[l]
+    end
+    out.diag .*= kernel.prefactor
+end
+
+import ModeCouplingTheory.evaluate_kernel
+function evaluate_kernel(kernel::TaggedMCTKernel, Fs, t)
+    out = Diagonal(similar(Fs)) # we need it to produce a diagonal matrix
+    evaluate_kernel!(out, kernel, Fs, t) # call the inplace version
+    return out
+end</code></pre><p>Now we can finally solve the tagged equation:</p><pre><code class="language-julia hljs">Cₖ = find_analytical_C_k(k_array, η)
+F0 = ones(Nk); ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m; δ = 0.0
+
+taggedkernel = TaggedMCTKernel(ρ, kBT, m, k_array, Cₖ, t, F)
+taggedproblem = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, taggedkernel)
+taggedsolver = FuchsSolver(Δt=10^-5, t_max=10.0^15, 
+                           N = 8, tolerance=10^-8) # it is important we use the same settings for Δt, t_max and N
+sol_s = @time solve(taggedproblem, taggedsolver)
+using Plots
+p = plot(xlabel=&quot;log10(t)&quot;, ylabel=&quot;Fₛ(k,t)&quot;, ylims=(0,1))
+for ik = [7, 18, 25, 39]
+    plot!(p, log10.(sol_s.t), sol_s[ik], label=&quot;k = $(k_array[ik])&quot;, lw=3)
+end
+p</code></pre><p><img src="images/sMCTKernel.png" alt="image"/></p><p>This implementation of the tagged-particle memory kernel is an order of magnitude slower than the built-in collective one, and can be made much more performant by Bengtzelius&#39; trick. For the purposes of this example, however, we do not pursue this any further. For help with implementing your own kernel, please file an issue.</p><h2 id="Bengtzelius&#39;-Trick"><a class="docs-heading-anchor" href="#Bengtzelius&#39;-Trick">Bengtzelius&#39; Trick</a><a id="Bengtzelius&#39;-Trick-1"></a><a class="docs-heading-anchor-permalink" href="#Bengtzelius&#39;-Trick" title="Permalink"></a></h2><p>Bengtzelius&#39; trick is a fast way to evaluate the integral <span>$I(k) = \int d \mathbf{q} A(q, |\mathbf{k}-\mathbf{q}|)$</span>. Very briefly: after discretisation of the integral, one is left with terms such as <span>$T_{i}[A]=\sum_{j=1}^{N_k}\sum_{l=|j-i|+1}^{i+j-1}  A(p_{l},q_{j})$</span> which are largely independent of <span>$i$</span>. Because of this, one can calculate <span>$T_{i}[A]$</span> from <span>$T_{i-1}[A]$</span> in order <span>$N_k$</span> operations. The recurrence relation that allows one to do so is given by </p><p class="math-container">\[T_{i}[A] = T_{i-1}[A] + \sum_{j=1}^{N_k-i+1}(A(j, j+i-1)+A(j+i-1, j)) - \sum_{j=1}^{i-1}A(j,i-j)\]</p><p>with initial condition</p><p class="math-container">\[T_{1}[A] = \sum_{j=1}^{N_k}A(j, j).\]</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="Problems_and_Solvers.html">« Problems and Solvers</a><a class="docs-footer-nextpage" href="Scope.html">Scope »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Wednesday 23 November 2022 12:54">Wednesday 23 November 2022</span>. Using Julia version 1.8.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
