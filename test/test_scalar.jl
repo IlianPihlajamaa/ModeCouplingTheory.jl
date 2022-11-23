@@ -92,3 +92,16 @@ t_test = 10.0^2/2
 a = Spline1D(sol1.t, sol1.F)(t_test)
 b = Spline1D(sol2.t, sol2.F)(t_test)
 @test(abs(b-a) < 10^-3)
+
+import ModeCouplingTheory: MemoryKernel, evaluate_kernel
+function myfunc(coeffs, t)
+    coeffs.δ = -t
+end
+struct ZeroKernel <: MemoryKernel end
+evaluate_kernel(::ZeroKernel, _, _) = 0.0
+α = 1.0; β = 0.0; γ = 1.0; δ = 0.0; F0 = 1.0; dF0 = 0.0; kernel = ZeroKernel()
+equation = LinearMCTEquation(α, β, γ, δ, F0, dF0, kernel; update_coefficients! = myfunc)
+solver = FuchsSolver(t_max = 10.0^2, N = 600, Δt = 10^-4)
+sol = solve(equation, solver)
+t = sol.t; F = sol.F
+@test maximum(abs.(F - (t .+ cos.(t) .- sin.(t)))) < 10^-1
