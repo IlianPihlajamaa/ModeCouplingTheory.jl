@@ -45,17 +45,19 @@ function trapezoidal_integration(f, δt, it)
 end
 
 
-function Euler_step(F_old, ∂ₜF_old, time_integral, equation, solver::EulerSolver)
-    α = equation.α
-    β = equation.β
-    γ = equation.γ
+function Euler_step(F_old, ∂ₜF_old, time_integral, equation, solver::EulerSolver, t)
+    equation.update_coefficients!(equation.coeffs, t)
+    α = equation.coeffs.α
+    β = equation.coeffs.β
+    γ = equation.coeffs.γ
+    δ = equation.coeffs.δ
     Δt = solver.Δt
     if !iszero(α)
-        ∂ₜₜF  = -α\(β*∂ₜF_old + γ*F_old + time_integral)
+        ∂ₜₜF  = -α\(β*∂ₜF_old + γ*F_old + δ + time_integral)
         ∂ₜF = ∂ₜF_old + Δt* ∂ₜₜF
         F = F_old + Δt * ∂ₜF
     else
-        ∂ₜF = -β\(γ * F_old + time_integral)
+        ∂ₜF = -β\(γ * F_old + δ + time_integral)
         F = F_old + Δt * ∂ₜF
     end
     return F, ∂ₜF
@@ -100,7 +102,7 @@ function solve(equation::LinearMCTEquation, solver::EulerSolver)
         F_old = F_array[end]
         construct_euler_integrand!(integrand_array, K_array, ∂ₜF_array_reverse, it)
         time_integral = trapezoidal_integration(integrand_array, Δt, it)
-        F, ∂ₜF = Euler_step(F_old, ∂ₜF_old, time_integral, equation, solver)
+        F, ∂ₜF = Euler_step(F_old, ∂ₜF_old, time_integral, equation, solver, t)
         K = evaluate_kernel(kernel, F, t)
         allocate_results!(t_array, F_array, K_array, ∂ₜF_array_reverse, t, K, F, ∂ₜF)
         log_results(solver, tstart, t, it)

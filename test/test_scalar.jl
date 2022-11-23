@@ -3,17 +3,17 @@ F0 = 1.0
 α = 1.0
 β = 1.0
 γ = 1.0
+δ = 0.0
 λ = 2.0
 kernel1 = ModeCouplingTheory.SchematicF2Kernel(λ)
-system1 = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel1)
+system1 = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel1)
 solver1 = FuchsSolver(; Δt=10^-3, t_max=10.0^2, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 solver2 = EulerSolver(Δt=10^-3, t_max=10.0^2, verbose=false)
 
 sol1 =  solve(system1, solver1)
 sol2 =  solve(system1, solver2)
 
-# plot(log10.(t1), F1, label="Fuchs")
-# plot!(log10.(t2), F2, label="Euler", ls=:dash) |> display
+
 
 t_test = 10.0^2/2
 a = Spline1D(sol1.t, sol1.F)(t_test)
@@ -28,7 +28,7 @@ F0 = 1.0
 λ = 1.0
 
 kernel1 = SchematicF1Kernel(λ)
-system1 = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel1)
+system1 = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel1)
 solver1 = FuchsSolver(Δt=10^-10, t_max=10.0^2, verbose=false, N = 100, tolerance=10^-14, max_iterations=10^6)
 
 
@@ -48,7 +48,7 @@ F0 = 1.0
 λ = 1.0
 
 kernel1 = ExponentiallyDecayingKernel(λ, 1.0)
-system1 = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel1)
+system1 = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel1)
 solver1 = FuchsSolver(Δt=10^-3, t_max=10.0^2, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 solver2 = EulerSolver(Δt=10^-3, t_max=10.0^2, verbose=false)
 
@@ -79,7 +79,7 @@ F0 = 1.0
 λ = (1.0, 1.0, 1.0)
 
 kernel1 = SchematicF123Kernel(λ...)
-system1 = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel1)
+system1 = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel1)
 solver2 = EulerSolver(Δt=10^-3, t_max=10.0^2, verbose=false)
 
 sol1 =  solve(system1)

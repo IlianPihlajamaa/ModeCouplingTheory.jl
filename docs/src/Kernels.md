@@ -17,10 +17,10 @@ The integro-differential equation with this memory kernel actually has an analyt
 $$F(t) = \frac{e^{-\frac{t}{2}\left( \lambda + \sqrt{\lambda(\lambda+4)} + 2\right)}}{2 \sqrt{\lambda  (\lambda +4)}}\left(\sqrt{\lambda(\lambda+4)} \left(e^{\sqrt{\lambda(\lambda+4)} t}+1\right)+\lambda  \left(e^{\sqrt{\lambda(\lambda+4)} t}-1\right)\right)$$
 
 ```julia
-F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; λ = 1.0; τ = 1.0;
+F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; δ = 0.0; λ = 1.0; τ = 1.0;
 
 kernel = ExponentiallyDecayingKernel(λ, τ)
-problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
+problem = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-3, t_max=10.0^2, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 sol =  solve(problem, solver)
 
@@ -99,12 +99,13 @@ using StaticArrays
 α = 1.0
 β = 0.0
 γ = 1.0
+δ = 0.0
 ν1 = 2.0
 ν2 = 1.0
 F0 = @SVector [1.0, 1.0]
 ∂F0 = @SVector [0.0, 0.0]
 kernel = SjogrenKernel(ν1, ν2)
-eq = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
+eq = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
 sol = solve(eq)
 ```
 
@@ -120,14 +121,15 @@ F0 = 1.0
 α = 1.0
 β = 0.0
 γ = 1.0
+δ = 0.0
 ν1 = 2.0
 ν2 = 1.0
 kernel = SchematicF2Kernel(ν1)
-eq = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
+eq = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
 sol = solve(eq)
 
 taggedkernel = TaggedSchematicF2Kernel(ν2, sol)
-tagged_eq = LinearMCTEquation(α, β, γ, F0, ∂F0, taggedkernel)
+tagged_eq = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, taggedkernel)
 tagged_sol = solve(tagged_eq);
 ```
 
@@ -194,10 +196,10 @@ end
 Nk = 100; kmax = 40.0; dk = kmax/Nk; k_array = dk*(collect(1:Nk) .- 0.5)
 Sₖ = find_analytical_S_k(k_array, η)
 
-∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ)
+∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ); δ = 0.0
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = LinearMCTEquation(α, β, γ, Sₖ, ∂F0, kernel)
+problem = LinearMCTEquation(α, β, γ, δ, Sₖ, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
 sol = @time solve(problem, solver);
@@ -233,10 +235,10 @@ are the tagged vertices. This is done using the `TaggedModeCouplingKernel`.
 
 Example (excluding the code from collective MCT):
 ```julia
-taggedF0 = ones(Nk); tagged∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m
+taggedF0 = ones(Nk); tagged∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m; δ = 0.0
 
 taggedkernel = ModeCouplingTheory.TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
-taggedproblem = LinearMCTEquation(α, β, γ, taggedF0, tagged∂F0, taggedkernel)
+taggedproblem = LinearMCTEquation(α, β, γ, δ, taggedF0, tagged∂F0, taggedkernel)
 taggedsol = solve(taggedproblem, solver)
 ```
 
@@ -294,9 +296,10 @@ F₀ = copy(Sₖ)
 for ik = 1:Nk
     Ω2 .= J.*S⁻¹
 end
+δ = @SMatrix zeros(Ns, Ns)
 
 kernel = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = LinearMCTEquation(α, β, Ω2, F₀, ∂ₜF₀, kernel)
+problem = LinearMCTEquation(α, β, Ω2, δ, F₀, ∂ₜF₀, kernel)
 solver = FuchsSolver(verbose=false, N=16, tolerance=10^-8, max_iterations=10^8)
 sol = solve(problem, solver)
 ik = 19
@@ -327,11 +330,12 @@ s = 2
 α = 1.0
 β = 0.0
 γ = [kBT * k_array[ik]^2 ./ m[s] for ik = 1:Nk]
+δ = 0.0
 F0 = [1.0 for ik = 1:Nk]
 dF0 = [0.0 for ik = 1:Nk]
 
 taggedkernel = TaggedMultiComponentModeCouplingKernel(s, ρ, kBT, m, k_array, Sₖ, sol);
-taggedSystem = LinearMCTEquation(α, β, γ, F0, dF0, taggedkernel);
+taggedSystem = LinearMCTEquation(α, β, γ, δ, F0, dF0, taggedkernel);
 taggedsol = solve(taggedSystem, solverFuchs)
 ```
 In order to solve the tagged particle equation for all species, one should loop over the above code, changing specie index $s$ from 1 to the number of species.
@@ -368,7 +372,7 @@ end
 That's it! We can now use it like any other memory kernel to solve the equation:
 
 ```julia
-problem = LinearMCTEquation(1.0, 0.0, 1.0, 1.0, 0.0, kernel)
+problem = LinearMCTEquation(1.0, 0.0, 1.0, 0.0, 1.0, 0.0, kernel)
 solver = FuchsSolver(Δt = 10^-4, t_max=10.0^5)
 sol = solve(problem, solver)
 using Plots
@@ -400,10 +404,10 @@ Nk = 100; kmax = 40.0; dk = kmax/Nk; k_array = dk*(collect(1:Nk) .- 0.5)
 # We use the Percus-Yevick solution to the structure factor that can be found above.
 Sₖ = find_analytical_S_k(k_array, η)
 
-∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ)
+∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ); δ = 0.0
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = LinearMCTEquation(α, β, γ, Sₖ, ∂F0, kernel)
+problem = LinearMCTEquation(α, β, γ, δ, Sₖ, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
 sol = @time solve(problem, solver);
@@ -483,10 +487,10 @@ Now we can finally solve the tagged equation:
 
 ```julia
 Cₖ = find_analytical_C_k(k_array, η)
-F0 = ones(Nk); ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m
+F0 = ones(Nk); ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m; δ = 0.0
 
 taggedkernel = TaggedMCTKernel(ρ, kBT, m, k_array, Cₖ, t, F)
-taggedproblem = LinearMCTEquation(α, β, γ, F0, ∂F0, taggedkernel)
+taggedproblem = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, taggedkernel)
 taggedsolver = FuchsSolver(Δt=10^-5, t_max=10.0^15, 
                            N = 8, tolerance=10^-8) # it is important we use the same settings for Δt, t_max and N
 sol_s = @time solve(taggedproblem, taggedsolver)

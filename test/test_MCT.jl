@@ -47,10 +47,11 @@ F0 = copy(Sₖ)
 α = 0.0
 β = 1.0
 γ = @. k_array^2*kBT/(m*Sₖ)
+δ = 0.0
 
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-system = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
+system = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-10, t_max=10.0^10, verbose=false, N = 2, tolerance=10^-8, max_iterations=10^8)
 sol = solve(system, solver);
 @test sum(sum(sol.F))≈13755.713517887398
