@@ -5,8 +5,8 @@
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://IlianPihlajamaa.github.io/ModeCouplingTheory.jl/dev)
 
 A generic and fast solver of mode-coupling theory-like integrodifferential equations. It uses the algorithm outlined in [Fuchs et al.](https://iopscience.iop.org/article/10.1088/0953-8984/3/26/022/meta) to solve equations of the form
-$$\alpha \ddot{F}(t) + \beta \dot{F}(t) + \gamma F(t) + \int_0^t d\tau K(t-\tau)\dot{F}(\tau) = 0, $$
-in which $\alpha$, $\beta$, and $\gamma$ are coefficients, and $K(t) = K(F(t), t)$ is a memory kernel that may depend on $F$. This package exports some commonly used memory kernels, but it is straightforward to define your own. The solver is differentiable and works for scalar- and vector-valued functions $F(t)$. For more information see the [Documentation](https://IlianPihlajamaa.github.io/ModeCouplingTheory.jl/dev).
+$$\alpha \ddot{F}(t) + \beta \dot{F}(t) + \gamma F(t) + \delta + \int_0^t d\tau K(t-\tau)\dot{F}(\tau) = 0, $$
+in which $\alpha$, $\beta$, $\gamma$, and $\delta$ are coefficients, and $K(t) = K(F(t), t)$ is a memory kernel that may depend on $F$. This package exports some commonly used memory kernels, but it is straightforward to define your own. The solver is differentiable and works for scalar- and vector-valued functions $F(t)$. For more information see the [Documentation](https://IlianPihlajamaa.github.io/ModeCouplingTheory.jl/dev).
 
 
 # Installation
@@ -36,8 +36,8 @@ This kernel evaluates `K(t) = ν F(t)^2` when called.
 We can now define the equation we want to solve as follows:
 
 ```julia
-julia> α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
-julia> equation = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel);
+julia> α = 1.0; β = 0.0; γ = 1.0; δ, = 0.0, F0 = 1.0; ∂F0 = 0.0;
+julia> equation = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel);
 ```
 Which we can solve by calling `solve`:
 

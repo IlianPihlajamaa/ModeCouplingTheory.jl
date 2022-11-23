@@ -55,12 +55,12 @@ Returns a FuchsTempStruct containing several arrays that are used for intermedia
 function allocate_temporary_arrays(equation::MCTEquation, solver::FuchsSolver)
     K₀ = equation.K₀
     F₀ = equation.F₀
-    C1 = sum([equation.α, equation.β, equation.γ, K₀])
+    C1 = sum([equation.coeffs.α, equation.coeffs.β, equation.coeffs.γ, K₀])
     C2 = K₀ * F₀
     C3 = K₀ * F₀
     temp_vec = K₀ * F₀
     F_old = K₀ * F₀
-    temp_mat = sum([equation.α, equation.β, equation.γ, K₀])
+    temp_mat = sum([equation.coeffs.α, equation.coeffs.β, equation.coeffs.γ, K₀])
     Fmutable = ismutabletype(typeof(F₀))
     inplace = Fmutable & solver.inplace
     start_time = time()
@@ -95,22 +95,25 @@ Fills the first 2N entries of the temporary arrays of F using forward Euler with
 function initialize_F_temp!(equation::LinearMCTEquation, solver::FuchsSolver, temp_arrays::FuchsTempStruct)
     N = solver.N
     δt = solver.Δt / (4 * N)
-    α = equation.α
-    β = equation.β
-    γ = equation.γ
+
     F₀ = equation.F₀
     ∂ₜF₀ = equation.∂ₜF₀
-    second_order = !iszero(equation.α)
 
     ∂ₜF_old = ∂ₜF₀
     F_old = F₀
     for it = 1:2N
+        equation.update_coefficients!(equation.coeffs, δt*it)
+        α = equation.coeffs.α
+        β = equation.coeffs.β
+        γ = equation.coeffs.γ
+        δ = equation.coeffs.δ
+        second_order = !iszero(α)
         if second_order
-            ∂ₜₜF = -α \ (β * ∂ₜF_old + γ * F_old)
+            ∂ₜₜF = -α \ (β * ∂ₜF_old + γ * F_old + δ)
             ∂ₜF = ∂ₜF_old + δt * ∂ₜₜF
             F = F_old + δt * ∂ₜF
         else
-            ∂ₜF = -β \ (γ * F_old)
+            ∂ₜF = -β \ (γ * F_old + δ)
             F = F_old + δt * ∂ₜF
         end
         temp_arrays.F_temp[it] = F
@@ -233,9 +236,11 @@ function update_Fuchs_parameters!(equation::LinearMCTEquation, solver::FuchsSolv
     F_I = temp_arrays.F_I
     F = temp_arrays.F_temp
     kernel = temp_arrays.K_temp
-    α = equation.α
-    β = equation.β
-    γ = equation.γ
+    equation.update_coefficients!(equation.coeffs, δt*it)
+    α = equation.coeffs.α
+    β = equation.coeffs.β
+    γ = equation.coeffs.γ
+    δ = equation.coeffs.δ
     if !temp_arrays.inplace # everything immutable (we are free to allocate)
         c1 = (2 / (δt^2) * α + 3 / (2δt) * β) + K_I[1] + γ
 
@@ -243,6 +248,7 @@ function update_Fuchs_parameters!(equation::LinearMCTEquation, solver::FuchsSolv
 
         c3 = α * (5 * F[it-1] - 4 * F[it-2] + F[it-3]) / δt^2
         c3 += β * (2 / δt * F[it-1] - F[it-2] / (2δt))
+        c3 -= δ
         c3 += -kernel[it-i2] * F[i2] + kernel[it-1] * F_I[1] + K_I[1] * F[it-1]
         @inbounds for j = 2:i2
             c3 += (kernel[it-j] - kernel[it-j+1]) * F_I[j]
@@ -288,6 +294,7 @@ function update_Fuchs_parameters!(equation::LinearMCTEquation, solver::FuchsSolv
             @. temp_vec = F[it-j] - F[it-j+1]
             mymul!(c3, K_I[j], temp_vec, true, true)
         end
+        c3 .-= δ
     end
     return nothing
 end

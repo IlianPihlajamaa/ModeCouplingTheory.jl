@@ -1,3 +1,41 @@
+## Time-dependent coefficients
+
+In order to allow the coefficients $\alpha$, $\beta$, $\gamma$, and $\delta$ to have a time dependence, the constructor of `LinearMCTEquation` allows for an optional keyword argument `update_coefficients!`, which should be a user-defined function that updates the coefficient struct given a value of `t`. Make sure, when updating the coefficients, that their type does not change. The type of the coefficients can be inspected in the `coeffs` field of a `LinearMCTEquation` object.
+
+The default is that all coefficients are independent of time, that is: `update_coefficients! = (coeffs, t) -> nothing`. 
+
+### Example
+Let's say we want the coefficient `γ` to be equal to $2 + \cos(sqrt(t))$, this can be achieved like this:
+
+```julia
+α=1.0, β=0.0, γ=3.0, δ=0.0; F0=1.0; dF0=0.0
+kernel = SchematicF2Kernel(3.9)
+
+function myfunc(coeffs, t)
+    coeffs.γ = 2+cos(sqrt(t))
+end
+
+LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel; update_coefficients! = myfunc)
+```
+Alternatively, let's say we want to solve 
+$\ddot{F} + F - t = 0$,
+which has the analytical solution $F(t) = t + \cos(t) - \sin(t)$
+```julia
+import ModeCouplingTheory: MemoryKernel, evaluate_kernel
+function myfunc(coeffs, t)
+    coeffs.δ = -t
+end
+struct ZeroKernel <: MemoryKernel end
+evaluate_kernel(::ZeroKernel, _, _) = 0.0
+α = 1.0; β = 0.0; γ = 1.0; δ = 0.0; F0 = 1.0; dF0 = 0.0; kernel = ZeroKernel()
+equation = LinearMCTEquation(α, β, γ, δ, F0, dF0, kernel; update_coefficients! = myfunc)
+solver = FuchsSolver(t_max = 10.0^3, N = 600, Δt = 10^-4)
+sol = solve(equation, solver)
+t = sol.t; F = sol.F
+plot(log10.(t), log10.(F), lw=3)
+plot!(log10.(t), log10.(t .+ cos.(t) .- sin.(t)), ls=:dash, lw=3)
+```
+
 ## Automatic differentiation
 
 This package is compatible with forward-mode automatic differentiation. This makes it possible to calculate quatities such as $\frac{dF(t)}{d\lambda}$ for example, where $\lambda$ is a parameter of the memory kernel.
@@ -14,9 +52,9 @@ function my_func(λ)
     α = 0.0
     β = 1.0
     γ = 1.0
-
+    δ = 0.0
     kernel = ExponentiallyDecayingKernel(λ, 1.0)
-    problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
+    problem = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
     solver = FuchsSolver(Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
     sol =  solve(problem, solver)
@@ -127,9 +165,9 @@ Now we can use this structure factor to solve the mode-coupling equation as usua
 ```julia
 # The initial condition of the derivative must have the same type as the initial condition itself
 ∂F0 = zeros(eltype(Sₖ_uncertain), Nk)
-α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ_uncertain)
+α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ_uncertain); δ = 0.0
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ_uncertain)
-problem = LinearMCTEquation(α, β, γ, Sₖ_uncertain, ∂F0, kernel)
+problem = LinearMCTEquation(α, β, γ, δ, Sₖ_uncertain, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-5, t_max=10.0^5, verbose=true, N = 8, tolerance=10^-8, max_iterations=10^8)
 sol = @time solve(problem, solver);
 p = plot(xlabel="log10(t)", ylabel="F(k,t)", ylims=(0,1), xlims=(-5,5))
@@ -175,10 +213,10 @@ Let's solve mode-coupling theory to get some data:
 Nk = 100; kmax = 40.0; dk = kmax/Nk; k_array = dk*(collect(1:Nk) .- 0.5)
 Sₖ = find_analytical_S_k(k_array, η)
 
-∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ)
+∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ); δ = 0.0
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = LinearMCTEquation(α, β, γ, Sₖ, ∂F0, kernel)
+problem = LinearMCTEquation(α, β, γ, δ, Sₖ, ∂F0, kernel)
 solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
 sol = @time solve(problem, solver);

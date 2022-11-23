@@ -31,21 +31,27 @@ This kernel evaluates $K(t)=\lambda F(t)^2$.
 We can now define the equation we want to solve as follows:
 
 ```
-julia> α = 1.0; β = 0.0; γ = 2.0; F0 = 1.0; ∂F0 = 0.0;
-julia> problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
-LinearMCTEquation{Float64, Float64, Float64, Float64, Float64}(1.0, 0.0, 2.0, 1.0, 0.0, 3.999, Float64, Float64, Float64)
+julia> α = 1.0; β = 0.0; γ = 2.0; δ = 0.0; F0 = 1.0; ∂F0 = 0.0;
+julia> equation = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
+Linear MCT equation object:
+   α F̈ + β Ḟ + γF + δ + ∫K(τ)Ḟ(t-τ) = 0
+in which α is a Float64,
+         β is a Float64,
+         γ is a Float64,
+         δ is a Float64,
+  and K(t) is a SchematicF2Kernel{Float64}.
 ```
 and a solver:
 
 ```julia
-julia> solver = FuchsSolver(problem)
+julia> solver = FuchsSolver()
 ```
 
 Now we can solve the equation by calling `solve`:
 
 ```julia
 julia> using Plots
-julia> sol = solve(problem, solver);
+julia> sol = solve(equation, solver);
 julia> plot(log10.(sol.t), sol.F)
 ```
 ![image](images/readmefig.png)

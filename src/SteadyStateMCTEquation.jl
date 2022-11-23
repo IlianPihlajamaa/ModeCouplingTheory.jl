@@ -32,6 +32,7 @@ end
     solve_steady_state(γ, F₀, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false, inplace=true)
 
 Finds the steady-state solution (non-ergodicity parameter) of the generalized Langevin equation by recursive iteration of F = (K + γ)⁻¹ * K(F) * F₀
+This function assumes δ = 0, since that would lead to a divergence.
 
 # Arguments:
 * `γ`: parameter in front of the linear term in F

@@ -3,9 +3,9 @@
 
 The most straightforward workflow for solving MCT-like equations is to first construct a `MemoryKernel`, a `MCTEquation`, and optionally a `Solver`, in that order. The `MemoryKernel` is an object that evaluates the memory kernel when passed to the function `evaluate_kernel`. The `MCTEquation` holds the coefficients, initial conditions, and the just defined `MemoryKernel` belonging to the equation that need to be solved, and the `Solver` stores information related to the numerical integration procedure, such as the time step. Once these three objects have been defined, the function `solve(::MCTEquation, ::Solver)` can be called on them to solve the equation
 
-$$\alpha \ddot{F}(t) + \beta \dot{F}(t) + \gamma F(t) + \int_0^t d\tau K(t-\tau)\dot{F}(\tau) = 0$$
+$$\alpha \ddot{F}(t) + \beta \dot{F}(t) + \gamma F(t) + δ + \int_0^t d\tau K(t-\tau)\dot{F}(\tau) = 0$$
 
-A `LinearMCTEquation` defined by the equation above is constructed by the constructor `LinearMCTEquation(α, β, γ, F₀, ∂ₜF₀, kernel::MemoryKernel)`. Here, `F₀` and `∂ₜF₀` are the initial conditions of $F$ and its time derivative. In the case of vector-valued functions `F`, this package requires that the operation `α*F` is defined and returns the same type as `F`. This means that in general, when `F` is a vector, `α` must either be a matrix with a compatible element type, or a scalar. However, because it is common in practice to find equations in which `α` and `F` are both vectors (such that the multiplication `α*F` is understood to be conducted element-wise), vector-valued `α`s will automatically be promoted to diagonal matrices. `β` and `γ` are treated in the same way. `LinearMCTEquation` will also evaluate the `kernel` at $t=0$ to find its initial condition.
+A `LinearMCTEquation` defined by the equation above is constructed by the constructor `LinearMCTEquation(α, β, γ, δ, F₀, ∂ₜF₀, kernel::MemoryKernel)`. Here, `F₀` and `∂ₜF₀` are the initial conditions of $F$ and its time derivative. In the case of vector-valued functions `F`, this package requires that the operation `α*F` is defined and returns the same type as `F`. This means that in general, when `F` is a vector, `α` must either be a matrix with a compatible element type, or a scalar. However, because it is common in practice to find equations in which `α` and `F` are both vectors (such that the multiplication `α*F` is understood to be conducted element-wise), vector-valued `α`s will automatically be promoted to diagonal matrices. `β` and `γ` are treated in the same way. `δ` must in the same way be additively compatible with `F`. `LinearMCTEquation` will also evaluate the `kernel` at $t=0$ to find its initial condition.
 
 ### Examples
 
@@ -14,8 +14,8 @@ Scalar problems are the most straightforward:
 ```julia
 kernel = SchematicF1Kernel(0.2); # in the next page of the documentation we will 
                                  # explain how to construct memory kernels
-α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
-problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
+α = 1.0; β = 0.0; γ = 1.0; δ =0.0, F0 = 1.0; ∂F0 = 0.0;
+problem = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
 ```
 
 For vector-valued problems, the coefficients can be scalar, vector or matrix-valued. They are automatically promoted to make linear algebra work:
@@ -23,14 +23,14 @@ For vector-valued problems, the coefficients can be scalar, vector or matrix-val
 ```
 julia> N = 5;
 julia> kernel = SchematicDiagonalKernel(rand(N));
-julia> α = 1.0; β = rand(N); γ = rand(N,N); F0 = ones(N); ∂F0 = zeros(N);
-julia> problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel);
+julia> α = 1.0; β = rand(N); γ = rand(N,N); δ = 0.0; F0 = ones(N); ∂F0 = zeros(N);
+julia> problem = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel);
 
-julia> problem.α
+julia> problem.coeffs.α
 LinearAlgebra.UniformScaling{Float64}
 1.0*I
 
-julia> problem.β
+julia> problem.coeffs.β
 5×5 LinearAlgebra.Diagonal{Float64, Vector{Float64}}:
  0.789182   ⋅         ⋅        ⋅         ⋅
   ⋅        0.379832   ⋅        ⋅         ⋅
@@ -38,13 +38,21 @@ julia> problem.β
   ⋅         ⋅         ⋅       0.241663   ⋅
   ⋅         ⋅         ⋅        ⋅        0.857202
 
-julia> problem.γ
+julia> problem.coeffs.γ
 5×5 Matrix{Float64}:
  0.746936  0.963531  0.724356  0.31979   0.600617
  0.731198  0.217209  0.603705  0.373079  0.930195
  0.464137  0.670576  0.973505  0.23666   0.536108
  0.40188   0.797017  0.332496  0.841541  0.434256
  0.401826  0.303485  0.238624  0.239107  0.453554
+
+ julia> problem.coeffs.δ
+5-element Vector{Float64}:
+ 0.0
+ 0.0
+ 0.0
+ 0.0
+ 0.0
 ```
 
 ### Limitations
@@ -61,8 +69,8 @@ A `FuchsSolver` is constructed as follows:
 
 ```julia
 julia> kernel = SchematicF1Kernel(0.2);
-julia> α = 1.0; β = 0.0; γ = 1.0; F0 = 1.0; ∂F0 = 0.0;
-julia> problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel);
+julia> α = 1.0; β = 0.0; γ = 1.0; δ = 0.0; F0 = 1.0; ∂F0 = 0.0;
+julia> problem = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel);
 julia> solver1 = FuchsSolver() # using all default parameters
 julia> solver2 = FuchsSolver(N=128, Δt=10^-5, 
                             t_max=10.0^15, max_iterations=10^8, 
