@@ -69,7 +69,7 @@ Sₖ = find_analytical_S_k(k_array, η)
 
 kernel =  ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 problem = LinearMCTEquation(α, β, γ, δ, Sₖ, ∂F0, kernel)
-solver = FuchsSolver(Δt=10^-5, t_max=10.0^5, N = 8, tolerance=10^-8)
+solver = TimeDoublingSolver(Δt=10^-5, t_max=10.0^5, N = 8, tolerance=10^-8)
 sol = solve(problem, solver);
 
 Cₖ = find_analytical_C_k(k_array, η)

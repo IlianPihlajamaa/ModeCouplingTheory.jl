@@ -29,7 +29,7 @@ struct ZeroKernel <: MemoryKernel end
 evaluate_kernel(::ZeroKernel, _, _) = 0.0
 α = 1.0; β = 0.0; γ = 1.0; δ = 0.0; F0 = 1.0; dF0 = 0.0; kernel = ZeroKernel()
 equation = LinearMCTEquation(α, β, γ, δ, F0, dF0, kernel; update_coefficients! = myfunc)
-solver = FuchsSolver(t_max = 10.0^3, N = 600, Δt = 10^-4)
+solver = TimeDoublingSolver(t_max = 10.0^3, N = 600, Δt = 10^-4)
 sol = solve(equation, solver)
 t = sol.t; F = sol.F
 plot(log10.(t), log10.(F), lw=3)
@@ -55,7 +55,7 @@ function my_func(λ)
     δ = 0.0
     kernel = ExponentiallyDecayingKernel(λ, 1.0)
     problem = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
-    solver = FuchsSolver(Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
+    solver = TimeDoublingSolver(Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
     sol =  solve(problem, solver)
     return [sol.t[2:end], sol.F[2:end], sol.K[2:end]]
@@ -168,7 +168,7 @@ Now we can use this structure factor to solve the mode-coupling equation as usua
 α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ_uncertain); δ = 0.0
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ_uncertain)
 problem = LinearMCTEquation(α, β, γ, δ, Sₖ_uncertain, ∂F0, kernel)
-solver = FuchsSolver(Δt=10^-5, t_max=10.0^5, verbose=true, N = 8, tolerance=10^-8, max_iterations=10^8)
+solver = TimeDoublingSolver(Δt=10^-5, t_max=10.0^5, verbose=true, N = 8, tolerance=10^-8, max_iterations=10^8)
 sol = @time solve(problem, solver);
 p = plot(xlabel="log10(t)", ylabel="F(k,t)", ylims=(0,1), xlims=(-5,5))
 plot!(p, log10.(sol.t[2:10:end]), sol[19]/Sₖ_uncertain[19], label="k = $(k_array[19])", lw=3)
@@ -217,7 +217,7 @@ Sₖ = find_analytical_S_k(k_array, η)
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 problem = LinearMCTEquation(α, β, γ, δ, Sₖ, ∂F0, kernel)
-solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
+solver = TimeDoublingSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
 sol = @time solve(problem, solver);
 ```

@@ -21,7 +21,7 @@ F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; δ = 0.0; λ = 1.0; τ = 1.
 
 kernel = ExponentiallyDecayingKernel(λ, τ)
 problem = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
-solver = FuchsSolver(Δt=10^-3, t_max=10.0^2, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
+solver = TimeDoublingSolver(Δt=10^-3, t_max=10.0^2, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 sol =  solve(problem, solver)
 
 t_analytic = 10 .^ range(-3, 2, length=50)
@@ -50,7 +50,7 @@ F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; ν = 1.0
 
 kernel = SchematicF1Kernel(ν)
 problem = LinearMCTEquation(α, β, γ, F0, ∂F0, kernel)
-solver = FuchsSolver(Δt=10^-3, t_max=10.0^2, verbose=false, N = 100, tolerance=10^-14, max_iterations=10^6)
+solver = TimeDoublingSolver(Δt=10^-3, t_max=10.0^2, verbose=false, N = 100, tolerance=10^-14, max_iterations=10^6)
 sol =  solve(problem, solver)
 
 using Plots, SpecialFunctions
@@ -200,7 +200,7 @@ Sₖ = find_analytical_S_k(k_array, η)
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 problem = LinearMCTEquation(α, β, γ, δ, Sₖ, ∂F0, kernel)
-solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
+solver = TimeDoublingSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
 sol = @time solve(problem, solver);
     # 3.190870 seconds (377.93 k allocations: 106.456 MiB, 0.42% gc time)
@@ -300,7 +300,7 @@ end
 
 kernel = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 problem = LinearMCTEquation(α, β, Ω2, δ, F₀, ∂ₜF₀, kernel)
-solver = FuchsSolver(verbose=false, N=16, tolerance=10^-8, max_iterations=10^8)
+solver = TimeDoublingSolver(verbose=false, N=16, tolerance=10^-8, max_iterations=10^8)
 sol = solve(problem, solver)
 ik = 19
 k = k_array[ik]
@@ -373,7 +373,7 @@ That's it! We can now use it like any other memory kernel to solve the equation:
 
 ```julia
 problem = LinearMCTEquation(1.0, 0.0, 1.0, 0.0, 1.0, 0.0, kernel)
-solver = FuchsSolver(Δt = 10^-4, t_max=10.0^5)
+solver = TimeDoublingSolver(Δt = 10^-4, t_max=10.0^5)
 sol = solve(problem, solver)
 using Plots
 p = plot(log10.(sol.t), sol.F, ylims=(0,1), ylabel="F(t)", xlabel="log10(t)")
@@ -408,7 +408,7 @@ Sₖ = find_analytical_S_k(k_array, η)
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 problem = LinearMCTEquation(α, β, γ, δ, Sₖ, ∂F0, kernel)
-solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
+solver = TimeDoublingSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
 sol = @time solve(problem, solver);
 ```
@@ -491,7 +491,7 @@ F0 = ones(Nk); ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m; �
 
 taggedkernel = TaggedMCTKernel(ρ, kBT, m, k_array, Cₖ, t, F)
 taggedproblem = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, taggedkernel)
-taggedsolver = FuchsSolver(Δt=10^-5, t_max=10.0^15, 
+taggedsolver = TimeDoublingSolver(Δt=10^-5, t_max=10.0^15, 
                            N = 8, tolerance=10^-8) # it is important we use the same settings for Δt, t_max and N
 sol_s = @time solve(taggedproblem, taggedsolver)
 using Plots

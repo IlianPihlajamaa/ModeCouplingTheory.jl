@@ -24,7 +24,7 @@ struct MCTSolution{T1, T2, T3, T4}
 end
 
 include("EulerSolver.jl")
-include("FuchsSolver.jl")
+include("TimeDoublingSolver.jl")
 
 """
     solve(equation::MCTEquation, solver::Solver)
@@ -32,7 +32,7 @@ include("FuchsSolver.jl")
 Solves the `MCTequation` with the provided `kernel` using `solver`. 
 Search for a specific solver or kernel object to find more specific information.
 
-If no solver is provided, it uses the default FuchsSolver. 
+If no solver is provided, it uses the default TimeDoublingSolver. 
     
 # Returns:
 * `t` an array of time values
@@ -41,7 +41,7 @@ If no solver is provided, it uses the default FuchsSolver.
 """
 function solve(::MCTEquation, ::Solver); error("This solver is not known"); end
 
-solve(p::MCTEquation) = solve(p, FuchsSolver())
+solve(p::MCTEquation) = solve(p, TimeDoublingSolver())
 
 
 

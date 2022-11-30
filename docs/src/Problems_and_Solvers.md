@@ -61,22 +61,22 @@ This package is not tested for and is not expected to work when the type of `F` 
 
 ## Solvers
 
-A `Solver` object holds the settings for a specific integration method. This package defines two solvers: `EulerSolver` and `FuchsSolver`. The `EulerSolver` implements a simple forward Euler method (with trapezoidal integration) which is wildly inefficient if the domain of $t$ spans many orders of magnitude (such as it often does in Mode-Coupling Theory). It should therefore mainly be used for testing purposes. The `FuchsSolver` should be used in almost all other cases. The scheme it implements is outlined in [1] and in the appendix of [2]. If no solver is provided to a `solve` call, the default `FuchsSolver` is used.
+A `Solver` object holds the settings for a specific integration method. This package defines two solvers: `EulerSolver` and `TimeDoublingSolver`. The `EulerSolver` implements a simple forward Euler method (with trapezoidal integration) which is wildly inefficient if the domain of $t$ spans many orders of magnitude (such as it often does in Mode-Coupling Theory). It should therefore mainly be used for testing purposes. The `TimeDoublingSolver` should be used in almost all other cases. The scheme it implements is outlined in [1] and in the appendix of [2]. If no solver is provided to a `solve` call, the default `TimeDoublingSolver` is used.
 
 In short, the equation is discretised and solved on a grid of `4N` time-points, which are equally spaced over an interval `Δt`. It is solved using an implicit method, and thus a fixed point has to be found for each time point. This is done by recursive iteration. When the solution is found, the interval is doubled `Δt => 2Δt` and the solution on the previous grid is mapped onto the first `2N` time points of the new grid. The solution on the other`2N` points is again found by recursive iteration. This is repeated until some final time `t_max` is reached.
 
-A `FuchsSolver` is constructed as follows:
+A `TimeDoublingSolver` is constructed as follows:
 
 ```julia
 julia> kernel = SchematicF1Kernel(0.2);
 julia> α = 1.0; β = 0.0; γ = 1.0; δ = 0.0; F0 = 1.0; ∂F0 = 0.0;
 julia> problem = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel);
-julia> solver1 = FuchsSolver() # using all default parameters
-julia> solver2 = FuchsSolver(N=128, Δt=10^-5, 
+julia> solver1 = TimeDoublingSolver() # using all default parameters
+julia> solver2 = TimeDoublingSolver(N=128, Δt=10^-5, 
                             t_max=10.0^15, max_iterations=10^8, 
                             tolerance=10^-6, verbose=true)
 ```
-As optional keyword arguments `FuchsSolver` accepts:
+As optional keyword arguments `TimeDoublingSolver` accepts:
 * `N`: The number of time points in the interval is equal to `4N`. default = `32`
 * `t_max`: when this time value is reached, the integration returns. default = `10.0^10`
 * `Δt`: starting time interval, this will be doubled repeatedly. default = `10^-10`

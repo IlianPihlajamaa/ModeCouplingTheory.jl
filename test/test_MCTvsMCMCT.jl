@@ -51,7 +51,7 @@ Ftest = rand(SMatrix{1,1,Float64, 1}, N)
 
 
 systemMCT = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernelMCT)
-solverMCT = FuchsSolver(Δt=10^-10, t_max=10.0^10, verbose=false, N = 16, tolerance=10^-10, max_iterations=10^8)
+solverMCT = TimeDoublingSolver(Δt=10^-10, t_max=10.0^10, verbose=false, N = 16, tolerance=10^-10, max_iterations=10^8)
 solMCT = solve(systemMCT, solverMCT);
 
 systemMCMCT = LinearMCTEquation(α, β, [@SMatrix([γ[ik]]) for ik = 1:N], @SMatrix(zeros(1,1)), [@SMatrix([F0[ik]]) for ik = 1:N], [@SMatrix([∂F0[ik]]) for ik = 1:N], kernelMCMCT)
@@ -59,7 +59,7 @@ solverMCMCTEuler = EulerSolver(Δt=10^-5, t_max=2*10.0^-2, verbose=false)
 solMCMCTEuler = solve(systemMCMCT, solverMCMCTEuler);
 
 
-solverMCMCTFuchs = FuchsSolver(Δt=10^-10, t_max=10.0^10, verbose=false, N = 16, tolerance=10^-10, max_iterations=10^8)
+solverMCMCTFuchs = TimeDoublingSolver(Δt=10^-10, t_max=10.0^10, verbose=false, N = 16, tolerance=10^-10, max_iterations=10^8)
 solMCMCTFuchs = solve(systemMCMCT, solverMCMCTFuchs);
 
 # plot(log10.(tMCT), FMCT[19,:]/Sₖ[19], lw=3, label="MCT")

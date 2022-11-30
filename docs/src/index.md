@@ -44,7 +44,7 @@ in which α is a Float64,
 and a solver:
 
 ```julia
-julia> solver = FuchsSolver()
+julia> solver = TimeDoublingSolver()
 ```
 
 Now we can solve the equation by calling `solve`:
@@ -64,7 +64,7 @@ using ModeCouplingTheory, Plots
 α = 1.0; β = 0.0; γ = 1.0; δ = 0.0; F0 = 1.0; ∂F0 = 0.0;
 kernel = SchematicF2Kernel(ν)
 problem = LinearMCTEquation(α, β, γ, δ; F0, ∂F0, kernel)
-solver = FuchsSolver(problem)
+solver = TimeDoublingSolver(problem)
 sol = solve(problem, solver);
 plot(log10.(sol.t), sol.F)
 ```
