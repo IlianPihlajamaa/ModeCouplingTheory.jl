@@ -14,7 +14,7 @@ struct ZeroKernel &lt;: MemoryKernel end
 evaluate_kernel(::ZeroKernel, _, _) = 0.0
 α = 1.0; β = 0.0; γ = 1.0; δ = 0.0; F0 = 1.0; dF0 = 0.0; kernel = ZeroKernel()
 equation = LinearMCTEquation(α, β, γ, δ, F0, dF0, kernel; update_coefficients! = myfunc)
-solver = FuchsSolver(t_max = 10.0^3, N = 600, Δt = 10^-4)
+solver = TimeDoublingSolver(t_max = 10.0^3, N = 600, Δt = 10^-4)
 sol = solve(equation, solver)
 t = sol.t; F = sol.F
 plot(log10.(t), log10.(F), lw=3)
@@ -28,7 +28,7 @@ function my_func(λ)
     δ = 0.0
     kernel = ExponentiallyDecayingKernel(λ, 1.0)
     problem = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
-    solver = FuchsSolver(Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
+    solver = TimeDoublingSolver(Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
     sol =  solve(problem, solver)
     return [sol.t[2:end], sol.F[2:end], sol.K[2:end]]
@@ -107,7 +107,7 @@ julia&gt; plot(k_array, Sₖ_uncertain, xlabel=&quot;k&quot;, ylabel=&quot;S(k)&
 α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ_uncertain); δ = 0.0
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ_uncertain)
 problem = LinearMCTEquation(α, β, γ, δ, Sₖ_uncertain, ∂F0, kernel)
-solver = FuchsSolver(Δt=10^-5, t_max=10.0^5, verbose=true, N = 8, tolerance=10^-8, max_iterations=10^8)
+solver = TimeDoublingSolver(Δt=10^-5, t_max=10.0^5, verbose=true, N = 8, tolerance=10^-8, max_iterations=10^8)
 sol = @time solve(problem, solver);
 p = plot(xlabel=&quot;log10(t)&quot;, ylabel=&quot;F(k,t)&quot;, ylims=(0,1), xlims=(-5,5))
 plot!(p, log10.(sol.t[2:10:end]), sol[19]/Sₖ_uncertain[19], label=&quot;k = $(k_array[19])&quot;, lw=3)</code></pre><p><img src="images/uncertainF.png" alt="image"/></p><h2 id="Steady-state-(non-ergodicity-parameter)"><a class="docs-heading-anchor" href="#Steady-state-(non-ergodicity-parameter)">Steady state (non-ergodicity parameter)</a><a id="Steady-state-(non-ergodicity-parameter)-1"></a><a class="docs-heading-anchor-permalink" href="#Steady-state-(non-ergodicity-parameter)" title="Permalink"></a></h2><p>This package also exports a function <code>solve_steady_state(γ, F₀, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false)</code> to find the steady-state solution of a mode-coupling like equation. In order to find it, it performs a recursive iteration of the mapping </p><p class="math-container">\[F^\infty = (K(F^\infty,t=\infty) + γ)^{-1} \cdot K(F^\infty, t=\infty) \cdot F(t=0)\]</p><h3 id="Example-4"><a class="docs-heading-anchor" href="#Example-4">Example</a><a class="docs-heading-anchor-permalink" href="#Example-4" title="Permalink"></a></h3><pre><code class="language-julia hljs">using ModeCouplingTheory, Plots
@@ -128,8 +128,8 @@ Sₖ = find_analytical_S_k(k_array, η)
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 problem = LinearMCTEquation(α, β, γ, δ, Sₖ, ∂F0, kernel)
-solver = FuchsSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
+solver = TimeDoublingSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
 sol = @time solve(problem, solver);</code></pre><p>We can now extract a single relaxation time by calling </p><pre><code class="language-julia hljs">julia&gt; find_relaxation_time(sol.t, sol[18]) # at k k_array[18]
 4.232796654132995e11</code></pre><p>To extract all relaxation times as a function of <span>$k$</span>:</p><pre><code class="language-julia hljs">julia&gt; t_R = [find_relaxation_time(t, sol[ik]) for ik in eachindex(k_array)]; 
-julia&gt; p = plot(k_array, log10.(t_R), xlabel=&quot;k&quot;, ylabel=&quot;log10(relaxation time)&quot;, legend=false)</code></pre><p><img src="images/tr.png" alt="image"/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="Kernels.html">« Kernels</a><a class="docs-footer-nextpage" href="FromPython.html">From Python »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Wednesday 30 November 2022 09:45">Wednesday 30 November 2022</span>. Using Julia version 1.8.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+julia&gt; p = plot(k_array, log10.(t_R), xlabel=&quot;k&quot;, ylabel=&quot;log10(relaxation time)&quot;, legend=false)</code></pre><p><img src="images/tr.png" alt="image"/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="Kernels.html">« Kernels</a><a class="docs-footer-nextpage" href="FromPython.html">From Python »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.23 on <span class="colophon-date" title="Wednesday 30 November 2022 15:15">Wednesday 30 November 2022</span>. Using Julia version 1.8.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
