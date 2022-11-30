@@ -90,7 +90,7 @@ function solve_steady_state_mutable(γ, F₀, kernel; tolerance=10^-8, max_itera
         error = find_error(F, Fold)
         Fold .= F
         if verbose 
-            println("The error is $(error)) after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
+            println("The error is $(error) after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
         end
     end
     if verbose 
