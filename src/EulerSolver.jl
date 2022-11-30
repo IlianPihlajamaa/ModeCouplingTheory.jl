@@ -6,14 +6,14 @@ mutable struct EulerSolver{I, F} <: Solver
 end
 
 """
-    EulerSolver(equation::LinearMCTEquation; t_max=10.0^2, Δt=10^-3, verbose=false)
+    EulerSolver(equation::MemoryEquation; t_max=10.0^2, Δt=10^-3, verbose=false)
 
-Constructs a solver object that, when called `solve` upon will solve an `LinearMCTEquation` using a forward Euler method.
+Constructs a solver object that, when called `solve` upon will solve an `MemoryEquation` using a forward Euler method.
 It will discretise the integral using a Trapezoidal rule. Use this solver only for testing purposes. It is a wildy 
 inefficient way to solve MCT-like equations.
 
 # Arguments:
-* `equation` an instance of LinearMCTEquation
+* `equation` an instance of MemoryEquation
 * `t_max` when this time value is reached, the integration returns
 * `Δt` fixed time step
 * `verbose` if `true`, information will be printed to STDOUT
@@ -77,7 +77,7 @@ function allocate_results!(t_array, F_array, K_array, ∂ₜF_array_reverse, t, 
     pushfirst!(∂ₜF_array_reverse, ∂ₜF)
 end
 
-function initialize_output_arrays(equation::MCTEquation, solver::EulerSolver)
+function initialize_output_arrays(equation::AbstractMemoryEquation, solver::EulerSolver)
     F0 = equation.F₀
     dF0 = equation.∂ₜF₀
     ∂ₜF_array_reverse = typeof(dF0)[dF0]
@@ -89,7 +89,7 @@ function initialize_output_arrays(equation::MCTEquation, solver::EulerSolver)
 end
 
 
-function solve(equation::LinearMCTEquation, solver::EulerSolver)
+function solve(equation::MemoryEquation, solver::EulerSolver)
     tstart = time()
     kernel = equation.kernel
     N = solver.N

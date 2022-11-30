@@ -43,7 +43,7 @@ d = 0.0
 F0 = 1.0
 dF0 = 0.0
 kernel = mct.SchematicF2Kernel(k)
-problem = mct.LinearMCTEquation(a, b, c, d, F0, dF0, kernel)
+problem = mct.MemoryEquation(a, b, c, d, F0, dF0, kernel)
 sol = mct.solve(problem)
 
 import matplotlib.pyplot as plt

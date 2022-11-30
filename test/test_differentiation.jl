@@ -6,7 +6,7 @@ function main_scalar(λ)
     γ = 1.0
 
     kernel1 = ExponentiallyDecayingKernel(λ, 1.0)
-    system1 = LinearMCTEquation(α, β, γ, 0.0, F0, ∂F0, kernel1)
+    system1 = MemoryEquation(α, β, γ, 0.0, F0, ∂F0, kernel1)
     solver1 = TimeDoublingSolver(Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
     sol =  solve(system1, solver1)
@@ -48,7 +48,7 @@ function main_vector(Λ)
     γ = [sin(i*j/π)^4 for i = 1:N, j = 1:N]/N^2
 
     kernel = SchematicMatrixKernel(λ)
-    system = LinearMCTEquation(α, β, γ, 0.0, F0, ∂F0, kernel)
+    system = MemoryEquation(α, β, γ, 0.0, F0, ∂F0, kernel)
     solver = TimeDoublingSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
     
     sol =  solve(system, solver);

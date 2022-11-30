@@ -168,7 +168,7 @@ kernel = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 kernelnaive = NaiveMultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ);
 Ftest = rand(eltype(F₀), Nk)
 @test all(evaluate_kernel(kernelnaive, Ftest, 0.0) .≈ evaluate_kernel(kernel, Ftest, 0.0))
-system = LinearMCTEquation(α, β, γ, δ, F₀, ∂ₜF₀, kernel)
+system = MemoryEquation(α, β, γ, δ, F₀, ∂ₜF₀, kernel)
 solverFuchs = TimeDoublingSolver(N=4, tolerance=10^-12, max_iterations=20000, Δt=10^-4, t_max=10.0^3, verbose=false)
 sol =  solve(system, solverFuchs);
 tFuchs, FFuchs = sol.t, sol.F
@@ -184,7 +184,7 @@ dF0 = [0.0 for ik = 1:Nk]
 δ = 0.0
 
 taggedkernel = TaggedMultiComponentModeCouplingKernel(s, ρ, kBT, m, k_array, Sₖ, sol);
-taggedSystem = LinearMCTEquation(α, β, γ, δ, F0, dF0, taggedkernel)
+taggedSystem = MemoryEquation(α, β, γ, δ, F0, dF0, taggedkernel)
 taggedsol = solve(taggedSystem, solverFuchs)
 @test all(sol[19][end] .≈ [0.13881069002073976 0.04192527228732725; 0.041925272287327266 0.52419581715369]) # regression test
 @test taggedsol[19][end] ≈ 0.7678799482793754 # regression tests

@@ -1,6 +1,6 @@
 ## Time-dependent coefficients
 
-In order to allow the coefficients $\alpha$, $\beta$, $\gamma$, and $\delta$ to have a time dependence, the constructor of `LinearMCTEquation` allows for an optional keyword argument `update_coefficients!`, which should be a user-defined function that updates the coefficient struct given a value of `t`. Make sure, when updating the coefficients, that their type does not change. The type of the coefficients can be inspected in the `coeffs` field of a `LinearMCTEquation` object.
+In order to allow the coefficients $\alpha$, $\beta$, $\gamma$, and $\delta$ to have a time dependence, the constructor of `MemoryEquation` allows for an optional keyword argument `update_coefficients!`, which should be a user-defined function that updates the coefficient struct given a value of `t`. Make sure, when updating the coefficients, that their type does not change. The type of the coefficients can be inspected in the `coeffs` field of a `MemoryEquation` object.
 
 The default is that all coefficients are independent of time, that is: `update_coefficients! = (coeffs, t) -> nothing`. 
 
@@ -15,7 +15,7 @@ function myfunc(coeffs, t)
     coeffs.γ = 2+cos(sqrt(t))
 end
 
-LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel; update_coefficients! = myfunc)
+MemoryEquation(α, β, γ, δ, F0, ∂F0, kernel; update_coefficients! = myfunc)
 ```
 Alternatively, let's say we want to solve 
 $\ddot{F} + F - t = 0$,
@@ -28,7 +28,7 @@ end
 struct ZeroKernel <: MemoryKernel end
 evaluate_kernel(::ZeroKernel, _, _) = 0.0
 α = 1.0; β = 0.0; γ = 1.0; δ = 0.0; F0 = 1.0; dF0 = 0.0; kernel = ZeroKernel()
-equation = LinearMCTEquation(α, β, γ, δ, F0, dF0, kernel; update_coefficients! = myfunc)
+equation = MemoryEquation(α, β, γ, δ, F0, dF0, kernel; update_coefficients! = myfunc)
 solver = TimeDoublingSolver(t_max = 10.0^3, N = 600, Δt = 10^-4)
 sol = solve(equation, solver)
 t = sol.t; F = sol.F
@@ -54,7 +54,7 @@ function my_func(λ)
     γ = 1.0
     δ = 0.0
     kernel = ExponentiallyDecayingKernel(λ, 1.0)
-    problem = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
+    problem = MemoryEquation(α, β, γ, δ, F0, ∂F0, kernel)
     solver = TimeDoublingSolver(Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
     sol =  solve(problem, solver)
@@ -167,7 +167,7 @@ Now we can use this structure factor to solve the mode-coupling equation as usua
 ∂F0 = zeros(eltype(Sₖ_uncertain), Nk)
 α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ_uncertain); δ = 0.0
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ_uncertain)
-problem = LinearMCTEquation(α, β, γ, δ, Sₖ_uncertain, ∂F0, kernel)
+problem = MemoryEquation(α, β, γ, δ, Sₖ_uncertain, ∂F0, kernel)
 solver = TimeDoublingSolver(Δt=10^-5, t_max=10.0^5, verbose=true, N = 8, tolerance=10^-8, max_iterations=10^8)
 sol = @time solve(problem, solver);
 p = plot(xlabel="log10(t)", ylabel="F(k,t)", ylims=(0,1), xlims=(-5,5))
@@ -216,7 +216,7 @@ Sₖ = find_analytical_S_k(k_array, η)
 ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ); δ = 0.0
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = LinearMCTEquation(α, β, γ, δ, Sₖ, ∂F0, kernel)
+problem = MemoryEquation(α, β, γ, δ, Sₖ, ∂F0, kernel)
 solver = TimeDoublingSolver(Δt=10^-5, t_max=10.0^15, verbose=false, 
                      N = 8, tolerance=10^-8)
 sol = @time solve(problem, solver);

@@ -32,7 +32,7 @@ We can now define the equation we want to solve as follows:
 
 ```
 julia> α = 1.0; β = 0.0; γ = 2.0; δ = 0.0; F0 = 1.0; ∂F0 = 0.0;
-julia> equation = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel)
+julia> equation = MemoryEquation(α, β, γ, δ, F0, ∂F0, kernel)
 Linear MCT equation object:
    α F̈ + β Ḟ + γF + δ + ∫K(τ)Ḟ(t-τ) = 0
 in which α is a Float64,
@@ -63,7 +63,7 @@ using ModeCouplingTheory, Plots
 ν = 3.999
 α = 1.0; β = 0.0; γ = 1.0; δ = 0.0; F0 = 1.0; ∂F0 = 0.0;
 kernel = SchematicF2Kernel(ν)
-problem = LinearMCTEquation(α, β, γ, δ; F0, ∂F0, kernel)
+problem = MemoryEquation(α, β, γ, δ; F0, ∂F0, kernel)
 solver = TimeDoublingSolver(problem)
 sol = solve(problem, solver);
 plot(log10.(sol.t), sol.F)

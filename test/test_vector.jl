@@ -10,12 +10,12 @@ F0 = @SVector ones(N)
 
 #SMatrix
 kernel1 = SchematicDiagonalKernel(λ)
-system1 = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel1)
+system1 = MemoryEquation(α, β, γ, δ, F0, ∂F0, kernel1)
 solver1 = TimeDoublingSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
 #Matrix
 kernel2 = SchematicDiagonalKernel(Vector(λ))
-system2 = LinearMCTEquation(α, β, Matrix(γ), δ, Vector(F0), Vector(∂F0), kernel2)
+system2 = MemoryEquation(α, β, Matrix(γ), δ, Vector(F0), Vector(∂F0), kernel2)
 solver2 = TimeDoublingSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
 inFS = @SVector rand(N)
@@ -66,17 +66,17 @@ thresh = 10^-6
 
 #Matrix
 kernel1 = SchematicMatrixKernel(λ)
-system1 = LinearMCTEquation(α, β, γ, δ, F₀, ∂ₜF₀, kernel1)
+system1 = MemoryEquation(α, β, γ, δ, F₀, ∂ₜF₀, kernel1)
 solver1 = TimeDoublingSolver(Δt=10^-2, t_max=10.0^1, verbose=false, N = 32, tolerance=10^-10, max_iterations=10^6)
 
 #SMatrix
 kernel2 = SchematicMatrixKernel(SMatrix{2*Nc, 2*Nc}(λ))
-system2 = LinearMCTEquation(SVector{2*Nc}(α), SMatrix{2*Nc, 2*Nc}(β), SMatrix{2*Nc, 2*Nc}(γ), δ, SVector{2*Nc}(F₀), SVector{2*Nc}(∂ₜF₀), kernel2)
+system2 = MemoryEquation(SVector{2*Nc}(α), SMatrix{2*Nc, 2*Nc}(β), SMatrix{2*Nc, 2*Nc}(γ), δ, SVector{2*Nc}(F₀), SVector{2*Nc}(∂ₜF₀), kernel2)
 solver2 = TimeDoublingSolver(Δt=10^-2, t_max=10.0^1, verbose=false, N = 32, tolerance=10^-10, max_iterations=10^6)
 
 #SparseMatrix
 kernel3 = SchematicMatrixKernel(sparse(λ))
-system3 = LinearMCTEquation(α, β, sparse(γ), δ, F₀, ∂ₜF₀, kernel3)
+system3 = MemoryEquation(α, β, sparse(γ), δ, F₀, ∂ₜF₀, kernel3)
 solver3 = TimeDoublingSolver(Δt=10^-2, t_max=10.0^1, verbose=false, N = 32, tolerance=10^-10, max_iterations=10^6)
 
 inFS = @SVector rand(N)

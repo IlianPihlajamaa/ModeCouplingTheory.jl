@@ -50,11 +50,11 @@ Ftest = rand(SMatrix{1,1,Float64, 1}, N)
 @test all(getindex.(evaluate_kernel(kernelnaive, Ftest, 0.0), 1) .≈ getindex.(evaluate_kernel(kernelMCMCT, Ftest, 0.0),1) .≈ evaluate_kernel(kernelMCT, getindex.(Ftest,1), 0.0))
 
 
-systemMCT = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernelMCT)
+systemMCT = MemoryEquation(α, β, γ, δ, F0, ∂F0, kernelMCT)
 solverMCT = TimeDoublingSolver(Δt=10^-10, t_max=10.0^10, verbose=false, N = 16, tolerance=10^-10, max_iterations=10^8)
 solMCT = solve(systemMCT, solverMCT);
 
-systemMCMCT = LinearMCTEquation(α, β, [@SMatrix([γ[ik]]) for ik = 1:N], @SMatrix(zeros(1,1)), [@SMatrix([F0[ik]]) for ik = 1:N], [@SMatrix([∂F0[ik]]) for ik = 1:N], kernelMCMCT)
+systemMCMCT = MemoryEquation(α, β, [@SMatrix([γ[ik]]) for ik = 1:N], @SMatrix(zeros(1,1)), [@SMatrix([F0[ik]]) for ik = 1:N], [@SMatrix([∂F0[ik]]) for ik = 1:N], kernelMCMCT)
 solverMCMCTEuler = EulerSolver(Δt=10^-5, t_max=2*10.0^-2, verbose=false)
 solMCMCTEuler = solve(systemMCMCT, solverMCMCTEuler);
 

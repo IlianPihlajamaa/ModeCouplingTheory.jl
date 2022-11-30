@@ -4,7 +4,7 @@ abstract type Solver end
 """
     MCTSolution
 
-solution object that holds the solution of an MCTEquation. It has 4 fields
+solution object that holds the solution of an AbstractMemoryEquation. It has 4 fields
     t: array of t values
     F: array of F for all t
     K: array of K for all T
@@ -27,9 +27,9 @@ include("EulerSolver.jl")
 include("TimeDoublingSolver.jl")
 
 """
-    solve(equation::MCTEquation, solver::Solver)
+    solve(equation::AbstractMemoryEquation, solver::Solver)
 
-Solves the `MCTequation` with the provided `kernel` using `solver`. 
+Solves the `AbstractMemoryEquation` with the provided `kernel` using `solver`. 
 Search for a specific solver or kernel object to find more specific information.
 
 If no solver is provided, it uses the default TimeDoublingSolver. 
@@ -39,9 +39,9 @@ If no solver is provided, it uses the default TimeDoublingSolver.
 * `F` The solution in an array of which the last dimension corresponds to the time.
 * `K` The memory kernel corresponding to each `F`
 """
-function solve(::MCTEquation, ::Solver); error("This solver is not known"); end
+function solve(::AbstractMemoryEquation, ::Solver); error("This solver is not known"); end
 
-solve(p::MCTEquation) = solve(p, TimeDoublingSolver())
+solve(p::AbstractMemoryEquation) = solve(p, TimeDoublingSolver())
 
 
 
