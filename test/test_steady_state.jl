@@ -4,8 +4,8 @@ F0 = 1.0
 γ = 1.0
 λ = 4.00000001
 kernel = SchematicF2Kernel(λ)
-f = solve_steady_state(γ, F0, kernel; tolerance=10^-10, verbose=false)
-@test abs(f - 0.5) < 0.001
+sol = solve_steady_state(γ, F0, kernel; tolerance=10^-10, verbose=false)
+@test abs(sol.F - 0.5) < 0.001
 
 ## SVector
 N = 5
@@ -13,8 +13,8 @@ F0 = @SVector ones(N)
 γ = @SMatrix [sin(i*j/π)^4/N^2 for i = 1:N, j = 1:N] #some random matrix
 λ = @SVector [cos(i)^2*N^2 for i = 1:N] #some random vector
 kernel = SchematicDiagonalKernel(λ)
-f = solve_steady_state(γ, F0, kernel; tolerance=10^-10, verbose=false)
-@test sum(f) ≈ 4.892831203320679
+sol = solve_steady_state(γ, F0, kernel; tolerance=10^-10, verbose=false)
+@test sum(sol.F) ≈ 4.892831203320679
 
 # Vector
 N = 5
@@ -22,8 +22,8 @@ F0 =  ones(N)
 γ =  [sin(i*j/π)^4/N^2 for i = 1:N, j = 1:N] #some random matrix
 λ =  [cos(i)^2*N^2 for i = 1:N] #some random vector
 kernel = SchematicDiagonalKernel(λ)
-f = solve_steady_state(γ, F0, kernel; tolerance=10^-10, verbose=false)
-@test sum(f) ≈ 4.892831203320679
+sol = solve_steady_state(γ, F0, kernel; tolerance=10^-10, verbose=false)
+@test sum(sol.F) ≈ 4.892831203320679
 
 # Vector out-of-place
 N = 5
@@ -38,8 +38,8 @@ end
 import ModeCouplingTheory.evaluate_kernel
 evaluate_kernel(kernel::MyKernel, F, t) = Diagonal(kernel.ν .* F .^ 2)
 
-f = solve_steady_state(γ, F0, kernel; tolerance=10^-10, verbose=false, inplace=false)
-@test sum(f) ≈ 4.892831203320679
+sol = solve_steady_state(γ, F0, kernel; tolerance=10^-10, verbose=false, inplace=false)
+@test sum(sol.F) ≈ 4.892831203320679
 
 function find_analytical_C_k(k, η)
     A = -(1 - η)^-4 *(1 + 2η)^2
