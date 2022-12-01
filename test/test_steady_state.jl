@@ -5,7 +5,7 @@ F0 = 1.0
 λ = 4.00000001
 kernel = SchematicF2Kernel(λ)
 sol = solve_steady_state(γ, F0, kernel; tolerance=10^-10, verbose=false)
-@test abs(sol.F - 0.5) < 0.001
+@test abs(sol.F[1] - 0.5) < 0.001
 
 ## SVector
 N = 5
@@ -14,7 +14,7 @@ F0 = @SVector ones(N)
 λ = @SVector [cos(i)^2*N^2 for i = 1:N] #some random vector
 kernel = SchematicDiagonalKernel(λ)
 sol = solve_steady_state(γ, F0, kernel; tolerance=10^-10, verbose=false)
-@test sum(sol.F) ≈ 4.892831203320679
+@test sum(sol.F[1]) ≈ 4.892831203320679
 
 # Vector
 N = 5
@@ -23,7 +23,7 @@ F0 =  ones(N)
 λ =  [cos(i)^2*N^2 for i = 1:N] #some random vector
 kernel = SchematicDiagonalKernel(λ)
 sol = solve_steady_state(γ, F0, kernel; tolerance=10^-10, verbose=false)
-@test sum(sol.F) ≈ 4.892831203320679
+@test sum(sol.F[1]) ≈ 4.892831203320679
 
 # Vector out-of-place
 N = 5
@@ -39,7 +39,7 @@ import ModeCouplingTheory.evaluate_kernel
 evaluate_kernel(kernel::MyKernel, F, t) = Diagonal(kernel.ν .* F .^ 2)
 
 sol = solve_steady_state(γ, F0, kernel; tolerance=10^-10, verbose=false, inplace=false)
-@test sum(sol.F) ≈ 4.892831203320679
+@test sum(sol.F[1]) ≈ 4.892831203320679
 
 function find_analytical_C_k(k, η)
     A = -(1 - η)^-4 *(1 + 2η)^2
