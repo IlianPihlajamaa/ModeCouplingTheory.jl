@@ -107,6 +107,6 @@ function solve(equation::MemoryEquation, solver::EulerSolver)
         allocate_results!(t_array, F_array, K_array, ∂ₜF_array_reverse, t, K, F, ∂ₜF)
         log_results(solver, tstart, t, it)
     end
-    sol = MCTSolution(t_array, F_array, K_array, solver)
+    sol = MemoryEquationSolution(t_array, F_array, K_array, solver)
     return sol
 end
