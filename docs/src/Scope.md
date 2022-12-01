@@ -182,6 +182,7 @@ This package also exports a function `solve_steady_state(γ, F₀, kernel; toler
 
 $$F^\infty = (K(F^\infty,t=\infty) + γ)^{-1} \cdot K(F^\infty, t=\infty) \cdot F(t=0)$$
 
+It returns a `MemoryEquationSolution` object defined at one time $t=\infty$, which contains both $F(t=\infty)$ and $K(t=\infty)$ as fields.
 
 ### Example
 
@@ -193,7 +194,8 @@ Sₖ = find_analytical_S_k(k_array, ρ*π/6)
 
 γ = @. k_array^2*kBT/(m*Sₖ)
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-fk = solve_steady_state(γ, Sₖ, kernel; tolerance=10^-8, verbose=false)
+sol = solve_steady_state(γ, Sₖ, kernel; tolerance=10^-8, verbose=false)
+fk = sol.F[1]
 p = plot(k_array, fk, ylabel="non-ergodicity parameter", xlabel="k")
 ```
 
