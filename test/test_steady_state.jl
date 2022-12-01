@@ -78,7 +78,8 @@ F0 = copy(Sₖ)
 γ = @. k_array^2*kBT/(m*Sₖ)
 
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-fk = solve_steady_state(γ, F0, kernel; tolerance=10^-8, verbose=false)
+sol = solve_steady_state(γ, F0, kernel; tolerance=10^-8, verbose=false)
+fk = sol.F[1]
 @test sum(fk) ≈ 19.285439116785284 # regression test
 
 #### MCMCT ###
@@ -117,6 +118,6 @@ for ik = 1:Nk
 end
 
 kernel = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-solve_steady_state(γ, F₀, kernel; tolerance=10^-12, verbose=false)
-fk = solve_steady_state(γ, F₀, kernel; tolerance=10^-12, verbose=false)
+sol = solve_steady_state(γ, F₀, kernel; tolerance=10^-12, verbose=false)
+fk = sol.F[1]
 @test sum(sum(fk)) ≈ 45.50146332163797 # regression test

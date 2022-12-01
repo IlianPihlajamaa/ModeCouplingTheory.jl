@@ -25,7 +25,7 @@ function solve_steady_state_immutable(γ, F₀, kernel; tolerance=10^-8, max_ite
     if verbose 
         println("converged after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
     end
-    return F    
+    return MemoryEquationSolution([Inf64], [F], [K], (tolerance=tolerance, max_iterations=max_iterations, verbose=verbose))    
 end
 
 """
@@ -96,5 +96,5 @@ function solve_steady_state_mutable(γ, F₀, kernel; tolerance=10^-8, max_itera
     if verbose 
         println("converged after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
     end
-    return F    
+    return MemoryEquationSolution([Inf64], [F], [K], (tolerance=tolerance, max_iterations=max_iterations, verbose=verbose))    
 end
