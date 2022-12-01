@@ -2,7 +2,7 @@ abstract type Solver end
 
 
 """
-    MCTSolution
+    MemoryEquationSolution
 
 solution object that holds the solution of an AbstractMemoryEquation. It has 4 fields
     t: array of t values
@@ -11,12 +11,12 @@ solution object that holds the solution of an AbstractMemoryEquation. It has 4 f
     solver: solver object that holds the solver settings
 
 an MCT object can be indexed such that 
-    sol=MCTSolution
+    sol=MemoryEquationSolution
     sol[2]  
 gives the F[2] for all t.
 
 """
-struct MCTSolution{T1, T2, T3, T4}
+struct MemoryEquationSolution{T1, T2, T3, T4}
     t::T1
     F::T2
     K::T3
@@ -46,4 +46,4 @@ solve(p::AbstractMemoryEquation) = solve(p, TimeDoublingSolver())
 
 
 import Base.getindex
-getindex(sol::MCTSolution, I...) = getindex.(sol.F, I...)
+getindex(sol::MemoryEquationSolution, I...) = getindex.(sol.F, I...)

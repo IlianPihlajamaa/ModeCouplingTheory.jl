@@ -574,6 +574,6 @@ function solve(equation::AbstractMemoryEquation, solver::TimeDoublingSolver)
         new_time_mapping!(equation, solver, temp_arrays)
     end
     solver.Δt = startΔt
-    sol = MCTSolution(t_array, F_array, K_array, solver)
+    sol = MemoryEquationSolution(t_array, F_array, K_array, solver)
     return sol
 end
