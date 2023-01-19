@@ -52,7 +52,7 @@ end
 
 Returns a FuchsTempStruct containing several arrays that are used for intermediate calculations.
 """
-function allocate_temporary_arrays(equation::AbstractMemoryEquation, solver::TimeDoublingSolver)
+function allocate_temporary_arrays(equation::MemoryEquation, solver::TimeDoublingSolver)
     K₀ = equation.K₀
     F₀ = equation.F₀
     C1 = sum([equation.coeffs.α, equation.coeffs.β, equation.coeffs.γ, K₀])
@@ -433,7 +433,7 @@ end
 
 pushes the found solution, stored in `temp_arrays` with indices `istart` until `istop` to the output arrays.
 """
-function allocate_results!(t_array, F_array, K_array, solver::TimeDoublingSolver, temp_arrays; istart=2(solver.N) + 1, iend=4(solver.N))
+function allocate_results!(t_array, F_array, K_array, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct; istart=2(solver.N) + 1, iend=4(solver.N))
     N = solver.N
     δt = solver.Δt / (4N)
     for it = istart:iend
@@ -552,7 +552,11 @@ end
 initializes arrays that the solver will push results into.
 """
 function initialize_output_arrays(equation::AbstractMemoryEquation)
-    return typeof(0.0)[0.0], typeof(equation.F₀)[equation.F₀], typeof(equation.K₀)[equation.K₀]
+    if typeof(equation.K₀) != nothing
+        return typeof(0.0)[0.0], typeof(equation.F₀)[equation.F₀], typeof(equation.K₀)[equation.K₀]
+    else
+        return typeof(0.0)[0.0], typeof(equation.F₀)[equation.F₀], nothing
+    end
 end
 
 function solve(equation::AbstractMemoryEquation, solver::TimeDoublingSolver)

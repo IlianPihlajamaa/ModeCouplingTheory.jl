@@ -9,13 +9,14 @@ module ModeCouplingTheory
     export ModeCouplingKernel, MultiComponentModeCouplingKernel, ExponentiallyDecayingKernel, SchematicDiagonalKernel, SchematicF123Kernel, SchematicF1Kernel, SchematicF2Kernel, SchematicMatrixKernel
     export SjogrenKernel, TaggedSchematicF2Kernel, TaggedModeCouplingKernel, TaggedMultiComponentModeCouplingKernel
     export InterpolatingKernel
+    export BetaScalingEquation
     export AbstractMemoryEquation, MemoryEquation
     export MemoryKernel, evaluate_kernel, evaluate_kernel!
     export find_relaxation_time, solve_steady_state
     
     abstract type AbstractMemoryEquation end
 
-    for file in ["Kernels.jl", "MemoryEquation.jl", "Solvers.jl", "RelaxationTime.jl", "SteadyStateMemoryEquation.jl"]
+    for file in ["Kernels.jl", "MemoryEquation.jl", "Solvers.jl", "RelaxationTime.jl", "SteadyStateMemoryEquation.jl", "BetaScaling.jl"]
         include(file)
     end
 
