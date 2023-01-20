@@ -3,7 +3,7 @@
 Package to solve mode-coupling theory like equations
 """
 module ModeCouplingTheory
-    using StaticArrays, SparseArrays, LinearAlgebra, Random, LoopVectorization, Dierckx, Printf
+    using StaticArrays, SparseArrays, LinearAlgebra, Random, LoopVectorization, Dierckx, Printf, SpecialFunctions
     import LinearSolve
     export solve, TimeDoublingSolver, EulerSolver
     export ModeCouplingKernel, MultiComponentModeCouplingKernel, ExponentiallyDecayingKernel, SchematicDiagonalKernel, SchematicF123Kernel, SchematicF1Kernel, SchematicF2Kernel, SchematicMatrixKernel
@@ -20,7 +20,7 @@ module ModeCouplingTheory
         include(file)
     end
 
-    if ccall(:jl_generating_output, Cint, ()) == 1   # if we're precompiling the package, run a simple scalar and MCT code
+    if false #ccall(:jl_generating_output, Cint, ()) == 1   # if we're precompiling the package, run a simple scalar and MCT code
         let 
             kernel1 = ModeCouplingTheory.SchematicF2Kernel(0.1)
             system1 = MemoryEquation(1.0, 0.0, 1.0, 0.0, 1.0, 0.0, kernel1)

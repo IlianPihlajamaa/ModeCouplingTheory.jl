@@ -16,9 +16,44 @@ mutable struct BetaScalingEquationCoefficients{T}
     b::T
 end
 
+function regula_falsi(x0::Float64, x1::Float64, f; accuracy::Float64=1e-10, max_iterations::Integer=1000000)
+    iterations = 0
+    xa, xb = x0, x1
+    fa, fb = f(x0), f(x1)
+    dx = xb-xa
+    xguess = (xa + xb)/2
+    while iterations==0 || (dx > accuracy && iterations <= max_iterations)
+        # regula falsi: estimate the zero of f(x) by the secant,
+        # check f(xguess) and use xguess as one of the new endpoints of
+        # the interval, such that f has opposite signs at the endpoints
+        # (and hence a root of f(x) should be inside the interval)
+        xguess = xa - (dx / (fb-fa)) * fa
+        fguess = f(xguess)
+        # we catch the cases where the secant extrapolates outside the interval
+        if xguess < xa
+            xb,fb = xa,fa
+            xa,fa = xguess,fguess
+        elseif xguess > xb
+            xa,fa = xb,fb
+            xb,fb = xguess,fguess
+        elseif (fguess>0 && fa<0) || (fguess<0 && fa>0)
+            # f(xguess) and f(a) have opposite signs => search in [xa,xguess]
+            xb,fb = xguess,fguess
+        else
+            # f(xguess) and f(b) have opposite signs => search in [xxguess,xb]
+            xa,fa = xguess,fguess
+        end
+        iterations += 1
+        dx = xb - xa
+    end
+    return xguess
+end
+
+
 function BetaScalingEquationCoefficients(λ, σ, δ, t₀)
-    a = 0.3
-    b = 0.0
+    exponent_func = (x) -> (SpecialFunctions.gamma(1-x)/SpecialFunctions.gamma(1-2x))*SpecialFunctions.gamma(1-x) - λ
+    a = regula_falsi(0.2, 0.3, exponent_func)
+    b = - regula_falsi(-0.5, -0.1, exponent_func)
     return BetaScalingEquationCoefficients(λ, σ, δ, t₀, Float64(0.0), a, b)
 end
 
@@ -100,18 +135,24 @@ function update_Fuchs_parameters!(equation::BetaScalingEquation, solver::TimeDou
     λ = equation.coeffs.λ
     σ = equation.coeffs.σ
     δ_times_t = equation.coeffs.δ_times_t
+    if it==4N
+        println("dt =",δt,"t =",δt*it)
+    end
 
     temp_arrays.C1 = 2*F_I[1]
     temp_arrays.C2 = λ
 
     c3 = -F[it-i2]*F[i2] + 2*F[it-1]*F_I[1]
     c3 += σ - δ_times_t 
-    for j = 2:i2
-        c3 += 2 * (F[it-j] - F[it-j+1]) * F_I[j]
+    @inbounds for j = 2:i2
+        c3 += (F[it-j] - F[it-j+1]) * F_I[j]
     end
-    if it-i2 != i2
-        c3 += (F[i2] - F[i2+1]) * F_I[it-i2]
+    @inbounds for j = 2:it-i2
+        c3 += (F[it-j] - F[it-j+1]) * F_I[j]
     end
+    #@inbounds if it-i2 != i2
+    #    c3 += (F[i2] - F[i2+1]) * F_I[it-i2]
+    #end
     temp_arrays.C3 = c3
 end
 
@@ -121,8 +162,8 @@ function update_F!(::TimeDoublingSolver, temp_arrays::FuchsNoMemTempStruct, it::
     c2 = temp_arrays.C2
     c3 = temp_arrays.C3
     F_old = temp_arrays.F_temp[it]
-    #temp_arrays.F_temp[it] = c1/(2c2)-sqrt((c1/(2c2))^2-c3/c2)
-    temp_arrays.F_temp[it] = c1 \ (F_old*F_old*c2 + c3)
+    temp_arrays.F_temp[it] = c1/(2c2)-sqrt((c1/(2c2))^2-c3/c2)
+    #temp_arrays.F_temp[it] = c1 \ (F_old*F_old*c2 + c3)
 end
 
 function update_K_and_F!(solver::TimeDoublingSolver, kernel, temp_arrays::FuchsNoMemTempStruct, it::Int)
@@ -182,12 +223,14 @@ function new_time_mapping!(equation::AbstractMemoryEquation, solver::TimeDoublin
     end
     for j = (N+1):2*N
         #F_I[j] = (F_I[2j] + 4 * F_I[2j-1] + F_I[2j-2]) / 6
-        F_I[j] = (F_I[2j] + F_I[2j-1]) / 2
+        #F_I[j] = (F_I[2j] + F_I[2j-1]) / 2
+        F_I[j] = (F[2j] + 2*F[2j-1] + F[2j-2]) / 4
         F[j] = F[2j]
     end
     for j = 2N+1:4N
         F_I[j] = equation.F₀ * zero(eltype(eltype(F_I)))
         F[j] = equation.F₀ * zero(eltype(eltype(F)))
     end
+    println("new mapping")
     solver.Δt *= 2
 end
