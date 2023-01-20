@@ -115,7 +115,7 @@ the returned x will be the approximation to that root.
 * `x1`: upper bound of the initial search interval
 * `f`: a function accepting one real value, return one real value
 """
-function regula_falsi(x0::Float64, x1::Float64, f; accuracy::Float64=10^-10, max_iterations::Integer=10^4)
+function regula_falsi(x0, x1, f; accuracy=10^-10, max_iterations::Integer=10^4)
     iterations = 0
     xa, xb = x0, x1
     fa, fb = f(x0), f(x1)
