@@ -36,8 +36,8 @@ This kernel evaluates `K(t) = ν F(t)^2` when called.
 We can now define the equation we want to solve as follows:
 
 ```julia
-julia> α = 1.0; β = 0.0; γ = 1.0; δ, = 0.0, F0 = 1.0; ∂F0 = 0.0;
-julia> equation = LinearMCTEquation(α, β, γ, δ, F0, ∂F0, kernel);
+julia> α = 1.0; β = 0.0; γ = 1.0; δ = 0.0; F0 = 1.0; ∂F0 = 0.0;
+julia> equation = MemoryEquation(α, β, γ, δ, F0, ∂F0, kernel);
 ```
 Which we can solve by calling `solve`:
 
