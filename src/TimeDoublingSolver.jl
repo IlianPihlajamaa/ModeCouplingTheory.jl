@@ -1,4 +1,6 @@
-mutable struct FuchsTempStruct{T,T2,T3,VT,VT2,SC}
+abstract type AbstractFuchsTempStruct end
+
+mutable struct FuchsTempStruct{T,T2,T3,VT,VT2,SC} <: AbstractFuchsTempStruct
     F_temp::VT
     K_temp::VT2
     F_I::VT
@@ -87,7 +89,7 @@ end
 
 
 """
-    initialize_F_temp!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct)
+    initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct)
 
 Fills the first 2N entries of the temporary arrays of F using forward Euler without a memory kernel in order to kickstart Fuchs' scheme.
 
@@ -396,7 +398,7 @@ end
 Solves the equation on the time points with index 2N+1 until 4N, for each point doing a recursive iteration
 to find the solution to the nonlinear equation C1 F  = -C2 M(F) + C3.
 """
-function do_time_steps!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, kernel::MemoryKernel, temp_arrays::FuchsTempStruct)
+function do_time_steps!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, kernel, temp_arrays::AbstractFuchsTempStruct)
     N = solver.N
     F_temp = temp_arrays.F_temp
     tolerance = solver.tolerance
