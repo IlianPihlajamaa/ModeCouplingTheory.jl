@@ -37,8 +37,8 @@ end
 
 # version of update_K_and_F! that doesn't update the kernel
 # intended for models that don't need to calculate the kernel separately
-function update_K_and_F!(solver::TimeDoublingSolver, kernel, temp_arrays::FuchsNoMemTempStruct, it::Int)
-    update_F!(solver, temp_arrays, it)
+function update_K_and_F!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, kernel, temp_arrays::FuchsNoMemTempStruct, it::Int)
+    update_F!(equation, solver, temp_arrays, it)
 end
 
 function update_integrals!(temp_arrays::FuchsNoMemTempStruct, it::Int)
@@ -275,7 +275,7 @@ function update_Fuchs_parameters!(equation::BetaScalingEquation, solver::TimeDou
     temp_arrays.C3 = c3
 end
 
-function update_F!(::TimeDoublingSolver, temp_arrays::FuchsNoMemTempStruct, it::Int)
+function update_F!(::BetaScalingEquation, ::TimeDoublingSolver, temp_arrays::AbstractFuchsTempStruct, it::Int)
     c1 = temp_arrays.C1
     c2 = temp_arrays.C2
     c3 = temp_arrays.C3
