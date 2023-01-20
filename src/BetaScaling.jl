@@ -99,7 +99,7 @@ end
 """
     regula_falsi(x0::Float64, x1::Float64, f; accuracy=10^-10, max_iterations=10^4)
 
-Implement a simple "regular falsi" search to find a point x where
+Implements a simple "regular falsi" search to find a point x where
 f(x)=0 within the given accuracy, starting in the interval [x0,x1].
 For purists, f(x) should have exactly one root in the given interval,
 and the scheme will then converge to that. The present code is a bit
@@ -279,7 +279,7 @@ function update_F!(::BetaScalingEquation, ::TimeDoublingSolver, temp_arrays::Abs
     c1 = temp_arrays.C1
     c2 = temp_arrays.C2
     c3 = temp_arrays.C3
-    F_old = temp_arrays.F_temp[it]
+    # F_old = temp_arrays.F_temp[it]
     temp_arrays.F_temp[it] = c1/(2c2)-sqrt((c1/(2c2))^2-c3/c2)
     #temp_arrays.F_temp[it] = c1 \ (F_old*F_old*c2 + c3)
 end
