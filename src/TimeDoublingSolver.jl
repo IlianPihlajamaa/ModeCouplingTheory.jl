@@ -227,7 +227,7 @@ end
 Updates the parameters c1, c2, c3, according to the appendix of 
 "Flenner, Elijah, and Grzegorz Szamel. Physical Review E 72.3 (2005): 031508"
 using the naming conventions from that paper. If F is mutable (and therefore also c1,c2,c3), it will
-updata the variables in place, otherwise it will create new copies. This is controlled by the solver.inplace 
+update the variables in place, otherwise it will create new copies. This is controlled by the solver.inplace 
 setting.
 """
 function update_Fuchs_parameters!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct, it::Int)
@@ -306,9 +306,8 @@ end
 
 updates F using the formula c1*F = -K*C2 + C3.
 """
-function update_F!(::TimeDoublingSolver, temp_arrays::FuchsTempStruct, it::Int)
+function update_F!(::MemoryEquation, ::TimeDoublingSolver, temp_arrays::FuchsTempStruct, it::Int)
     c1 = temp_arrays.C1
-    c1_temp = temp_arrays.C1_temp
     c2 = temp_arrays.C2
     c3 = temp_arrays.C3
     if !temp_arrays.inplace
@@ -319,8 +318,8 @@ function update_F!(::TimeDoublingSolver, temp_arrays::FuchsTempStruct, it::Int)
         if check_if_diag(c1)
             temp_arrays.F_temp[it] .= c1.diag .\ temp_arrays.temp_vec
         else
+            c1_temp = temp_arrays.C1_temp
             c1_temp .= c1
-
             cache = LinearSolve.set_b(temp_arrays.solve_cache, temp_arrays.temp_vec)
             cache = LinearSolve.set_A(cache, c1_temp)
             sol = LinearSolve.solve(cache)
@@ -330,9 +329,9 @@ function update_F!(::TimeDoublingSolver, temp_arrays::FuchsTempStruct, it::Int)
     end
 end
 
-function update_K_and_F!(solver::TimeDoublingSolver, kernel::MemoryKernel, temp_arrays::FuchsTempStruct, it::Int)
+function update_K_and_F!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, kernel::MemoryKernel, temp_arrays, it::Int)
     update_K!(solver, kernel, temp_arrays, it)
-    update_F!(solver, temp_arrays, it)
+    update_F!(equation, solver, temp_arrays, it)
 end
 
 """
@@ -408,14 +407,14 @@ function do_time_steps!(equation::AbstractMemoryEquation, solver::TimeDoublingSo
         F_old = temp_arrays.F_old
 
         update_Fuchs_parameters!(equation, solver, temp_arrays, it)
-        update_F!(solver, temp_arrays, it)
+        update_F!(equation, solver, temp_arrays, it)
 
         while error > tolerance
             iterations += 1
             if iterations > solver.max_iterations
                 throw(DomainError("Iteration did not converge. Either increase the number of time steps before a time doubling, or choose a different memory kernel."))
             end
-            update_K_and_F!(solver, kernel, temp_arrays, it)
+            update_K_and_F!(equation, solver, kernel, temp_arrays, it)
             error = find_error(F_temp[it], F_old)
             if !temp_arrays.inplace
                 F_old = F_temp[it]

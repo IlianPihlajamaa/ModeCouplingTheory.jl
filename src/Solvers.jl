@@ -44,6 +44,5 @@ function solve(::AbstractMemoryEquation, ::Solver); error("This solver is not kn
 solve(p::AbstractMemoryEquation) = solve(p, TimeDoublingSolver())
 
 
-
 import Base.getindex
 getindex(sol::MemoryEquationSolution, I...) = getindex.(sol.F, I...)
