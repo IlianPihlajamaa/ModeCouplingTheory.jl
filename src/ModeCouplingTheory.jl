@@ -20,7 +20,7 @@ module ModeCouplingTheory
         include(file)
     end
 
-    if false #ccall(:jl_generating_output, Cint, ()) == 1   # if we're precompiling the package, run a simple scalar and MCT code
+    if ccall(:jl_generating_output, Cint, ()) == 1   # if we're precompiling the package, run a simple scalar and MCT code
         let 
             kernel1 = ModeCouplingTheory.SchematicF2Kernel(0.1)
             system1 = MemoryEquation(1.0, 0.0, 1.0, 0.0, 1.0, 0.0, kernel1)
