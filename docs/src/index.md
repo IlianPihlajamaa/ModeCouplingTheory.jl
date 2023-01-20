@@ -2,9 +2,9 @@
 
 This package provides a generic and fast solver of mode-coupling theory-like integrodifferential equations. It uses the algorithm outlined in [Fuchs et al.](https://iopscience.iop.org/article/10.1088/0953-8984/3/26/022/meta) to solve equations of the form
 
-$$\alpha \ddot{F}(t) + \beta \dot{F}(t) + \gamma F(t) + \int_0^t d\tau K(t-\tau)\dot{F}(\tau) = 0$$
+$$\alpha \ddot{F}(t) + \beta \dot{F}(t) + \gamma F(t) + \delta + \int_0^t d\tau K(t-\tau)\dot{F}(\tau) = 0$$
 
-in which $\alpha$, $\beta$, and $\gamma$ are coefficients, and $K(t) = K(F(t), t)$. This package exports some commonly used memory kernels, but it is straightforward to define your own. The solver is differentiable and works for scalar- and vector-valued functions $F(t)$. 
+in which $\alpha$, $\beta$, $\gamma$, and $\delta$ are coefficients, and $K(t) = K(F(t), t)$. This package exports some commonly used memory kernels, but it is straightforward to define your own. The solver is differentiable and works for scalar- and vector-valued functions $F(t)$. 
 
 # Installation
 
@@ -63,7 +63,7 @@ using ModeCouplingTheory, Plots
 ν = 3.999
 α = 1.0; β = 0.0; γ = 1.0; δ = 0.0; F0 = 1.0; ∂F0 = 0.0;
 kernel = SchematicF2Kernel(ν)
-problem = MemoryEquation(α, β, γ, δ; F0, ∂F0, kernel)
+problem = MemoryEquation(α, β, γ, δ, F0, ∂F0, kernel)
 solver = TimeDoublingSolver(problem)
 sol = solve(problem, solver);
 plot(log10.(sol.t), sol.F)
