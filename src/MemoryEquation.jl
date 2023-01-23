@@ -20,18 +20,6 @@ function MemoryEquationCoefficients(a, b, c, d, F₀)
     return MemoryEquationCoefficients(a, b, c, d)
 end
 
-clean_mulitplicative_coefficient(coeff::Vector, F₀::Vector) = Diagonal(coeff)
-clean_mulitplicative_coefficient(coeff::SVector, F₀::SVector) = Diagonal(coeff)
-clean_mulitplicative_coefficient(coeff::Vector, F₀::SVector) = Diagonal(SVector{length(coeff)}(coeff))
-clean_mulitplicative_coefficient(coeff::Number, F₀::Vector) = coeff * I
-clean_mulitplicative_coefficient(coeff::Number, F₀::SVector) = coeff * I
-clean_mulitplicative_coefficient(coeff, F₀) = coeff
-
-clean_additive_coefficient(coeff::Number, F₀::SVector) = coeff .+ F₀ * zero(eltype(F₀))
-clean_additive_coefficient(coeff::Number, F₀::Vector) = coeff .+ F₀ * zero(eltype(F₀))
-clean_additive_coefficient(coeff::SMatrix, F₀::Vector{<:SMatrix}) = Ref(coeff) .+ F₀ .* Ref(zero(eltype(F₀)))
-clean_additive_coefficient(coeff, F₀) = coeff
-
 struct MemoryEquation{T,A,B,C,D} <: AbstractMemoryEquation
     coeffs::T
     F₀::A
@@ -40,7 +28,6 @@ struct MemoryEquation{T,A,B,C,D} <: AbstractMemoryEquation
     kernel::C
     update_coefficients!::D
 end
-
 
 """
     MemoryEquation(α, β, γ, F₀::T, ∂ₜF₀::T, kernel::MemoryKernel) where T
@@ -73,3 +60,32 @@ function Base.show(io::IO, ::MIME"text/plain", p::MemoryEquation)
     println(io, "         δ is a $(typeof(p.coeffs.δ)),")
     println(io, "  and K(t) is a $(typeof(p.kernel)).")
 end
+
+
+mutable struct BetaScalingEquationCoefficients{T}
+    λ::T
+    σ::T
+    t₀::T
+    δ::T
+    δ_times_t::T
+    a::T
+    b::T
+end
+
+abstract type AbstractNoKernelEquation <: AbstractMemoryEquation end
+
+struct BetaScalingEquation{T,A,B,C,D} <: AbstractNoKernelEquation
+    coeffs::T
+    F₀::A
+    K₀::B
+    kernel::C
+    update_coefficients!::D
+end
+
+function Base.show(io::IO, ::MIME"text/plain", p::BetaScalingEquation)
+    println(io, "MCT beta-scaling object:")
+    println(io, "   σ - δ t + λ (g(t))² = ∂ₜ∫g(t-τ)g(τ)dτ")
+    println(io, "with real-valued parameters.")
+end
+
+
