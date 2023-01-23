@@ -31,7 +31,7 @@ function allocate_temporary_arrays(::BetaScalingEquation, solver::TimeDoublingSo
     start_time = time()
     F_temp = Float64[]
     F_I = Float64[]
-    temp_arrays = FuchsTempStruct(F_temp, 
+    temp_arrays = SolverCache(F_temp, 
                                   nothing, 
                                   F_I, 
                                   nothing, 
@@ -54,7 +54,7 @@ function allocate_temporary_arrays(::BetaScalingEquation, solver::TimeDoublingSo
 end
 
 """
-    initialize_F_temp!(equation::BetaScalingEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct)
+    initialize_F_temp!(equation::BetaScalingEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
 
 Fills the first 2N entries of the temporary arrays needed for solving the
 β-scaling equation with a an adapted Fuchs scheme.
@@ -62,7 +62,7 @@ Fills the first 2N entries of the temporary arrays needed for solving the
 In particular, this initializes g(t) = (t/t₀)^-a.
 
 """
-function initialize_F_temp!(equation::BetaScalingEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct)
+function initialize_F_temp!(equation::BetaScalingEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
     N = solver.N
     δt = solver.Δt / (4 * N)
     t₀ = equation.coeffs.t₀
@@ -74,14 +74,14 @@ function initialize_F_temp!(equation::BetaScalingEquation, solver::TimeDoublingS
 end
 
 """
-    initialize_integrals!(equation::BetaScalingEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct)
+    initialize_integrals!(equation::BetaScalingEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
 
 Initializes the integrals over the first 2N time points for the solution
 of the β-scaling equation, using the known critical decay law as the
 short-time asymptote.
 
 """
-function initialize_integrals!(equation::BetaScalingEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct)
+function initialize_integrals!(equation::BetaScalingEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
     F_I = temp_arrays.F_I
     N = solver.N
     δt = solver.Δt / (4 * N)
@@ -96,12 +96,12 @@ function initialize_integrals!(equation::BetaScalingEquation, solver::TimeDoubli
 end
 
 """
-    update_Fuchs_parameters!(equation::BetaScalingEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct, it::Int)
+    update_Fuchs_parameters!(equation::BetaScalingEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache, it::Int)
 
 Updates the parameters that are needed to solve the β-scaling equation
 numerically with Fuchs' scheme.
 """
-function update_Fuchs_parameters!(equation::BetaScalingEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct, it::Int)
+function update_Fuchs_parameters!(equation::BetaScalingEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache, it::Int)
     N = solver.N
     i2 = 2N
     δt = solver.Δt / (4N)
@@ -129,7 +129,7 @@ function update_Fuchs_parameters!(equation::BetaScalingEquation, solver::TimeDou
     temp_arrays.C3 = c3
 end
 
-function update_F!(::BetaScalingEquation, ::TimeDoublingSolver, temp_arrays::FuchsTempStruct, it::Int)
+function update_F!(::BetaScalingEquation, ::TimeDoublingSolver, temp_arrays::SolverCache, it::Int)
     c1 = temp_arrays.C1
     c2 = temp_arrays.C2
     c3 = temp_arrays.C3

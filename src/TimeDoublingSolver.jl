@@ -1,6 +1,6 @@
-abstract type AbstractFuchsTempStruct end
+abstract type AbstractSolverCache end
 
-mutable struct FuchsTempStruct{T,T2,T3,VT,VT2,SC} <: AbstractFuchsTempStruct
+mutable struct SolverCache{T,T2,T3,VT,VT2,SC} <: AbstractSolverCache
     F_temp::VT
     K_temp::VT2
     F_I::VT
@@ -50,7 +50,7 @@ end
 """
     allocate_temporary_arrays(equation::AbstractMemoryEquation, solver::TimeDoublingSolver)
 
-Returns a FuchsTempStruct containing several arrays that are used for intermediate calculations.
+Returns a SolverCache containing several arrays that are used for intermediate calculations.
 """
 function allocate_temporary_arrays(equation::MemoryEquation, solver::TimeDoublingSolver)
     K₀ = equation.K₀
@@ -72,9 +72,9 @@ function allocate_temporary_arrays(equation::MemoryEquation, solver::TimeDoublin
         prob = LinearSolve.LinearProblem(temp_mat, temp_vec)
         cache1 = LinearSolve.init(prob)
         sol = LinearSolve.solve(cache1)
-        temp_arrays = FuchsTempStruct(F_temp, K_temp, F_I, K_I, C1, C1 + C1, C2, C3, temp_vec, F_old, temp_mat, sol.cache, inplace, start_time)
+        temp_arrays = SolverCache(F_temp, K_temp, F_I, K_I, C1, C1 + C1, C2, C3, temp_vec, F_old, temp_mat, sol.cache, inplace, start_time)
     else
-        temp_arrays = FuchsTempStruct(F_temp, K_temp, F_I, K_I, C1, C1 + C1, C2, C3, temp_vec, F_old, temp_mat, false, inplace, start_time)
+        temp_arrays = SolverCache(F_temp, K_temp, F_I, K_I, C1, C1 + C1, C2, C3, temp_vec, F_old, temp_mat, false, inplace, start_time)
     end
     for _ in 1:4*solver.N
         push!(temp_arrays.F_temp, K₀ * F₀)
@@ -87,12 +87,12 @@ end
 
 
 """
-    initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct)
+    initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
 
-Fills the first 2N entries of the temporary arrays of F using forward Euler without a memory kernel in order to kickstart Fuchs' scheme.
+Fills the first 2N entries of the temporary arrays of F using forward Euler without a memory kernel in order to kickstart the algorithm' scheme.
 
 """
-function initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct)
+function initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
     N = solver.N
     δt = solver.Δt / (4 * N)
 
@@ -123,11 +123,11 @@ function initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver
 end
 
 """
-    initialize_K_temp!(solver::TimeDoublingSolver, kernel::MemoryKernel, temp_arrays::FuchsTempStruct)
+    initialize_K_temp!(solver::TimeDoublingSolver, kernel::MemoryKernel, temp_arrays::SolverCache)
 
 Evaluates the memory kernel at the first 2N time points.
 """
-function initialize_K_temp!(solver::TimeDoublingSolver, kernel::MemoryKernel, temp_arrays::FuchsTempStruct)
+function initialize_K_temp!(solver::TimeDoublingSolver, kernel::MemoryKernel, temp_arrays::SolverCache)
     N = solver.N
     δt = solver.Δt / (4 * N)
     for it = 1:2N
@@ -142,11 +142,11 @@ end
 
 
 """
-    initialize_integrals!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct)
+    initialize_integrals!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
 
 Initializes the integrals on the first 2N time points as prescribed in the literature.
 """
-function initialize_integrals!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct)
+function initialize_integrals!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
     F_I = temp_arrays.F_I
     K_I = temp_arrays.K_I
     F_temp = temp_arrays.F_temp
@@ -174,7 +174,7 @@ function initialize_integrals!(equation::AbstractMemoryEquation, solver::TimeDou
 end
 
 
-function initialize_temporary_arrays!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, kernel::MemoryKernel, temp_arrays::FuchsTempStruct)
+function initialize_temporary_arrays!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, kernel::MemoryKernel, temp_arrays::SolverCache)
     initialize_F_temp!(equation, solver, temp_arrays)
     initialize_K_temp!(solver, kernel, temp_arrays)
     initialize_integrals!(equation, solver, temp_arrays)
@@ -182,7 +182,7 @@ end
 
 
 """
-    update_Fuchs_parameters!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct, it::Int) 
+    update_Fuchs_parameters!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache, it::Int) 
 
 Updates the parameters c1, c2, c3, according to the appendix of 
 "Flenner, Elijah, and Grzegorz Szamel. Physical Review E 72.3 (2005): 031508"
@@ -190,7 +190,7 @@ using the naming conventions from that paper. If F is mutable (and therefore als
 update the variables in place, otherwise it will create new copies. This is controlled by the solver.inplace 
 setting.
 """
-function update_Fuchs_parameters!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct, it::Int)
+function update_Fuchs_parameters!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache, it::Int)
     N = solver.N
     i2 = 2N
     δt = solver.Δt / (4N)
@@ -262,11 +262,11 @@ function update_Fuchs_parameters!(equation::MemoryEquation, solver::TimeDoubling
 end
 
 """
-    update_F!(solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct, it::Int) 
+    update_F!(solver::TimeDoublingSolver, temp_arrays::SolverCache, it::Int) 
 
 updates F using the formula c1*F = -K*C2 + C3.
 """
-function update_F!(::MemoryEquation, ::TimeDoublingSolver, temp_arrays::FuchsTempStruct, it::Int)
+function update_F!(::MemoryEquation, ::TimeDoublingSolver, temp_arrays::SolverCache, it::Int)
     c1 = temp_arrays.C1
     c2 = temp_arrays.C2
     c3 = temp_arrays.C3
@@ -295,11 +295,11 @@ function update_K_and_F!(equation::AbstractMemoryEquation, solver::TimeDoublingS
 end
 
 """
-    update_K!(solver::TimeDoublingSolver, kernel::MemoryKernel, temp_arrays::FuchsTempStruct, it::Int) 
+    update_K!(solver::TimeDoublingSolver, kernel::MemoryKernel, temp_arrays::SolverCache, it::Int) 
 
 evaluates the memory kernel, updating the value in solver.temp_arrays.K_temp    
 """
-function update_K!(solver::TimeDoublingSolver, kernel::MemoryKernel, temp_arrays::FuchsTempStruct, it::Int)
+function update_K!(solver::TimeDoublingSolver, kernel::MemoryKernel, temp_arrays::SolverCache, it::Int)
     N = solver.N
     δt = solver.Δt / (4N)
     t = δt * it
@@ -312,11 +312,11 @@ end
 
 
 """
-    update_integrals!(solver::TimeDoublingSolver, equation::AbstractMemoryEquation, temp_arrays::FuchsTempStruct, it::Int)
+    update_integrals!(solver::TimeDoublingSolver, equation::AbstractMemoryEquation, temp_arrays::SolverCache, it::Int)
 
 Update the discretisation of the integral of F and K, see the literature for details.
 """
-function update_integrals!(temp_arrays::FuchsTempStruct, ::AbstractMemoryEquation, it::Int)
+function update_integrals!(temp_arrays::SolverCache, ::AbstractMemoryEquation, it::Int)
     K_I = temp_arrays.K_I
     F_I = temp_arrays.F_I
     F_temp = temp_arrays.F_temp
@@ -327,12 +327,12 @@ end
 
 
 """
-    do_time_steps!(equation::MemoryEquation, solver::TimeDoublingSolver, kernel::MemoryKernel, temp_arrays::FuchsTempStruct)
+    do_time_steps!(equation::MemoryEquation, solver::TimeDoublingSolver, kernel::MemoryKernel, temp_arrays::SolverCache)
 
 Solves the equation on the time points with index 2N+1 until 4N, for each point doing a recursive iteration
 to find the solution to the nonlinear equation C1 F  = -C2 M(F) + C3.
 """
-function do_time_steps!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, kernel, temp_arrays::AbstractFuchsTempStruct)
+function do_time_steps!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, kernel, temp_arrays::AbstractSolverCache)
     N = solver.N
     F_temp = temp_arrays.F_temp
     tolerance = solver.tolerance
@@ -365,11 +365,11 @@ end
 
 
 """
-    allocate_results!(t_array, F_array, K_array, equation::AbstractMemoryEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct; istart=2(solver.N)+1, iend=4(solver.N))
+    allocate_results!(t_array, F_array, K_array, equation::AbstractMemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache; istart=2(solver.N)+1, iend=4(solver.N))
 
 pushes the found solution, stored in `temp_arrays` with indices `istart` until `istop` to the output arrays.
 """
-function allocate_results!(t_array, F_array, K_array, ::AbstractMemoryEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct; istart=2(solver.N) + 1, iend=4(solver.N))
+function allocate_results!(t_array, F_array, K_array, ::AbstractMemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache; istart=2(solver.N) + 1, iend=4(solver.N))
     N = solver.N
     δt = solver.Δt / (4N)
     for it = istart:iend
@@ -382,13 +382,13 @@ end
 
 
 """
-new_time_mapping!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct)
+new_time_mapping!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
 
 Performs the time mapping central to Fuchs' algorithm with the conventions prescribed in 
 "Flenner, Elijah, and Grzegorz Szamel. Physical Review E 72.3 (2005): 031508". 
 Performs them inplace if solver.inplace = true in order to avoid unnecessary allocations.
 """
-function new_time_mapping!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct)
+function new_time_mapping!(equation::AbstractMemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
     F = temp_arrays.F_temp
     K = temp_arrays.K_temp
     F_I = temp_arrays.F_I
@@ -522,24 +522,24 @@ end
 # these could be moved to a separate file or integrated with
 # TimeDoublingSolver.jl, because semantically they belong there
 
-function initialize_temporary_arrays!(equation::AbstractNoKernelEquation, solver::TimeDoublingSolver, _, temp_arrays::FuchsTempStruct)
+function initialize_temporary_arrays!(equation::AbstractNoKernelEquation, solver::TimeDoublingSolver, _, temp_arrays::SolverCache)
     initialize_F_temp!(equation, solver, temp_arrays)
     initialize_integrals!(equation, solver, temp_arrays)
 end
 
 # version of update_K_and_F! that doesn't update the kernel
 # intended for models that don't need to calculate the kernel separately
-function update_K_and_F!(equation::AbstractNoKernelEquation, solver::TimeDoublingSolver, ::Nothing, temp_arrays::FuchsTempStruct, it::Int)
+function update_K_and_F!(equation::AbstractNoKernelEquation, solver::TimeDoublingSolver, ::Nothing, temp_arrays::SolverCache, it::Int)
     update_F!(equation, solver, temp_arrays, it)
 end
 
-function update_integrals!(temp_arrays::FuchsTempStruct, ::AbstractNoKernelEquation, it::Int)
+function update_integrals!(temp_arrays::SolverCache, ::AbstractNoKernelEquation, it::Int)
     F_I = temp_arrays.F_I
     F_temp = temp_arrays.F_temp
     F_I[it] = (F_temp[it] + F_temp[it-1]) / 2
 end
 
-function allocate_results!(t_array, F_array, K_array,::AbstractNoKernelEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct; istart=2(solver.N) + 1, iend=4(solver.N))
+function allocate_results!(t_array, F_array, K_array,::AbstractNoKernelEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache; istart=2(solver.N) + 1, iend=4(solver.N))
     N = solver.N
     δt = solver.Δt / (4N)
     for it = istart:iend
@@ -549,7 +549,7 @@ function allocate_results!(t_array, F_array, K_array,::AbstractNoKernelEquation,
     end
 end
 
-function new_time_mapping!(equation::AbstractNoKernelEquation, solver::TimeDoublingSolver, temp_arrays::FuchsTempStruct)
+function new_time_mapping!(equation::AbstractNoKernelEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
     F = temp_arrays.F_temp
     F_I = temp_arrays.F_I
     N = solver.N
