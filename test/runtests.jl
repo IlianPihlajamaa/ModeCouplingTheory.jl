@@ -9,7 +9,7 @@ using SparseArrays
 using QuadGK
 
 
-for target in ["scalar", "vector", "MCT", "MCMCT", "MCTvsMCMCT", "relaxationtime", "steady_state", "differentiation", "interpolating_kernel", "tagged"]
+for target in [ "beta", "scalar", "vector", "MCT", "MCMCT", "MCTvsMCMCT", "relaxationtime", "steady_state", "differentiation", "interpolating_kernel", "tagged"]
     @testset "$target" begin
         include("test_$target.jl")
     end
