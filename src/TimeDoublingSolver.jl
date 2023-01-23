@@ -180,6 +180,88 @@ function initialize_temporary_arrays!(equation::AbstractMemoryEquation, solver::
     initialize_integrals!(equation, solver, temp_arrays)
 end
 
+"""
+compute_c3_immutable(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache, it::Int)
+
+computes one of the matrices necessary to propagate F in time.
+"""
+function compute_C3_immutable(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache, it::Int)
+    N = solver.N
+    i2 = it ÷ 2
+    δt = solver.Δt / (4N)
+    K_I = temp_arrays.K_I
+    F_I = temp_arrays.F_I
+    F = temp_arrays.F_temp
+    kernel = temp_arrays.K_temp
+    α = equation.coeffs.α
+    β = equation.coeffs.β
+    δ = equation.coeffs.δ
+    c3 = α * (5 * F[it-1] - 4 * F[it-2] + F[it-3]) / δt^2
+    c3 += β * (2 / δt * F[it-1] - F[it-2] / (2δt))
+    c3 -= δ
+    c3 += -kernel[it-i2] * F[i2] + kernel[it-1] * F_I[1] + K_I[1] * F[it-1]
+    @inbounds for j = 2:i2
+        c3 += (kernel[it-j] - kernel[it-j+1]) * F_I[j]
+    end
+    @inbounds for j = 2:it-i2
+        c3 += K_I[j] * (F[it-j] - F[it-j+1])
+    end
+    return c3
+end
+
+
+"""
+compute_c3_mutable(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache, it::Int)
+
+computes one of the matrices necessary to propagate F in time, by mutating it inplace. The commented code is the corresponding scalar equivalent
+"""
+function compute_C3_mutable!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache, it::Int)
+    N = solver.N
+    i2 = it ÷ 2
+    δt = solver.Δt / (4N)
+    K_I = temp_arrays.K_I
+    F_I = temp_arrays.F_I
+    F = temp_arrays.F_temp
+    kernel = temp_arrays.K_temp
+    α = equation.coeffs.α
+    β = equation.coeffs.β
+    δ = equation.coeffs.δ
+    temp_vec = temp_arrays.temp_vec
+    temp_mat = temp_arrays.temp_mat
+
+    c3 = temp_arrays.C3
+    # c3 .= α*(5*F[it-1] - 4*F[it-2] + F[it-3])/δt^2
+    @. temp_vec = (5 * F[it-1] - 4 * F[it-2] + F[it-3]) / δt^2
+    mymul!(c3, α, temp_vec, true, false)
+
+    # c3 .+= β*(2/δt*F[it-1] - F[it-2]/(2δt))
+    @. temp_vec = 2 / δt * F[it-1] - F[it-2] / (2δt)
+    mymul!(c3, β, temp_vec, true, true)
+
+    # c3 .+= -kernel[it-i2]*F[i2] + kernel[it-1]*F_I[1] + K_I[1]*F[it-1]
+    mymul!(c3, kernel[it-i2], F[i2], -true, true)
+    mymul!(c3, kernel[it-1], F_I[1], true, true)
+    mymul!(c3, K_I[1], F[it-1], true, true)
+
+    for j = 2:i2
+        # c3 .+= (kernel[it-j] - kernel[it-j+1])*F_I[j]
+        if check_if_diag(temp_mat)
+            @. temp_mat.diag = kernel[it-j].diag - kernel[it-j+1].diag
+        else
+            @. temp_mat = kernel[it-j] - kernel[it-j+1]
+        end
+        mymul!(c3, temp_mat, F_I[j], true, true)
+
+    end
+    for j = 2:it-i2
+        # c3 .+= K_I[j]*(F[it-j] - F[it-j+1])
+        @. temp_vec = F[it-j] - F[it-j+1]
+        mymul!(c3, K_I[j], temp_vec, true, true)
+    end
+    c3 .-= δ
+    return
+end
+
 
 """
     update_Fuchs_parameters!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache, it::Int) 
@@ -192,73 +274,23 @@ setting.
 """
 function update_Fuchs_parameters!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache, it::Int)
     N = solver.N
-    i2 = 2N
     δt = solver.Δt / (4N)
     K_I = temp_arrays.K_I
     F_I = temp_arrays.F_I
-    F = temp_arrays.F_temp
-    kernel = temp_arrays.K_temp
     equation.update_coefficients!(equation.coeffs, δt*it)
     α = equation.coeffs.α
     β = equation.coeffs.β
     γ = equation.coeffs.γ
-    δ = equation.coeffs.δ
     if !temp_arrays.inplace # everything immutable (we are free to allocate)
-        c1 = (2 / (δt^2) * α + 3 / (2δt) * β) + K_I[1] + γ
-
-        c2 = F_I[1] - equation.F₀
-
-        c3 = α * (5 * F[it-1] - 4 * F[it-2] + F[it-3]) / δt^2
-        c3 += β * (2 / δt * F[it-1] - F[it-2] / (2δt))
-        c3 -= δ
-        c3 += -kernel[it-i2] * F[i2] + kernel[it-1] * F_I[1] + K_I[1] * F[it-1]
-        @inbounds for j = 2:i2
-            c3 += (kernel[it-j] - kernel[it-j+1]) * F_I[j]
-        end
-        @inbounds for j = 2:it-i2
-            c3 += K_I[j] * (F[it-j] - F[it-j+1])
-        end
-        temp_arrays.C1 = c1
-        temp_arrays.C2 = c2
-        temp_arrays.C3 = c3
-    else # perform everything without allocations. The commented code is the corresponding scalar equivalent
+        temp_arrays.C1 = (2 / (δt^2) * α + 3 / (2δt) * β) + K_I[1] + γ
+        temp_arrays.C2 = F_I[1] - equation.F₀
+        temp_arrays.C3 = compute_C3_immutable(equation, solver, temp_arrays, it)
+    else # perform everything without allocations.
         temp_arrays.C1 .= (2 / (δt^2) * α + 3 / (2δt) * β) + K_I[1] + γ
         temp_arrays.C2 .= F_I[1] - equation.F₀
-        temp_vec = temp_arrays.temp_vec
-        temp_mat = temp_arrays.temp_mat
-
-        c3 = temp_arrays.C3
-        # c3 .= α*(5*F[it-1] - 4*F[it-2] + F[it-3])/δt^2
-        @. temp_vec = (5 * F[it-1] - 4 * F[it-2] + F[it-3]) / δt^2
-        mymul!(c3, α, temp_vec, true, false)
-
-        # c3 .+= β*(2/δt*F[it-1] - F[it-2]/(2δt))
-        @. temp_vec = 2 / δt * F[it-1] - F[it-2] / (2δt)
-        mymul!(c3, β, temp_vec, true, true)
-
-        # c3 .+= -kernel[it-i2]*F[i2] + kernel[it-1]*F_I[1] + K_I[1]*F[it-1]
-        mymul!(c3, kernel[it-i2], F[i2], -true, true)
-        mymul!(c3, kernel[it-1], F_I[1], true, true)
-        mymul!(c3, K_I[1], F[it-1], true, true)
-
-        for j = 2:i2
-            # c3 .+= (kernel[it-j] - kernel[it-j+1])*F_I[j]
-            if check_if_diag(temp_mat)
-                @. temp_mat.diag = kernel[it-j].diag - kernel[it-j+1].diag
-            else
-                @. temp_mat = kernel[it-j] - kernel[it-j+1]
-            end
-            mymul!(c3, temp_mat, F_I[j], true, true)
-
-        end
-        for j = 2:it-i2
-            # c3 .+= K_I[j]*(F[it-j] - F[it-j+1])
-            @. temp_vec = F[it-j] - F[it-j+1]
-            mymul!(c3, K_I[j], temp_vec, true, true)
-        end
-        c3 .-= δ
+        compute_C3_mutable!(equation, solver, temp_arrays, it)
     end
-    return nothing
+    return
 end
 
 """
@@ -395,15 +427,9 @@ function new_time_mapping!(equation::AbstractMemoryEquation, solver::TimeDoublin
     K_I = temp_arrays.K_I
     N = solver.N
     if !temp_arrays.inplace
-        for j = 1:N
+        for j = 1:2N
             F_I[j] = (F_I[2j] + F_I[2j-1]) / 2
             K_I[j] = (K_I[2j] + K_I[2j-1]) / 2
-            F[j] = F[2j]
-            K[j] = K[2j]
-        end
-        for j = (N+1):2*N
-            F_I[j] = (F_I[2j] + 4 * F_I[2j-1] + F_I[2j-2]) / 6
-            K_I[j] = (K_I[2j] + 4 * K_I[2j-1] + K_I[2j-2]) / 6
             F[j] = F[2j]
             K[j] = K[2j]
         end
@@ -415,22 +441,12 @@ function new_time_mapping!(equation::AbstractMemoryEquation, solver::TimeDoublin
         end
     else
         isdiag = check_if_diag(K_I[1])
-        for j = 1:N
+        for j = 1:2N
             @. F_I[j] = (F_I[2j] + F_I[2j-1]) / 2
             if isdiag
                 @. K_I[j].diag = (K_I[2j].diag + K_I[2j-1].diag) / 2
             else
                 @. K_I[j] = (K_I[2j] + K_I[2j-1]) / 2
-            end
-            @. F[j] = F[2j]
-            @. K[j] = K[2j]
-        end
-        for j = (N+1):2*N
-            @. F_I[j] = (F_I[2j] + 4 * F_I[2j-1] + F_I[2j-2]) / 6
-            if isdiag
-                @. K_I[j].diag = (K_I[2j].diag + 4 * K_I[2j-1].diag + K_I[2j-2].diag) / 6
-            else
-                @. K_I[j] = (K_I[2j] + 4 * K_I[2j-1] + K_I[2j-2]) / 6
             end
             @. F[j] = F[2j]
             @. K[j] = K[2j]
