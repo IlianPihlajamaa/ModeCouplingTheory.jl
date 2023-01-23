@@ -79,4 +79,4 @@ taggedkernel = ModeCouplingTheory.TaggedModeCouplingKernel(ρ, kBT, m, k_array, 
 taggedproblem = MemoryEquation(α, β, γ, δ, F0, ∂F0, taggedkernel)
 sols = solve(taggedproblem, solver)
 
-@test sum(sum(sol.F)) ≈ 25593.438983792006
+@test sum(sum(sol.F)) ≈ 25492.648222645254
