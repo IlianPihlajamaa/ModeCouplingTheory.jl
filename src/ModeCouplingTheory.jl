@@ -13,6 +13,7 @@ module ModeCouplingTheory
     export AbstractMemoryEquation, MemoryEquation, BetaScalingEquation
     export MemoryKernel, evaluate_kernel, evaluate_kernel!
     export find_relaxation_time, solve_steady_state
+    export convert_multicomponent_structure_factor
     
     abstract type AbstractMemoryEquation end
 

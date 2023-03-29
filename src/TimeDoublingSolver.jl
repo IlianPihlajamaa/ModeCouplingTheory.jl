@@ -517,7 +517,6 @@ function solve(equation::AbstractMemoryEquation, solver::TimeDoublingSolver)
     startΔt = solver.Δt
     solver.kernel_evals = 1
 
-
     # main loop of the algorithm
     while solver.Δt < solver.t_max * 2
         do_time_steps!(equation, solver, kernel, temp_arrays)
