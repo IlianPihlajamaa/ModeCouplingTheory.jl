@@ -188,3 +188,17 @@ taggedSystem = MemoryEquation(α, β, γ, δ, F0, dF0, taggedkernel)
 taggedsol = solve(taggedSystem, solverFuchs)
 @test all(sol[19][end] .≈ [0.13881069002073976 0.04192527228732725; 0.041925272287327266 0.52419581715369]) # regression test
 @test taggedsol[19][end] ≈ 0.7678799482793754 # regression tests
+
+
+s = 2
+α = 1.0
+β = 0.0
+γ = 0.0
+δ = -6*kBT / m[s]
+msd0 = 0.0
+dmsd0 = 0.0
+
+msdkernel = MSDMultiComponentModeCouplingKernel(s, ρ, kBT, m, k_array, Sₖ, sol, taggedsol);
+msdequation = MemoryEquation(α, β, γ, δ, msd0, dmsd0, msdkernel);
+msdsol = solve(msdequation, solverFuchs)
+@test sum(msdsol) ≈ 21321.0

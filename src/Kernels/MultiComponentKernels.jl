@@ -391,7 +391,7 @@ end
 
 
 
-struct MSDMultiComponentModeCouplingKernel{F,V,M2,M,TDICT,FF, V1, FFF, FS} <: MemoryKernel
+struct MSDMultiComponentModeCouplingKernel{F,V,TDICT,FF, V1, FFF, FS} <: MemoryKernel
     s::Int
     ρ::V1
     kBT::F
@@ -456,6 +456,7 @@ function MSDMultiComponentModeCouplingKernel(s::Int, ρ, kBT, m, k_array, Sₖ, 
 end
 
 function evaluate_kernel(kernel::MSDMultiComponentModeCouplingKernel, MSD, t)
+    s = kernel.s
     K = zero(typeof(MSD))
     it = kernel.tDict[t]
     k_array = kernel.k_array
@@ -464,11 +465,12 @@ function evaluate_kernel(kernel::MSDMultiComponentModeCouplingKernel, MSD, t)
     F = kernel.F[it]
     Fs = kernel.Fs[it]
     Ns = length(Fs[1])
+    ρ_all = sum(kernel.ρ)
     for α = 1:Ns, β = 1:Ns
         for iq in eachindex(k_array)
             K += k_array[iq]^4*Ck[iq][α,s]*Ck[iq][s,β]*F[iq][α,β]*Fs[iq]
         end
     end
-    K *= Δk*kernel.ρ*kernel.kBT/(6π^2*kernel.m)
+    K *= Δk*ρ_all*kernel.kBT/(6π^2*kernel.m[s])
     return K
 end

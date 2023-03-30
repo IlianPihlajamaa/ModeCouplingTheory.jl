@@ -297,7 +297,7 @@ kmax = 40.0; dk = kmax/Nk
 k_array = dk*(collect(1:Nk) .- 0.5)
 
 # data can be found in the \test\ folder of the source code
-Sₖdata = reshape(readdlm("Sk_MC.txt"), (2,2,100))
+Sₖdata = reshape(readdlm("test/Sk_MC.txt"), (2,2,100))
 # convert the data to the Vector of SMatrix format
 Sₖ = [@SMatrix(zeros(Ns, Ns)) for i = 1:Nk]
 for i = 1:Nk
@@ -315,7 +315,6 @@ F₀ = copy(Sₖ)
 α = 1.0
 β = 0.0
 Ω2 = similar(Sₖ)
-Ω2 .*= 0.0
 for ik = 1:Nk
     Ω2 .= J.*S⁻¹
 end
@@ -358,10 +357,39 @@ F0 = [1.0 for ik = 1:Nk]
 dF0 = [0.0 for ik = 1:Nk]
 
 taggedkernel = TaggedMultiComponentModeCouplingKernel(s, ρ, kBT, m, k_array, Sₖ, sol);
-taggedSystem = MemoryEquation(α, β, γ, δ, F0, dF0, taggedkernel);
-taggedsol = solve(taggedSystem, solverFuchs)
+taggedequation = MemoryEquation(α, β, γ, δ, F0, dF0, taggedkernel);
+taggedsol = solve(taggedequation, solver)
 ```
 In order to solve the tagged particle equation for all species, one should loop over the above code, changing specie index $s$ from 1 to the number of species.
+
+### Multi-component mean-squared displacements
+
+The equation for the mean squared displacement in a multicomponent system reads
+
+$$\delta \dot{r}_s^2(t) -\frac{6k_BT}{m_s} + \int_0^td\tau K_{s}(t-\tau)\delta \dot{r}_s^2(\tau)=0$$
+ 
+for a particle of species $s$. The memory kernel is given by
+
+$$K_s(t) = \frac{\rho k_BT}{6\pi^2 m_s}\sum_{\alpha\beta}\int_0^\infty dq q^4c_{s\alpha}(q)c_{s\beta}(q)F_{\alpha\beta}(q,t)F^{(s)}_s(q,t).$$
+
+Here $\delta r_s^2(t)$ is the MSD of species s, with initial condition $\delta r_s^2(t=0)=0$, and $\delta \dot{r}_s^2(t=0)=0$. This kernel is implemented using the `MSDMultiComponentModeCouplingKernel`
+
+#### Example
+```julia 
+# we look for the tagged correlator of the second species.
+s = 2
+α = 1.0
+β = 0.0
+γ = 0.0
+δ = -6*kBT / m[s]
+msd0 = 0.0
+dmsd0 = 0.0
+
+msdkernel = MSDMultiComponentModeCouplingKernel(s, ρ, kBT, m, k_array, Sₖ, sol, taggedsol);
+msdequation = MemoryEquation(α, β, γ, δ, msd0, dmsd0, msdkernel);
+msdsol = solve(msdequation, solver)
+```
+
 
 ## Defining custom kernels
 
