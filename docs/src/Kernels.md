@@ -237,10 +237,33 @@ Example (excluding the code from collective MCT):
 ```julia
 taggedF0 = ones(Nk); tagged∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/m; δ = 0.0
 
-taggedkernel = ModeCouplingTheory.TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
-taggedproblem = MemoryEquation(α, β, γ, δ, taggedF0, tagged∂F0, taggedkernel)
-taggedsol = solve(taggedproblem, solver)
+taggedkernel = TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
+taggedequation = MemoryEquation(α, β, γ, δ, taggedF0, tagged∂F0, taggedkernel)
+taggedsol = solve(taggedequation, solver)
 ```
+
+### Mean squared displacement (MSD)
+
+From the tagged particle dynamics we just computed, we can evaluate the MSD, as a low k limit. The equations that it satisfies are
+
+$$\ddot{\delta r^2}(t) - \frac{6 k_BT}{m}  + \int_0^t d\tau K(k, t-\tau)\delta\dot{ r}^2(\tau)=0,$$
+
+where
+
+$$K(t) = \frac{\rho k_BT}{6\pi^2 m}\int_0^\infty dq q^4c(q)^2F(q,t)F_s(q,t).$$
+This kernel is implemented in the `MSDModeCouplingKernel`
+
+Example:
+
+```julia
+MSD0 = 0.0; dMSD0 = 0.0; α = 1.0; β = 0.0; γ = 0.0; δ = -6.0*kBT/m;
+msdkernel = TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol)
+msdequation = MemoryEquation(α, β, γ, δ, MSD0, dMSD0, msdkernel)
+msdsol = solve(msdequation, solver)
+
+plot(log10.(msdsol.t), log10.(msdsol.F), xlabel="log(t)", ylabel="log(MSD(t))", xlims=(-5,15), label=false)
+```
+![image](images/msd.png)
 
 ## Multi-component Mode-Coupling Theory
 
