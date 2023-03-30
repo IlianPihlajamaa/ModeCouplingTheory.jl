@@ -78,8 +78,8 @@ in which k and q are vectors and α and β species labels.
 
 an instance `k` of `ModeCouplingKernel <: MemoryKernel`, which can be called both in-place and out-of-place:
 k = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-out = `k`(F, t)
-`k`(out, F, t)
+`evaluate_kernel!(out, kernel, F, t)`
+`out = evaluate_kernel(kernel, F, t)`
 """
 function MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
     Nk = length(k_array)
@@ -262,8 +262,8 @@ in which k and q are vectors.
 # Returns:
 
 an instance `k` of `TaggedMultiComponentModeCouplingKernel <: MemoryKernel`, which can be called both in-place and out-of-place:
-`k`(out, F, t)
-out = `k`(F, t)
+`evaluate_kernel!(out, kernel, Fs, t)`
+`out = evaluate_kernel(kernel, Fs, t)`
 """
 function TaggedMultiComponentModeCouplingKernel(s::Int, ρ, kBT, m, k_array, Sₖ, sol)
     tDict = Dict(zip(sol.t, eachindex(sol.t)))
