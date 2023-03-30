@@ -201,4 +201,4 @@ dmsd0 = 0.0
 msdkernel = MSDMultiComponentModeCouplingKernel(s, ρ, kBT, m, k_array, Sₖ, sol, taggedsol);
 msdequation = MemoryEquation(α, β, γ, δ, msd0, dmsd0, msdkernel);
 msdsol = solve(msdequation, solverFuchs)
-@test sum(msdsol) ≈ 21321.0
+@test sum(msdsol.F) ≈ 0.6057207573375025
