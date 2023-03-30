@@ -34,8 +34,8 @@ in which k and q are vectors.
 # Returns:
 
 an instance `k` of `ModeCouplingKernel <: MemoryKernel`, which can be called both in-place and out-of-place:
-`k`(out, F, t)
-out = `k`(F, t)
+`evaluate_kernel!(out, kernel, F, t)`
+`out = evaluate_kernel(kernel, F, t)`
 """
 function ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
     Nk = length(k_array)
@@ -201,7 +201,7 @@ TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
 
 Constructor of a Tagged ModeCouplingKernel. It implements the kernel
 K(k,t) = ρ kBT / (8π^3m) ∫dq V^2(k,q) F(q,t) Fs(k-q,t)
-in which k and q are vectors. 
+in which k and q are vectors. Here V(k,q) = c(q) (k dot q)/k. 
 
 # Arguments:
 
@@ -215,8 +215,8 @@ in which k and q are vectors.
 # Returns:
 
 an instance `k` of `TaggedModeCouplingKernel <: MemoryKernel`, which can be called both in-place and out-of-place:
-`k`(out, F, t)
-out = `k`(F, t)
+`evaluate_kernel!(out, kernel, Fs, t)`
+`out = evaluate_kernel(kernel, Fs, t)`
 """
 function TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
     tDict = Dict(zip(sol.t, eachindex(sol.t)))
@@ -299,3 +299,73 @@ function evaluate_kernel(kernel::TaggedModeCouplingKernel, Fs, t)
     evaluate_kernel!(out, kernel, Fs, t) # call the inplace version
     return out
 end
+
+
+
+struct MSDModeCouplingKernel{F, V, TDICT, FF, FS} <: MemoryKernel
+    ρ::F
+    kBT::F
+    m::F
+    Nk::Int
+    k_array::V
+    Ck::V
+    tDict::TDICT
+    F::FF
+    Fs::FS
+end
+
+"""
+MSDModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol)
+
+Constructor of a MSDModeCouplingKernel. It implements the kernel
+K(k,t) = ρ kBT / (6π^2m) ∫dq q^4 c(q)^2 F(q,t) Fs(q,t)
+where the integration runs from 0 to infinity. F and Fs are the coherent
+and incoherent intermediate scattering functions, and must be passed in
+as solutions of the corresponding equations.
+
+# Arguments:
+
+* `ρ`: number density
+* `kBT`: Thermal energy
+* `m` : particle mass
+* `k_array`: vector of wavenumbers at which the structure factor is known
+* `Sₖ`: vector with the elements of the structure factor 
+* `sol`: a solution object of an equation with a ModeCouplingKernel.
+* `taggedsol`: a solution object of an equation with a TaggedModeCouplingKernel.
+
+# Returns:
+
+an instance `k` of `MSDModeCouplingKernel <: MemoryKernel`, which can be evaluated like:
+`k = evaluate_kernel(kernel, F, t)`
+"""
+function MSDModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol)
+    tDict = Dict(zip(sol.t, eachindex(sol.t)))
+    Nk = length(k_array)
+    T = promote_type(eltype(Sₖ), eltype(k_array), typeof(ρ), typeof(kBT), typeof(m))
+    ρ, kBT, m = T(ρ), T(kBT), T(m)
+    k_array, Sₖ = T.(k_array), T.(Sₖ)
+    Δk = k_array[2] - k_array[1]
+    @assert k_array[1] ≈ Δk / 2
+    @assert all(diff(k_array) .≈ Δk)
+    Cₖ = @. (Sₖ - 1) / (ρ * Sₖ)
+    kernel = MSDModeCouplingKernel(ρ, kBT, m, Nk, k_array, Cₖ, tDict, sol.F, taggedsol.F)
+    return kernel
+end
+
+function evaluate_kernel(kernel::MSDModeCouplingKernel, MSD, t)
+    K = zero(typeof(MSD))
+    k_array = kernel.k_array
+    Ck = kernel.Ck
+    it = kernel.tDict[t]
+    Δk = k_array[2] - k_array[1]
+    F = kernel.F[it]
+    Fs = kernel.Fs[it]
+    for iq in eachindex(k_array)
+        K += k_array[iq]^4*Ck[iq]^2*F[iq]*Fs[iq]
+    end
+    K *= Δk*kernel.ρ*kernel.kBT/(6π^2*kernel.m)
+    return K
+end
+
+
+

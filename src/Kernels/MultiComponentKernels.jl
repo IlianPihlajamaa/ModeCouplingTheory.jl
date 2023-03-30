@@ -78,8 +78,8 @@ in which k and q are vectors and α and β species labels.
 
 an instance `k` of `ModeCouplingKernel <: MemoryKernel`, which can be called both in-place and out-of-place:
 k = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-out = `k`(F, t)
-`k`(out, F, t)
+`evaluate_kernel!(out, kernel, F, t)`
+`out = evaluate_kernel(kernel, F, t)`
 """
 function MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
     Nk = length(k_array)
@@ -262,8 +262,8 @@ in which k and q are vectors.
 # Returns:
 
 an instance `k` of `TaggedMultiComponentModeCouplingKernel <: MemoryKernel`, which can be called both in-place and out-of-place:
-`k`(out, F, t)
-out = `k`(F, t)
+`evaluate_kernel!(out, kernel, Fs, t)`
+`out = evaluate_kernel(kernel, Fs, t)`
 """
 function TaggedMultiComponentModeCouplingKernel(s::Int, ρ, kBT, m, k_array, Sₖ, sol)
     tDict = Dict(zip(sol.t, eachindex(sol.t)))
@@ -386,4 +386,91 @@ function evaluate_kernel(kernel::TaggedMultiComponentModeCouplingKernel, Fs, t)
     out = Diagonal(similar(Fs)) # we need it to produce a diagonal matrix
     evaluate_kernel!(out, kernel, Fs, t) # call the inplace version
     return out
+end
+
+
+
+
+struct MSDMultiComponentModeCouplingKernel{F,V,TDICT,FF, V1, FFF, FS} <: MemoryKernel
+    s::Int
+    ρ::V1
+    kBT::F
+    m::V1
+    Nk::Int
+    k_array::V
+    Ck::FF
+    tDict::TDICT
+    F::FFF
+    Fs::FS
+end
+
+"""
+MSDMultiComponentModeCouplingKernel(s, ρ, kBT, m, k_array, Sₖ, sol, taggedsol)
+
+Constructor of a MSDModeCouplingKernel. It implements the kernel
+Kₛ(k,t) = ρ kBT / (6π^2mₛ) Σαβ ∫dq q^4 csα(q)csβ(q) Fαβ(q,t) Fₛ(q,t)
+where the integration runs from 0 to infinity. F and Fs are the coherent
+and incoherent intermediate scattering functions, and must be passed in
+as solutions of the corresponding equations.
+
+# Arguments:
+
+* `ρ`: number density
+* `kBT`: Thermal energy
+* `m` : particle mass of species s
+* `k_array`: vector of wavenumbers at which the structure factor is known
+* `Sₖ`: vector with the elements of the structure factor 
+* `sol`: a solution object of an equation with a MultiComponentModeCouplingKernel.
+* `taggedsol`: a solution object of an equation with a TaggedMultiComponentModeCouplingKernel.
+
+# Returns:
+
+an instance `k` of `MSDMultiComponentModeCouplingKernel <: MemoryKernel`, which can be evaluated like:
+`k = evaluate_kernel(kernel, F, t)`
+"""
+function MSDMultiComponentModeCouplingKernel(s::Int, ρ, kBT, m, k_array, Sₖ, sol, taggedsol)
+    tDict = Dict(zip(sol.t, eachindex(sol.t)))
+    Nk = length(k_array)
+    Ns = size(Sₖ[1], 2)
+    @assert size(Sₖ) == (Nk,)
+    @assert size(Sₖ[1]) == (Ns, Ns)
+    @assert size(m) == size(ρ) == (Ns,)
+    T = promote_type(eltype(Sₖ[1]), eltype(k_array), eltype(ρ), typeof(kBT), eltype(m))
+    ρ, kBT, m = T.(ρ), T(kBT), T.(m)
+    k_array = T.(k_array)
+    Δk = k_array[2] - k_array[1]
+    @assert k_array[1] ≈ Δk / 2
+    @assert all(diff(k_array) .≈ Δk)
+
+    ρ_all = sum(ρ)
+    x = ρ / sum(ρ)
+    S⁻¹ = inv.(Sₖ)
+    Cₖ = similar(Sₖ)
+    δαβ = Matrix(I(Ns))
+    for i = 1:Nk
+        Cₖ[i] = (δαβ ./ x - S⁻¹[i]) / ρ_all
+    end
+
+    kernel = MSDMultiComponentModeCouplingKernel(s, ρ, kBT, m, Nk, k_array, Cₖ, tDict, sol.F, taggedsol.F)
+    return kernel
+end
+
+function evaluate_kernel(kernel::MSDMultiComponentModeCouplingKernel, MSD, t)
+    s = kernel.s
+    K = zero(typeof(MSD))
+    it = kernel.tDict[t]
+    k_array = kernel.k_array
+    Ck = kernel.Ck
+    Δk = k_array[2] - k_array[1]
+    F = kernel.F[it]
+    Fs = kernel.Fs[it]
+    Ns = length(Fs[1])
+    ρ_all = sum(kernel.ρ)
+    for α = 1:Ns, β = 1:Ns
+        for iq in eachindex(k_array)
+            K += k_array[iq]^4*Ck[iq][α,s]*Ck[iq][s,β]*F[iq][α,β]*Fs[iq]
+        end
+    end
+    K *= Δk*ρ_all*kernel.kBT/(6π^2*kernel.m[s])
+    return K
 end
