@@ -257,7 +257,7 @@ Example:
 
 ```julia
 MSD0 = 0.0; dMSD0 = 0.0; α = 1.0; β = 0.0; γ = 0.0; δ = -6.0*kBT/m;
-msdkernel = TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol)
+msdkernel = MSDModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol)
 msdequation = MemoryEquation(α, β, γ, δ, MSD0, dMSD0, msdkernel)
 msdsol = solve(msdequation, solver)
 

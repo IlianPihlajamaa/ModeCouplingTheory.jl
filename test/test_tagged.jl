@@ -80,3 +80,10 @@ taggedproblem = MemoryEquation(α, β, γ, δ, F0, ∂F0, taggedkernel)
 sols = solve(taggedproblem, solver)
 
 @test sum(sum(sol.F)) ≈ 25492.648222645254
+
+
+MSD0 = 0.0; dMSD0 = 0.0; α = 1.0; β = 0.0; γ = 0.0; δ = -6.0*kBT/m;
+msdkernel = MSDModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, sols)
+msdequation = MemoryEquation(α, β, γ, δ, MSD0, dMSD0, msdkernel)
+msdsol = solve(msdequation, solver)
+@test sum(msdsol.F) ≈ 51.75329405084479
