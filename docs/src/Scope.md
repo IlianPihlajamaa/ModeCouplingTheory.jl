@@ -89,8 +89,8 @@ plot!(log10.(sol.t), sol.dF, ls=:dash, lw=3, label="Numerical solution", legend=
 
 ## Measurement errors and other number types
 
-Similar to automatically evaluating derivatives, it is also possible to automatically propagate measurement errors through the entire solution process. This does however cause a serious performace loss. It works by instead of doing arithmatic with standard floating point numbers, it uses numbers with an error attached. The 
-[Measurements.jl](https://juliaphysics.github.io/Measurements.jl/stable/) package implements how arithmatic with such numbers should be performed. Analagously, one can use arbitrary precision arithmatic (when many decimal places of precision are required) or complex valued numbers together with this package.
+Similar to automatically evaluating derivatives, it is also possible to automatically propagate measurement errors through the entire solution process. This does however cause a serious performace loss. It works by instead of doing arithmetic with standard floating point numbers, it uses numbers with an error attached. The 
+[Measurements.jl](https://juliaphysics.github.io/Measurements.jl/stable/) package implements how arithmetic with such numbers should be performed. Analagously, one can use arbitrary precision arithmetic (when many decimal places of precision are required) or complex valued numbers together with this package.
 
 ### Example
 
