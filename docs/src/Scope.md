@@ -246,7 +246,7 @@ The beta-scaling model is implemented to make it easier to find critical exponen
 
 $$\sigma - \delta t + \lambda (g(t))^2 = \partial_t∫g(t-\tau)g(\tau)d\tau.$$
 
-Here, $\sigma$ is the distance from the critical point, $\lambda$ is the MCT-exponent parameter that governs the power-law divergence of the relaxation time near the critical point. $g(t)$ describes the deviation of the order parameter from the plateau. $\delta$ is an optional hopping parameter, defaulting to 0 if not specified. Each of the parameters have to be floating point numbers.  
+Here, $\sigma$ is the distance from the critical point, $\lambda$ is the relevant eigenvalue of the stability matrix. $g(t)$ describes the deviation of the order parameter from the plateau. $\delta$ is an optional hopping parameter, defaulting to 0 if not specified. Each of the parameters have to be floating point numbers.  
 
 
 ### Example
