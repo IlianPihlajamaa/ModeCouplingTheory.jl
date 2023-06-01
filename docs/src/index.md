@@ -61,10 +61,10 @@ Full copy-pastable example:
 ```
 using ModeCouplingTheory, Plots
 ν = 3.999
-α = 1.0; β = 0.0; γ = 1.0; δ = 0.0; F0 = 1.0; ∂F0 = 0.0;
+α = 1.0; β = 0.0; γ = 2.0; δ = 0.0; F0 = 1.0; ∂F0 = 0.0;
 kernel = SchematicF2Kernel(ν)
 problem = MemoryEquation(α, β, γ, δ, F0, ∂F0, kernel)
-solver = TimeDoublingSolver(problem)
+solver = TimeDoublingSolver()
 sol = solve(problem, solver);
 plot(log10.(sol.t), sol.F)
 ```
