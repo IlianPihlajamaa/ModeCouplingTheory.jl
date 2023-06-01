@@ -46,10 +46,10 @@ $$F(t) =  e^{-2t}\left(I_0(2t) + I_1(2t) \right)$$
 
 in which $I_k$ are modified Bessel functions of the first kind.
 ```julia
-F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; ν = 1.0
+F0 = 1.0; ∂F0 = 0.0; α = 0.0; β = 1.0; γ = 1.0; ν = 1.0; δ = 0.0
 
 kernel = SchematicF1Kernel(ν)
-problem = MemoryEquation(α, β, γ, F0, ∂F0, kernel)
+problem = MemoryEquation(α, β, γ, δ, F0, ∂F0, kernel)
 solver = TimeDoublingSolver(Δt=10^-3, t_max=10.0^2, verbose=false, N = 100, tolerance=10^-14, max_iterations=10^6)
 sol =  solve(problem, solver)
 
