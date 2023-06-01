@@ -58,7 +58,7 @@ function my_func(λ)
     solver = TimeDoublingSolver(Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
 
     sol =  solve(problem, solver)
-    return [sol.t[2:end], sol.F[2:end], sol.K[2:end]]
+    return sol
 end
 
 function exact_func(λ, t)
