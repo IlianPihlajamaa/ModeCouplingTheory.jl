@@ -71,7 +71,7 @@ function allocate_temporary_arrays(equation::MemoryEquation, solver::TimeDoublin
     if inplace && !check_if_diag(temp_mat)
         prob = LinearSolve.LinearProblem(temp_mat, temp_vec)
         cache1 = LinearSolve.init(prob)
-        sol = LinearSolve.solve(cache1)
+        sol = LinearSolve.solve!(cache1)
         temp_arrays = SolverCache(F_temp, K_temp, F_I, K_I, C1, C1 + C1, C2, C3, temp_vec, F_old, temp_mat, sol.cache, inplace, start_time)
     else
         temp_arrays = SolverCache(F_temp, K_temp, F_I, K_I, C1, C1 + C1, C2, C3, temp_vec, F_old, temp_mat, false, inplace, start_time)
@@ -312,9 +312,10 @@ function update_F!(::MemoryEquation, ::TimeDoublingSolver, temp_arrays::SolverCa
         else
             c1_temp = temp_arrays.C1_temp
             c1_temp .= c1
-            cache = LinearSolve.set_b(temp_arrays.solve_cache, temp_arrays.temp_vec)
-            cache = LinearSolve.set_A(cache, c1_temp)
-            sol = LinearSolve.solve(cache)
+            cache = temp_arrays.solve_cache
+            cache.b = temp_arrays.temp_vec
+            cache.A = c1_temp
+            sol = LinearSolve.solve!(cache)
             temp_arrays.F_temp[it] .= sol.u
             # ldiv!(temp_arrays.F_temp[it], qr!(c1_temp, ColumnNorm()), temp_arrays.temp_vec)
         end

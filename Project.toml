@@ -16,7 +16,6 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
 Dierckx = "0.5"
-LinearSolve = "1"
 LoopVectorization = "0.12"
 SpecialFunctions = "2"
 StaticArrays = "1"
