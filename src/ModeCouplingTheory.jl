@@ -15,10 +15,10 @@ module ModeCouplingTheory
     export find_relaxation_time, solve_steady_state
     export convert_multicomponent_structure_factor
     export MSDModeCouplingKernel, MSDMultiComponentModeCouplingKernel
-    
+    export get_F, get_K, get_t
     abstract type AbstractMemoryEquation end
 
-    for file in ["HelperFunctions.jl", "Kernels.jl", "MemoryEquation.jl", "Solvers.jl", "RelaxationTime.jl", "SteadyStateMemoryEquation.jl", "BetaScaling.jl"]
+    for file in ["Kernels.jl", "MemoryEquation.jl", "Solvers.jl", "HelperFunctions.jl", "RelaxationTime.jl", "SteadyStateMemoryEquation.jl", "BetaScaling.jl"]
         include(file)
     end
 

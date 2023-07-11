@@ -48,7 +48,9 @@ sol = mct.solve(problem)
 
 import matplotlib.pyplot as plt
 import numpy as np
-plt.plot(np.log10(sol.t), sol.F)
+t = get_t(sol)
+F = get_t(sol)
+plt.plot(np.log10(t), F)
 plt.show()
 ```
 

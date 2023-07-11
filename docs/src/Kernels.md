@@ -28,7 +28,7 @@ t_analytic = 10 .^ range(-3, 2, length=50)
 F_analytic = @. (exp(-0.5*(3+sqrt(5))* t_analytic)*(exp(sqrt(5)*t_analytic) * (1+sqrt(5))-1+sqrt(5)))/(2sqrt(5))
 
 using Plots
-p = plot(log10.(sol.t), sol.F, label="Numeric solution", lw=3)
+p = plot(log10.(get_t(sol)), get_F(sol), label="Numeric solution", lw=3)
 scatter!(log10.(t_analytic), F_analytic, label="Exact solution", ylabel="F", xlabel="log10(t)")
 ```
 
@@ -56,7 +56,7 @@ sol =  solve(problem, solver)
 using Plots, SpecialFunctions
 t_analytic = 10 .^ range(-3, 2, length=50)
 F_analytic = @. exp(-2*t_analytic)*(besseli(0, 2t_analytic) + besseli(1, 2t_analytic))
-plot(log10.(sol.t), sol.F, label="Numerical Solution", ylabel="F", xlabel="log10(t)", lw=3)
+plot(log10.(get_t(sol)), get_F(sol), label="Numerical Solution", ylabel="F", xlabel="log10(t)", lw=3)
 scatter!(log10.(t_analytic), F_analytic, label="Exact Solution")
 ```
 ![image](images/F1Kernel.png)
@@ -206,7 +206,8 @@ sol = @time solve(problem, solver);
     # 3.190870 seconds (377.93 k allocations: 106.456 MiB, 0.42% gc time)
 p = plot(xlabel="log10(t)", ylabel="F(k,t)", ylims=(0,1))
 for ik = [7, 18, 25, 39]
-    plot!(p, log10.(sol.t), sol[ik]/Sₖ[ik], label="k = $(k_array[ik])", lw=3)
+    Fk = get_F(sol, :, ik)
+    plot!(p, log10.(get_t(sol)), Fk/Sₖ[ik], label="k = $(k_array[ik])", lw=3)
 end
 p
 ```
@@ -326,11 +327,17 @@ solver = TimeDoublingSolver(verbose=false, N=16, tolerance=10^-8, max_iterations
 sol = solve(problem, solver)
 ik = 19
 k = k_array[ik]
-t = sol.t
-p = plot(log10.(t), getindex.(sol[ik], 1,1)/Sₖ[ik][1,1], ls=:dash, lw=2, color=1, label="Faa(k=$k, t)") 
-plot!(log10.(t), getindex.(sol[ik], 1,2)/Sₖ[ik][1,2], lw=2, color=2, label="Fab(k=$k, t)") 
-plot!(log10.(t), getindex.(sol[ik], 2,1)/Sₖ[ik][2,1], ls=:dash, lw=2, color=3, label="Fba(k=$k, t)") 
-plot!(log10.(t), getindex.(sol[ik], 2,2)/Sₖ[ik][2,2], ls=:dash, lw=2, color=4, label="Fbb(k=$k, t)")
+t = get_t(sol)
+
+Fk_11 = get_F(:, ik, (1,1))
+Fk_12 = get_F(:, ik, (1,2))
+Fk_21 = get_F(:, ik, (2,1))
+Fk_22 = get_F(:, ik, (2,2))
+
+p = plot(log10.(t), Fk_11/Sₖ[ik][1,1], ls=:dash, lw=2, color=1, label="Faa(k=$k, t)") 
+plot!(log10.(t), Fk_12/Sₖ[ik][1,2], lw=2, color=2, label="Fab(k=$k, t)") 
+plot!(log10.(t), Fk_21/Sₖ[ik][2,1], ls=:dash, lw=2, color=3, label="Fba(k=$k, t)") 
+plot!(log10.(t), Fk_22/Sₖ[ik][2,2], ls=:dash, lw=2, color=4, label="Fbb(k=$k, t)")
 ```
 
 ![image](images/MCMCTKernel.png)
@@ -548,7 +555,8 @@ sol_s = @time solve(taggedproblem, taggedsolver)
 using Plots
 p = plot(xlabel="log10(t)", ylabel="Fₛ(k,t)", ylims=(0,1))
 for ik = [7, 18, 25, 39]
-    plot!(p, log10.(sol_s.t), sol_s[ik], label="k = $(k_array[ik])", lw=3)
+    Fk = get_F(sol_s, :, ik)
+    plot!(p, log10.(get_t(sol_s)), Fk, label="k = $(k_array[ik])", lw=3)
 end
 p
 ```
