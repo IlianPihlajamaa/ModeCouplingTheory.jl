@@ -62,30 +62,6 @@ function Base.show(io::IO, ::MIME"text/plain", p::MemoryEquation)
 end
 
 
-mutable struct BetaScalingEquationCoefficients{T}
-    λ::T
-    σ::T
-    t₀::T
-    δ::T
-    δ_times_t::T
-    a::T
-    b::T
-end
-
 abstract type AbstractNoKernelEquation <: AbstractMemoryEquation end
-
-struct BetaScalingEquation{T,A,B,C,D} <: AbstractNoKernelEquation
-    coeffs::T
-    F₀::A
-    K₀::B
-    kernel::C
-    update_coefficients!::D
-end
-
-function Base.show(io::IO, ::MIME"text/plain", p::BetaScalingEquation)
-    println(io, "MCT beta-scaling object:")
-    println(io, "   σ - δ t + λ (g(t))² = ∂ₜ∫g(t-τ)g(τ)dτ")
-    println(io, "with real-valued parameters.")
-end
 
 
