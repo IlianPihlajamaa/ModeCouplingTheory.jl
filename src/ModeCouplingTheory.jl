@@ -18,7 +18,7 @@ module ModeCouplingTheory
     export get_F, get_K, get_t
     abstract type AbstractMemoryEquation end
 
-    for file in ["Kernels.jl", "MemoryEquation.jl", "Solvers.jl", "HelperFunctions.jl", "RelaxationTime.jl", "SteadyStateMemoryEquation.jl", "BetaScaling.jl"]
+    for file in ["Kernels.jl", "MemoryEquation.jl", "Solvers.jl", "HelperFunctions.jl", "RelaxationTime.jl", "SteadyStateMemoryEquation.jl"]
         include(file)
     end
 
