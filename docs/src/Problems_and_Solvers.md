@@ -85,7 +85,7 @@ As optional keyword arguments `TimeDoublingSolver` accepts:
 * `verbose`: if `true`, some information will be printed. default = `false`
 * `inplace`: if `true` and if the type of `F` is mutable, the solver will try to avoid allocating many temporaries. default = `true`
 
-Having defined a `MemoryKernel`, `AbstractMemoryEquation` and a `Solver`, one can call `sol = solve(problem, solver)` to solve the problem. It outputs an object `sol` that contains a `Vector` `sol.t` of time points and the solution `sol.F` and memory kernel `sol.K` evaluated at those times points. 
+Having defined a `MemoryKernel`, `AbstractMemoryEquation` and a `Solver`, one can call `sol = solve(problem, solver)` to solve the problem. It outputs an object `sol` that contains a `Vector` `sol.t` of time points and the solution `sol.F` and memory kernel `sol.K` evaluated at those times points. These can be extracted with `get_t(sol)`, `get_F(sol)` and `get_K(sol)`, respectively. These functions also allow for easy indexing. For example, suppose one has obtained the solution to a vector-valued equation, then extracting the solution over time of the second equation can be done with `get_F(sol, :, 2)`. If instead one wants to extract the solution at the 53th time point for all equations, one may run `get_F(sol, 53, :)`.
 
 ### References
 [1] Fuchs, Matthias, et al. "Comments on the alpha-peak shapes for relaxation in supercooled liquids." Journal of Physics: Condensed Matter 3.26 (1991): 5047.

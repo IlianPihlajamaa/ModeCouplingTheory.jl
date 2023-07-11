@@ -52,7 +52,9 @@ Now we can solve the equation by calling `solve`:
 ```julia
 julia> using Plots
 julia> sol = solve(equation, solver);
-julia> plot(log10.(sol.t), sol.F)
+julia> t = get_t(sol)
+julia> F = get_F(sol)
+julia> plot(log10.(t), F)
 ```
 ![image](images/readmefig.png)
 
@@ -66,6 +68,8 @@ kernel = SchematicF2Kernel(ν)
 problem = MemoryEquation(α, β, γ, δ, F0, ∂F0, kernel)
 solver = TimeDoublingSolver()
 sol = solve(problem, solver);
-plot(log10.(sol.t), sol.F)
+t = get_t(sol)
+F = get_F(sol)
+plot(log10.(t), F)
 ```
 

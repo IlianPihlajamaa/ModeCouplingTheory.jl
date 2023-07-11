@@ -182,3 +182,72 @@ function convert_multicomponent_structure_factor(Sk_in::Matrix{Vector{T}}) where
     end
     return Sk_out
 end
+
+getindexelementwise(A, i) = getindex.(A, i)
+getindexelementwise(A, i, j) = getindex.(A, i, j)
+
+"""
+    `get_F(sol::MemoryEquationSolution)`
+
+obtains the solution `F` from a `MemoryEquationSolution` object. Equivalent to `sol.F`.
+
+    `get_F(sol::MemoryEquationSolution, I...)`
+
+obtains the solution `F` from a `MemoryEquationSolution` object and indexes into it.
+Enables convenient indexing into the multidimensional object. 
+`I` is interpreted as a set of indices. 
+
+# Examples:
+If `sol` is the solution to a scalar equation
+`get_F(sol, 2:4)`
+gets the elements `2:4`
+If `sol` is the solution to a vector-valued equation
+`get_F(sol, 5, 2:43)`
+gets the solution at the 5th time point for vector indices 2:43.
+If `sol` is the solution to a vector-valued multicomponent equation
+`get_F(sol, 5, 2:43, (1,2))`
+gets the solution at the 5th time point for vector indices 2:43, for species 1 and 2.
+"""
+get_F(sol::MemoryEquationSolution) = sol.F
+get_F(sol::MemoryEquationSolution, it::Int, ik::Int, is) = get_F(sol)[it][ik][is...]
+get_F(sol::MemoryEquationSolution, it::Int, ik::Union{Colon, AbstractArray}, is) = getindexelementwise(get_F(sol)[it][ik], Ref(is[1]), Ref(is[2]))
+get_F(sol::MemoryEquationSolution, it::Union{Colon, AbstractArray}, ik::Int, is) = getindexelementwise(getindexelementwise(get_F(sol)[it], ik), Ref(is[1]), Ref(is[2]))
+get_F(sol::MemoryEquationSolution, it::AbstractArray, ik::Union{Colon, AbstractArray}, is) = [getindexelementwise(get_F(sol)[iit][ik], Ref(is[1]), Ref(is[2])) for iit in it]
+get_F(sol::MemoryEquationSolution, ::Colon, ik::Union{Colon, AbstractArray}, is) = [getindexelementwise(get_F(sol)[iit][ik], Ref(is[1]), Ref(is[2])) for iit in eachindex(sol.F)]
+get_F(sol::MemoryEquationSolution, it::Int, ik) = get_F(sol)[it][ik]
+get_F(sol::MemoryEquationSolution, it::Union{Colon, AbstractArray}, ik) = getindexelementwise(get_F(sol)[it], ik)
+get_F(sol::MemoryEquationSolution, it) = get_F(sol)[it]
+
+
+hasdiagkernel(sol::MemoryEquationSolution) = (eltype(sol.K) <: Diagonal)
+
+"""
+    `get_K(sol::MemoryEquationSolution)`
+
+obtains the kernel `K` from a `MemoryEquationSolution` object. Equivalent to `sol.K`.
+
+    `get_K(sol::MemoryEquationSolution, I...)`
+
+obtains the solution `K` from a `MemoryEquationSolution` object and indexes into it.
+Enables convenient indexing into the multidimensional object. See `get_F` for examples.
+"""
+get_K(sol::MemoryEquationSolution, i, j) = hasdiagkernel(sol) ? _get_K_diag(sol::MemoryEquationSolution, i, j) : error("Indexing for non-diagonal kernels is not implemented")
+get_K(sol::MemoryEquationSolution, i, j, k) = hasdiagkernel(sol) ? _get_K_diag(sol::MemoryEquationSolution, i, j, k) : error("Indexing for non-diagonal kernels is not implemented")
+
+get_K(sol::MemoryEquationSolution) = sol.K
+_get_K_diag(sol::MemoryEquationSolution, it::Int, ik::Int, is) = get_K(sol)[it].diag[ik][is...]
+_get_K_diag(sol::MemoryEquationSolution, it::Int, ik::Union{Colon, AbstractArray}, is) = getindexelementwise(get_K(sol)[it].diag[ik], Ref(is[1]), Ref(is[2]))
+_get_K_diag(sol::MemoryEquationSolution, it::Union{Colon, AbstractArray}, ik::Int, is) = getindexelementwise(getindexelementwise(getproperty.(get_K(sol)[it], :diag), ik), Ref(is[1]), Ref(is[2]))
+_get_K_diag(sol::MemoryEquationSolution, it::AbstractArray, ik::Union{Colon, AbstractArray}, is) = [getindexelementwise(get_K(sol)[iit].diag[ik], Ref(is[1]), Ref(is[2])) for iit in it]
+_get_K_diag(sol::MemoryEquationSolution, ::Colon, ik::Union{Colon, AbstractArray}, is) = [getindexelementwise(get_K(sol)[iit].diag[ik], Ref(is[1]), Ref(is[2])) for iit in eachindex(sol.F)]
+_get_K_diag(sol::MemoryEquationSolution, it::Int, ik) = get_K(sol)[it].diag[ik]
+_get_K_diag(sol::MemoryEquationSolution, it::Union{Colon, AbstractArray}, ik) = getindexelementwise(getproperty.(get_K(sol)[it], :diag), ik)
+get_K(sol::MemoryEquationSolution, it) = get_K(sol)[it]
+
+
+"""
+    `get_t(sol::MemoryEquationSolution)`
+
+obtains the time grid `t` from a `MemoryEquationSolution` object. Equivalent to `sol.t`.
+"""
+get_t(sol::MemoryEquationSolution) = sol.t
