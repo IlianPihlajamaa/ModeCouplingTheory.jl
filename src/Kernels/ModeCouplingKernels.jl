@@ -1,5 +1,5 @@
 
-struct ModeCouplingKernel{F,V,M, M2} <: MemoryKernel
+struct ModeCouplingKernel3D{F,V,M, M2} <: MemoryKernel
     ρ::F
     kBT::F
     m::F
@@ -17,7 +17,7 @@ struct ModeCouplingKernel{F,V,M, M2} <: MemoryKernel
 end
 
 """
-    ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
+    ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ; dims=3)
 
 Constructor of a ModeCouplingKernel. It implements the kernel
 K(k,t) = ρ kBT / (16π^3m) ∫dq V^2(k,q) F(q,t) F(k-q,t)
@@ -37,7 +37,10 @@ an instance `k` of `ModeCouplingKernel <: MemoryKernel`, which can be called bot
 `evaluate_kernel!(out, kernel, F, t)`
 `out = evaluate_kernel(kernel, F, t)`
 """
-function ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
+function ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ; dims=3)
+    if dims != 3
+        error("MCT for dimensions other than 3 is not implemented")
+    end
     Nk = length(k_array)
     T = promote_type(eltype(Sₖ), eltype(k_array), typeof(ρ), typeof(kBT), typeof(m))
     ρ, kBT, m = T(ρ), T(kBT), T(m)
@@ -67,7 +70,7 @@ function ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
             V3[iq, ip] = p * q * (q^2 - p^2) * (cq^2 - cp^2) / 2 * D₀ * ρ / (8 * π^2) * Δk * Δk
         end
     end
-    kernel = ModeCouplingKernel(ρ, kBT, m, Nk, k_array, A1, A2, A3, T1, T2, T3, V1, V2, V3)
+    kernel = ModeCouplingKernel3D(ρ, kBT, m, Nk, k_array, A1, A2, A3, T1, T2, T3, V1, V2, V3)
     return kernel
 end
 
@@ -130,7 +133,7 @@ function bengtzelius3!(T1, T2, T3, A1, A2, A3, Nk)
     end
 end
 
-function fill_A!(kernel::ModeCouplingKernel, F)
+function fill_A!(kernel::ModeCouplingKernel3D, F)
     A1 = kernel.A1
     A2 = kernel.A2
     A3 = kernel.A3
@@ -151,7 +154,7 @@ function fill_A!(kernel::ModeCouplingKernel, F)
 end
 
 
-function evaluate_kernel!(out::Diagonal, kernel::ModeCouplingKernel, F::Vector, t)
+function evaluate_kernel!(out::Diagonal, kernel::ModeCouplingKernel3D, F::Vector, t)
     A1 = kernel.A1
     A2 = kernel.A2
     A3 = kernel.A3
@@ -171,13 +174,13 @@ function evaluate_kernel!(out::Diagonal, kernel::ModeCouplingKernel, F::Vector, 
 end
 
 
-function evaluate_kernel(kernel::ModeCouplingKernel, F::Vector, t)
+function evaluate_kernel(kernel::ModeCouplingKernel3D, F::Vector, t)
     out = Diagonal(similar(kernel.T1))
     evaluate_kernel!(out, kernel, F, t)
     return out
 end
 
-struct TaggedModeCouplingKernel{F, V, M2, M, T5, FF} <: MemoryKernel
+struct TaggedModeCouplingKernel3D{F, V, M2, M, T5, FF} <: MemoryKernel
     ρ::F
     kBT::F
     m::F
@@ -197,7 +200,7 @@ struct TaggedModeCouplingKernel{F, V, M2, M, T5, FF} <: MemoryKernel
 end
 
 """
-TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
+TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol; dims=3)
 
 Constructor of a Tagged ModeCouplingKernel. It implements the kernel
 K(k,t) = ρ kBT / (8π^3m) ∫dq V^2(k,q) F(q,t) Fs(k-q,t)
@@ -218,7 +221,10 @@ an instance `k` of `TaggedModeCouplingKernel <: MemoryKernel`, which can be call
 `evaluate_kernel!(out, kernel, Fs, t)`
 `out = evaluate_kernel(kernel, Fs, t)`
 """
-function TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
+function TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol; dims=3)
+    if dims != 3
+        error("Tagged MCT is not implemented for dimensions other than 3")
+    end
     tDict = Dict(zip(sol.t, eachindex(sol.t)))
     Nk = length(k_array)
     T = promote_type(eltype(Sₖ), eltype(k_array), typeof(ρ), typeof(kBT), typeof(m))
@@ -248,12 +254,12 @@ function TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
             V3[iq, ip] = p * q * (q^2 - p^2) * (cq^2) / 2 * D₀ * ρ / (4 * π^2) * Δk ^ 2
         end
     end
-    kernel = TaggedModeCouplingKernel(ρ, kBT, m, Nk, k_array, A1, A2, A3, T1, T2, T3, V1, V2, V3, tDict, sol.F)
+    kernel = TaggedModeCouplingKernel3D(ρ, kBT, m, Nk, k_array, A1, A2, A3, T1, T2, T3, V1, V2, V3, tDict, sol.F)
 
     return kernel
 end
 
-function fill_A!(kernel::TaggedModeCouplingKernel, F, t)
+function fill_A!(kernel::TaggedModeCouplingKernel3D, F, t)
     A1 = kernel.A1
     A2 = kernel.A2
     A3 = kernel.A3
@@ -275,7 +281,7 @@ function fill_A!(kernel::TaggedModeCouplingKernel, F, t)
     end
 end
 
-function evaluate_kernel!(out::Diagonal, kernel::TaggedModeCouplingKernel, Fs, t)
+function evaluate_kernel!(out::Diagonal, kernel::TaggedModeCouplingKernel3D, Fs, t)
     A1 = kernel.A1
     A2 = kernel.A2
     A3 = kernel.A3
@@ -294,7 +300,7 @@ function evaluate_kernel!(out::Diagonal, kernel::TaggedModeCouplingKernel, Fs, t
     end
 end
 
-function evaluate_kernel(kernel::TaggedModeCouplingKernel, Fs, t)
+function evaluate_kernel(kernel::TaggedModeCouplingKernel3D, Fs, t)
     out = Diagonal(similar(Fs)) # we need it to produce a diagonal matrix
     evaluate_kernel!(out, kernel, Fs, t) # call the inplace version
     return out
@@ -302,7 +308,7 @@ end
 
 
 
-struct MSDModeCouplingKernel{F, V, TDICT, FF, FS} <: MemoryKernel
+struct MSDModeCouplingKernel3D{F, V, TDICT, FF, FS} <: MemoryKernel
     ρ::F
     kBT::F
     m::F
@@ -315,7 +321,7 @@ struct MSDModeCouplingKernel{F, V, TDICT, FF, FS} <: MemoryKernel
 end
 
 """
-MSDModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol)
+MSDModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol; dims=3)
 
 Constructor of a MSDModeCouplingKernel. It implements the kernel
 K(k,t) = ρ kBT / (6π^2m) ∫dq q^4 c(q)^2 F(q,t) Fs(q,t)
@@ -338,7 +344,10 @@ as solutions of the corresponding equations.
 an instance `k` of `MSDModeCouplingKernel <: MemoryKernel`, which can be evaluated like:
 `k = evaluate_kernel(kernel, F, t)`
 """
-function MSDModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol)
+function MSDModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol; dims=3)
+    if dims != 3
+        error("MSD is not implemented for dimentions other than 3")
+    end
     tDict = Dict(zip(sol.t, eachindex(sol.t)))
     Nk = length(k_array)
     T = promote_type(eltype(Sₖ), eltype(k_array), typeof(ρ), typeof(kBT), typeof(m))
@@ -348,11 +357,11 @@ function MSDModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol)
     @assert k_array[1] ≈ Δk / 2
     @assert all(diff(k_array) .≈ Δk)
     Cₖ = @. (Sₖ - 1) / (ρ * Sₖ)
-    kernel = MSDModeCouplingKernel(ρ, kBT, m, Nk, k_array, Cₖ, tDict, sol.F, taggedsol.F)
+    kernel = MSDModeCouplingKernel3D(ρ, kBT, m, Nk, k_array, Cₖ, tDict, sol.F, taggedsol.F)
     return kernel
 end
 
-function evaluate_kernel(kernel::MSDModeCouplingKernel, MSD, t)
+function evaluate_kernel(kernel::MSDModeCouplingKernel3D, MSD, t)
     K = zero(typeof(MSD))
     k_array = kernel.k_array
     Ck = kernel.Ck

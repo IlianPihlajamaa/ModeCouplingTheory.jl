@@ -42,7 +42,7 @@ function bengtzelius3!(T1, T2, T3, A1, A2, A3, Nk, Ns)
 
 end
 
-struct MultiComponentModeCouplingKernel{F,AF1,AF2,AF3,AF4} <: MemoryKernel
+struct MultiComponentModeCouplingKernel3D{F,AF1,AF2,AF3,AF4} <: MemoryKernel
     ρ::AF1
     kBT::F
     m::AF1
@@ -60,7 +60,7 @@ struct MultiComponentModeCouplingKernel{F,AF1,AF2,AF3,AF4} <: MemoryKernel
 end
 
 """
-    MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
+    MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ; dims=3)
 
 Constructor of a MultiComponentModeCouplingKernel. It implements the kernel
 Kαβ(k,t) = ρ  / (2 xα xβ (2π)³) Σμνμ'ν' ∫dq Vμ'ν'(k,q) Fμμ'(q,t) Fνν'(k-q,t) Vμν(k,q)
@@ -81,7 +81,10 @@ k = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 `evaluate_kernel!(out, kernel, F, t)`
 `out = evaluate_kernel(kernel, F, t)`
 """
-function MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
+function MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ; dims=3)
+    if dims != 3
+        error("MSD is not implemented for dimentions other than 3")
+    end
     Nk = length(k_array)
     Ns = size(Sₖ[1], 2)
     @assert size(Sₖ) == (Nk,)
@@ -123,12 +126,12 @@ function MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
         end
     end
 
-    kernel = MultiComponentModeCouplingKernel(ρ, kBT, m, Nk, Ns, k_array, prefactor, Cₖ, A1, A2, A3, T1, T2, T3)
+    kernel = MultiComponentModeCouplingKernel3D(ρ, kBT, m, Nk, Ns, k_array, prefactor, Cₖ, A1, A2, A3, T1, T2, T3)
     return kernel
 end
 
 
-function fill_A!(kernel::MultiComponentModeCouplingKernel, F)
+function fill_A!(kernel::MultiComponentModeCouplingKernel3D, F)
 
     Nk = kernel.Nk
     Ns = size(F[1], 1)
@@ -194,7 +197,7 @@ function fill_A!(kernel::MultiComponentModeCouplingKernel, F)
 
 end
 
-function evaluate_kernel!(out::Diagonal, kernel::MultiComponentModeCouplingKernel, F::Vector, t)
+function evaluate_kernel!(out::Diagonal, kernel::MultiComponentModeCouplingKernel3D, F::Vector, t)
     A1 = kernel.A1
     A2 = kernel.A2
     A3 = kernel.A3
@@ -215,13 +218,13 @@ function evaluate_kernel!(out::Diagonal, kernel::MultiComponentModeCouplingKerne
     end
 end
 
-function evaluate_kernel(kernel::MultiComponentModeCouplingKernel, F::Vector, t)
+function evaluate_kernel(kernel::MultiComponentModeCouplingKernel3D, F::Vector, t)
     out = Diagonal(similar(F))
     evaluate_kernel!(out, kernel, F, t)
     return out
 end
 
-struct TaggedMultiComponentModeCouplingKernel{F,V,M2,M,T5,FF, V1, FFF} <: MemoryKernel
+struct TaggedMultiComponentModeCouplingKernel3D{F,V,M2,M,T5,FF, V1, FFF} <: MemoryKernel
     s::Int
     ρ::V1
     kBT::F
@@ -243,7 +246,7 @@ struct TaggedMultiComponentModeCouplingKernel{F,V,M2,M,T5,FF, V1, FFF} <: Memory
 end
 
 """
-TaggedMultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol)
+TaggedMultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol; dims=3)
 
 Constructor of a Tagged ModeCouplingKernel. It implements the kernel
 K(k,t) = ρ kBT / (8π^3 mₛ) Σαβ ∫dq V^2sαβ(k,q) Fαβ(q,t) Fₛ(k-q,t)
@@ -265,7 +268,10 @@ an instance `k` of `TaggedMultiComponentModeCouplingKernel <: MemoryKernel`, whi
 `evaluate_kernel!(out, kernel, Fs, t)`
 `out = evaluate_kernel(kernel, Fs, t)`
 """
-function TaggedMultiComponentModeCouplingKernel(s::Int, ρ, kBT, m, k_array, Sₖ, sol)
+function TaggedMultiComponentModeCouplingKernel(s::Int, ρ, kBT, m, k_array, Sₖ, sol; dims=3)
+    if dims != 3
+        error("MSD is not implemented for dimentions other than 3")
+    end
     tDict = Dict(zip(sol.t, eachindex(sol.t)))
     Nk = length(k_array)
     Ns = size(Sₖ[1], 2)
@@ -321,12 +327,12 @@ function TaggedMultiComponentModeCouplingKernel(s::Int, ρ, kBT, m, k_array, S�
     end
     # c = reshape(reinterpret(reshape, eltype(eltype(Cₖ)), Cₖ),Ns,Ns,Nk)
     # Fc = [reshape(reinterpret(reshape, eltype(eltype(F)), F),Ns,Ns,Nk) for F in sol.F]
-    kernel = TaggedMultiComponentModeCouplingKernel(s, ρ, kBT, m, Nk, k_array, c, A1, A2, A3, T1, T2, T3, V1, V2, V3, tDict, Fc)
+    kernel = TaggedMultiComponentModeCouplingKernel3D(s, ρ, kBT, m, Nk, k_array, c, A1, A2, A3, T1, T2, T3, V1, V2, V3, tDict, Fc)
 
     return kernel
 end
 
-function fill_A!(kernel::TaggedMultiComponentModeCouplingKernel, F, t)
+function fill_A!(kernel::TaggedMultiComponentModeCouplingKernel3D, F, t)
     A1 = kernel.A1
     A2 = kernel.A2
     A3 = kernel.A3
@@ -363,7 +369,7 @@ function fill_A!(kernel::TaggedMultiComponentModeCouplingKernel, F, t)
     end
 end
 
-function evaluate_kernel!(out::Diagonal, kernel::TaggedMultiComponentModeCouplingKernel, Fs, t)
+function evaluate_kernel!(out::Diagonal, kernel::TaggedMultiComponentModeCouplingKernel3D, Fs, t)
     A1 = kernel.A1
     A2 = kernel.A2
     A3 = kernel.A3
@@ -382,7 +388,7 @@ function evaluate_kernel!(out::Diagonal, kernel::TaggedMultiComponentModeCouplin
     end
 end
 
-function evaluate_kernel(kernel::TaggedMultiComponentModeCouplingKernel, Fs, t)
+function evaluate_kernel(kernel::TaggedMultiComponentModeCouplingKernel3D, Fs, t)
     out = Diagonal(similar(Fs)) # we need it to produce a diagonal matrix
     evaluate_kernel!(out, kernel, Fs, t) # call the inplace version
     return out
@@ -391,7 +397,7 @@ end
 
 
 
-struct MSDMultiComponentModeCouplingKernel{F,V,TDICT,FF, V1, FFF, FS} <: MemoryKernel
+struct MSDMultiComponentModeCouplingKernel3D{F,V,TDICT,FF, V1, FFF, FS} <: MemoryKernel
     s::Int
     ρ::V1
     kBT::F
@@ -405,7 +411,7 @@ struct MSDMultiComponentModeCouplingKernel{F,V,TDICT,FF, V1, FFF, FS} <: MemoryK
 end
 
 """
-MSDMultiComponentModeCouplingKernel(s, ρ, kBT, m, k_array, Sₖ, sol, taggedsol)
+MSDMultiComponentModeCouplingKernel(s, ρ, kBT, m, k_array, Sₖ, sol, taggedsol; dims=3)
 
 Constructor of a MSDModeCouplingKernel. It implements the kernel
 Kₛ(k,t) = ρ kBT / (6π^2mₛ) Σαβ ∫dq q^4 csα(q)csβ(q) Fαβ(q,t) Fₛ(q,t)
@@ -428,7 +434,10 @@ as solutions of the corresponding equations.
 an instance `k` of `MSDMultiComponentModeCouplingKernel <: MemoryKernel`, which can be evaluated like:
 `k = evaluate_kernel(kernel, F, t)`
 """
-function MSDMultiComponentModeCouplingKernel(s::Int, ρ, kBT, m, k_array, Sₖ, sol, taggedsol)
+function MSDMultiComponentModeCouplingKernel(s::Int, ρ, kBT, m, k_array, Sₖ, sol, taggedsol; dims=3)
+    if dims != 3
+        error("MSD is not implemented for dimentions other than 3")
+    end
     tDict = Dict(zip(sol.t, eachindex(sol.t)))
     Nk = length(k_array)
     Ns = size(Sₖ[1], 2)
@@ -451,11 +460,11 @@ function MSDMultiComponentModeCouplingKernel(s::Int, ρ, kBT, m, k_array, Sₖ, 
         Cₖ[i] = (δαβ ./ x - S⁻¹[i]) / ρ_all
     end
 
-    kernel = MSDMultiComponentModeCouplingKernel(s, ρ, kBT, m, Nk, k_array, Cₖ, tDict, sol.F, taggedsol.F)
+    kernel = MSDMultiComponentModeCouplingKernel3D(s, ρ, kBT, m, Nk, k_array, Cₖ, tDict, sol.F, taggedsol.F)
     return kernel
 end
 
-function evaluate_kernel(kernel::MSDMultiComponentModeCouplingKernel, MSD, t)
+function evaluate_kernel(kernel::MSDMultiComponentModeCouplingKernel3D, MSD, t)
     s = kernel.s
     K = zero(typeof(MSD))
     it = kernel.tDict[t]
