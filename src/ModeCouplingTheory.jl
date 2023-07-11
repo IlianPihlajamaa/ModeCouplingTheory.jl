@@ -7,14 +7,14 @@ module ModeCouplingTheory
     import LinearSolve
     
     export solve, TimeDoublingSolver, EulerSolver
-    export ModeCouplingKernel3D, MultiComponentModeCouplingKernel3D, ExponentiallyDecayingKernel, SchematicDiagonalKernel, SchematicF123Kernel, SchematicF1Kernel, SchematicF2Kernel, SchematicMatrixKernel
-    export SjogrenKernel, TaggedSchematicF2Kernel, TaggedModeCouplingKernel3D, TaggedMultiComponentModeCouplingKernel3D
+    export ModeCouplingKernel, MultiComponentModeCouplingKernel, ExponentiallyDecayingKernel, SchematicDiagonalKernel, SchematicF123Kernel, SchematicF1Kernel, SchematicF2Kernel, SchematicMatrixKernel
+    export SjogrenKernel, TaggedSchematicF2Kernel, TaggedModeCouplingKernel, TaggedMultiComponentModeCouplingKernel
     export InterpolatingKernel
     export AbstractMemoryEquation, MemoryEquation
     export MemoryKernel, evaluate_kernel, evaluate_kernel!
     export find_relaxation_time, solve_steady_state
     export convert_multicomponent_structure_factor
-    export MSDModeCouplingKernel3D, MSDMultiComponentModeCouplingKernel3D
+    export MSDModeCouplingKernel, MSDMultiComponentModeCouplingKernel
     export get_F, get_K, get_t
     abstract type AbstractMemoryEquation end
 
