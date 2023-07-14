@@ -63,7 +63,7 @@ The documentation details the features of this software, which among others incl
 \item  Measurement errors: by leveraging the generality of the software it is straightforward to do standard error propagation through the solver. 
 \item  Automatic differentiation: similarly, the use of dual numbers allow for forward-mode automatic differentiation. This allows, for example, the use of nearal networks as surrogates for memory kernels or efficient methods for inverse problems.
 \item  Non-ergodicity parameters: there is built-in functionality for finding the steady state solutions of the equation. 
-
+\end{documentation}
 
 # Acknowledgements
 
