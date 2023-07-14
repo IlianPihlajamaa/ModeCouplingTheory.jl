@@ -56,14 +56,18 @@ $$\alpha \ddot{F}(t) + \beta \dot{F}(t) + \gamma F(t) + \delta + \int_0^t d\tau 
 in which $\alpha$, $\beta$, $\gamma$, and $\delta$ are coefficients (possibly dependent on time), $K(t) = K(F(t), t)$ is the memory kernel, and $F(t)$ is the function that is being solved for. Memory kernels for solving the most commonly encountered models, such as standard (multicomponent) MCT, including tagged-particle correlators, and mean squared displacements are implemented, and it is straightforward to implement custom memory kernels. Internally, the software completely separates the memory kernel, the type of equation, and the solver, each of which can be independenty extended by a user.  
 
 The documentation details the features of this software, which among others include
-\begin{enumerate}
-\item Generality: the code was developed with generality in mind. For example, the code works for types between which product operation is defined among $\alpha$, $\beta$, $\gamma$, $K$ on the left and $F$ on the right, returning something of the same type as $F$ and $\delta$. This implies that the code works for functions $F$ that are scalar valued (schematic models), as well as those that are vectors of floating point numbers (standard MCT), and vectors with elements of different types. The latter could include, for example, numbers with measurement errors, dual numbers, and immutable matrices. 
-\item  Speed: the code is developed for performance. The solver allocates little memory and uses BLAS implementations for linear algebra where applicable [@lawson1979basic]. The memory kernels of the single component and multi-component MCT as well as their tagged variants are implemented using Bengtzelius' trick, yielding dramatic algorithmic speed-up compared to more naive implementations.
-\item  Ease of use: solving the equations of standard MCT essentially takes four lines of code. While writted in `Julia`, the code can straightforwardly be called from `Python` and other languages. Convenience functions 
-\item  Measurement errors: by leveraging the generality of the software it is straightforward to do standard error propagation through the solver. 
-\item  Automatic differentiation: similarly, the use of dual numbers allow for forward-mode automatic differentiation. This allows, for example, the use of nearal networks as surrogates for memory kernels or efficient methods for inverse problems.
-\item  Non-ergodicity parameters: there is built-in functionality for finding the steady state solutions of the equation. 
-\end{documentation}
+
+1.  Generality: the code was developed with generality in mind. For example, the code works for types between which product operation is defined among $\alpha$, $\beta$, $\gamma$, $K$ on the left and $F$ on the right, returning something of the same type as $F$ and $\delta$. This implies that the code works for functions $F$ that are scalar valued (schematic models), as well as those that are vectors of floating point numbers (standard MCT), and vectors with elements of different types. The latter could include, for example, numbers with measurement errors, dual numbers, and immutable matrices. 
+
+2. Speed: the code is developed for performance. The solver allocates little memory and uses BLAS implementations for linear algebra where applicable [@lawson1979basic]. The memory kernels of the single component and multi-component MCT as well as their tagged variants are implemented using Bengtzelius' trick, yielding dramatic algorithmic speed-up compared to more naive implementations.
+
+3. Ease of use: solving the equations of standard MCT essentially takes four lines of code. While writted in `Julia`, the code can straightforwardly be called from `Python` and other languages. Convenience functions 
+
+4.  Measurement errors: by leveraging the generality of the software it is straightforward to do standard error propagation through the solver. 
+
+5.  Automatic differentiation: similarly, the use of dual numbers allow for forward-mode automatic differentiation. This allows, for example, the use of nearal networks as surrogates for memory kernels or efficient methods for inverse problems.
+
+6.  Non-ergodicity parameters: there is built-in functionality for finding the steady state solutions of the equation. 
 
 # Acknowledgements
 
