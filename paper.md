@@ -11,7 +11,6 @@ tags:
 authors:
   - name: Ilian Pihlajamaa
     orcid: 0000-0003-3779-4281
-    equal-contrib: true
     affiliation: 1 # (Multiple affiliations must be quoted)
   - name: Corentin C.L. laudicina
     orcid: 0009-0000-1888-2417
@@ -47,7 +46,7 @@ In particular, the theory predicts that density correlation functions evolve acc
 
 # Statement of need
 
-The mode-coupling theory of the glass transition (MCT) is at the forefront of the study of the glass transition [@gotze2009complex; @leutheusser1984dynamical; @bengtzelius1984dynamics; @das2004mode; @janssen2018mode; @reichman2005mode] and has been applied to an abundance of different systems and scenarios in the past forty years. See for example versions of MCT including multiple particle species[@gotze2003effect; @weysser2010structural; @franosch2002completely; @luo2022many], confinement [@lang2010glass; @krakoviack2007mode], self-propelling particles [@berthier2013non; @feng2017mode; @liluashvili2017mode; @debets2023mode; @reichert2021mode], and molecular particles [@theis2000test; @chong1998mode; @schilling1997mode; @winkler2000molecular; @chong2000mode] to name a few. Before the conception of the software this paper is based on, there was no open-source integrator for MCT-like equations available. This meant that each time an improvement, extension or application to the theory was employed or developed, a new in-house integrator needed to be developed or adapted. `ModeCouplingTheory.jl` aims at providing an open source and tested implementation of the scheme introduced by @fuchs1991comments, that is performant and easy to extend to new systems, yet simple to call interactively from dynamic languages such as `Python`. As of writing, it has been used for several scientific works [@winter2023deep; @pihlajamaa2023unveiling; @laudicina2023competing].
+The mode-coupling theory of the glass transition (MCT) is at the forefront of the study of the glass transition [@gotze2009complex; @leutheusser1984dynamical; @bengtzelius1984dynamics; @das2004mode; @janssen2018mode; @reichman2005mode] and has been applied to an abundance of different systems and scenarios in the past forty years. See for example versions of MCT including multiple particle species[@gotze2003effect; @weysser2010structural; @franosch2002completely; @luo2022many], confinement [@lang2010glass; @krakoviack2007mode], self-propelling particles [@berthier2013non; @feng2017mode; @liluashvili2017mode; @debets2023mode; @reichert2021mode], and molecular particles [@theis2000test; @chong1998mode; @schilling1997mode; @winkler2000molecular; @chong2000mode] to name a few. Before the conception of the software this paper is based on, there was no open-source integrator for MCT-like equations available. This meant that each time an improvement, extension or application to the theory was employed, a new in-house integrator needed to be developed or adapted. `ModeCouplingTheory.jl` aims at providing an open source and tested implementation of the scheme introduced by @fuchs1991comments, that is performant and easy to extend to new systems, yet simple to call interactively from dynamic languages such as `Python`. As of writing, it has been used for several scientific works [@winter2023deep; @pihlajamaa2023unveiling; @laudicina2023competing].
 
 The main equation that this package aims to solve is given by
 
@@ -68,6 +67,36 @@ The documentation details the features of this software, which among others incl
 5.  Automatic differentiation: similarly, the use of dual numbers allow for forward-mode automatic differentiation. This allows, for example, the use of nearal networks as surrogates for memory kernels or efficient methods for inverse problems.
 
 6.  Non-ergodicity parameters: there is built-in functionality for finding the steady state solutions of the equation. 
+
+# Example Use
+
+To solve the standard MCT equations in three dimensions, one may run the following code
+
+```julia
+using ModeCouplingTheory
+# the wave vector grid
+Nk = 100; kmax = 40.0; dk = kmax/Nk; k_array = range(dk/2, kmax-dk/2, length=Nk)
+# a very bad approximation of the structure factor
+Sₖ = @. 1 - cos(k_array)*exp(-k_array) 
+
+# physical parameters and coefficients
+kBT = 1.0; m = 1.0; ρ = 1.5
+∂F0 = zeros(Nk); α = 0.0; β = 1.0; γ = @. k_array^2*kBT/(m*Sₖ); δ = 0.0
+
+kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
+problem = MemoryEquation(α, β, γ, δ, Sₖ, ∂F0, kernel)
+sol = @time solve(problem);
+
+# plot the solution for several values of k
+using Plots
+p = plot(xlabel="log10(t)", ylabel="F(k,t)", ylims=(0,1), xlims=(-4, 1))
+for ik = [7, 18, 25, 39]
+    Fk = get_F(sol, :, ik)
+    plot!(p, log10.(get_t(sol)), Fk/Sₖ[ik], label="k = $(k_array[ik])", lw=3)
+end
+p
+```
+![The code above yield this figure, which shows the intermediate scattering function, obtained with MCT, as a function of time for different values of $k$.\label{fig:example}](paperfig.pdf)
 
 # Acknowledgements
 
