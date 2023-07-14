@@ -70,22 +70,22 @@ The documentation details the features of this software, which among others incl
 
 # Example Use
 
-To solve the standard MCT equations in three dimensions, one may run the following code
+To solve the standard MCT equations in three dimensions, one may run the following code. See the documentation for more explanations.
 
 ```julia
 using ModeCouplingTheory
 # the wave vector grid
-Nk = 100; kmax = 40.0; dk = kmax/Nk; k_array = range(dk/2, kmax-dk/2, length=Nk)
+Nk = 100; kmax = 40.0; dk = kmax/Nk; k_array = range(dk/2, kmax-dk/2, length=Nk);
 # a very bad approximation of the structure factor
-Sₖ = @. 1 - cos(k_array)*exp(-k_array) 
+Sk = @. 1 - cos(k_array)*exp(-k_array) 
 
 # physical parameters and coefficients
 kBT = 1.0; m = 1.0; ρ = 1.5
-∂F0 = zeros(Nk); α = 0.0; β = 1.0; γ = @. k_array^2*kBT/(m*Sₖ); δ = 0.0
+∂F0 = zeros(Nk); α = 0.0; β = 1.0; γ = @. k_array^2*kBT/(m*Sk); δ = 0.0
 
-kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
-problem = MemoryEquation(α, β, γ, δ, Sₖ, ∂F0, kernel)
-sol = @time solve(problem);
+kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sk)
+equation = MemoryEquation(α, β, γ, δ, Sk, ∂F0, kernel)
+sol = solve(equation);
 
 # plot the solution for several values of k
 using Plots
@@ -96,7 +96,7 @@ for ik = [7, 18, 25, 39]
 end
 p
 ```
-![The code above yield this figure, which shows the intermediate scattering function, obtained with MCT, as a function of time for different values of $k$.\label{fig:example}](paperfig.pdf)
+![The code above yields this figure, which shows the intermediate scattering function, obtained with MCT, as a function of time for different values of $k$.\label{fig:example}](paperfig.pdf)
 
 # Acknowledgements
 
