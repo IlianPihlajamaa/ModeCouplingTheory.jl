@@ -76,7 +76,7 @@ end
 p
 ```
 
-![image](images/MCTKernel.png)
+![image](images/MCTKernel2.png)
 
 #### References
 [1] Reichman, David R., and Patrick Charbonneau. "Mode-coupling theory." Journal of Statistical Mechanics: Theory and Experiment 2005.05 (2005): P05013.

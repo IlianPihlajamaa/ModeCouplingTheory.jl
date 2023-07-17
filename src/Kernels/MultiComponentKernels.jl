@@ -246,15 +246,15 @@ struct TaggedMultiComponentModeCouplingKernel3D{F,V,M2,M,T5,FF, V1, FFF} <: Memo
 end
 
 """
-TaggedMultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol; dims=3)
+TaggedMultiComponentModeCouplingKernel(s, ρ, kBT, m, k_array, Sₖ, sol; dims=3)
 
 Constructor of a Tagged ModeCouplingKernel. It implements the kernel
-K(k,t) = ρ kBT / (8π^3 mₛ) Σαβ ∫dq V^2sαβ(k,q) Fαβ(q,t) Fₛ(k-q,t)
+Kₛ(k,t) = ρ kBT / (8π^3 mₛ) Σαβ ∫dq V^2sαβ(k,q) Fαβ(q,t) Fₛ(k-q,t)
 in which k and q are vectors. 
 
 # Arguments:
 
-* `s`: index of the sepcies to tag
+* `s`: the species for which to solve this equation
 * `ρ`: number density
 * `kBT`: Thermal energy
 * `m` : particle mass
@@ -421,6 +421,7 @@ as solutions of the corresponding equations.
 
 # Arguments:
 
+* `s`: the species for which to solve this equation
 * `ρ`: number density
 * `kBT`: Thermal energy
 * `m` : particle mass of species s
