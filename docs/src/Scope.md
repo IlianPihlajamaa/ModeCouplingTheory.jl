@@ -171,7 +171,7 @@ problem = MemoryEquation(α, β, γ, δ, Sₖ_uncertain, ∂F0, kernel)
 solver = TimeDoublingSolver(Δt=10^-5, t_max=10.0^5, verbose=true, N = 8, tolerance=10^-8, max_iterations=10^8)
 sol = @time solve(problem, solver);
 p = plot(xlabel="log10(t)", ylabel="F(k,t)", ylims=(0,1), xlims=(-5,5))
-plot!(p, log10.(sol.t[2:10:end]), sol[19]/Sₖ_uncertain[19], label="k = $(k_array[19])", lw=3)
+plot!(p, log10.(get_t(sol)[2:10:end]), get_F(sol, :, 19)/Sₖ_uncertain[19], label="k = $(k_array[19])", lw=3)
 ```
 
 ![image](images/uncertainF.png)
@@ -195,7 +195,7 @@ Sₖ = find_analytical_S_k(k_array, ρ*π/6)
 γ = @. k_array^2*kBT/(m*Sₖ)
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 sol = solve_steady_state(γ, Sₖ, kernel; tolerance=10^-8, verbose=false)
-fk = sol.F[1]
+fk = get_F(sol.F, 1, :)
 p = plot(k_array, fk, ylabel="non-ergodicity parameter", xlabel="k")
 ```
 
@@ -227,12 +227,12 @@ sol = @time solve(problem, solver);
 We can now extract a single relaxation time by calling 
 
 ```julia
-julia> find_relaxation_time(sol.t, sol[18]) # at k k_array[18]
+julia> find_relaxation_time(get_t(sol), get_F(sol, :, 18)) # at k k_array[18]
 4.232796654132995e11
 ```
 To extract all relaxation times as a function of $k$:
 ```julia
-julia> t_R = [find_relaxation_time(t, sol[ik]) for ik in eachindex(k_array)]; 
+julia> t_R = [find_relaxation_time(get_t(sol), get_F(sol, :, ik)) for ik in eachindex(k_array)]; 
 julia> p = plot(k_array, log10.(t_R), xlabel="k", ylabel="log10(relaxation time)", legend=false)
 ```
 
