@@ -474,29 +474,6 @@ function log_results(solver, temp_arrays)
     end
 end
 
-function convertresults(F_array::Vector{<:Number}, K_array::Vector{<:Number})
-    return F_array, K_array
-end
-
-"""
-    convertresults(F_array::Vector{T}, K_array::Vector{Diagonal{T, T2}}) where {T2, T}
-
-converts the arrays of arrays into multidimensional arrays for ease of use.
-"""
-function convertresults(F_array::Vector{T}, K_array::Vector{Diagonal{T,T2}}) where {T2,T}
-    Nt = length(F_array)
-    Nk = length(F_array[1])
-    F = zeros(eltype(F_array[1]), Nk, Nt)
-    K = zeros(eltype(K_array[1]), Nk, Nt)
-    for it in 1:Nt
-        for ik = 1:Nk
-            F[ik, it] = F_array[it][ik]
-            K[ik, it] = K_array[it].diag[ik]
-        end
-    end
-    return F, K
-end
-
 
 """
     initialize_output_arrays(equation::AbstractMemoryEquation)
