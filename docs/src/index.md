@@ -21,17 +21,17 @@ We can define one of the predefined memory kernels
 
 ```julia
 julia> using ModeCouplingTheory
-julia> λ = 3.999
+julia> ν = 3.999
 3.999
-julia> kernel = SchematicF2Kernel(λ)
+julia> kernel = SchematicF2Kernel(ν)
 SchematicF2Kernel{Float64}(3.999)
 ```
-This kernel evaluates $K(t)=\lambda F(t)^2$.
+This kernel evaluates $K(t)=\nu F(t)^2$.
 
 We can now define the equation we want to solve as follows:
 
 ```
-julia> α = 1.0; β = 0.0; γ = 2.0; δ = 0.0; F0 = 1.0; ∂F0 = 0.0;
+julia> α = 1.0; β = 0.0; γ = 1.0; δ = 0.0; F0 = 1.0; ∂F0 = 0.0;
 julia> equation = MemoryEquation(α, β, γ, δ, F0, ∂F0, kernel)
 Linear MCT equation object:
    α F̈ + β Ḟ + γF + δ + ∫K(τ)Ḟ(t-τ) = 0
@@ -41,7 +41,7 @@ in which α is a Float64,
          δ is a Float64,
   and K(t) is a SchematicF2Kernel{Float64}.
 ```
-and a solver:
+and jula solver:
 
 ```julia
 julia> solver = TimeDoublingSolver()
@@ -63,7 +63,7 @@ Full copy-pastable example:
 ```
 using ModeCouplingTheory, Plots
 ν = 3.999
-α = 1.0; β = 0.0; γ = 2.0; δ = 0.0; F0 = 1.0; ∂F0 = 0.0;
+α = 1.0; β = 0.0; γ = 1.0; δ = 0.0; F0 = 1.0; ∂F0 = 0.0;
 kernel = SchematicF2Kernel(ν)
 problem = MemoryEquation(α, β, γ, δ, F0, ∂F0, kernel)
 solver = TimeDoublingSolver()

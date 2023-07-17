@@ -7,8 +7,9 @@ makedocs(
     sitename = "ModeCouplingTheory",
     pages = [
         "Introduction" => "index.md",
-        "Problems and Solvers" => "Problems_and_Solvers.md",
+        "Equations and Solvers" => "Problems_and_Solvers.md",
         "Kernels" => "Kernels.md",
+        "Mode-Coupling Theory" => "MCT.md",
         "Scope" => "Scope.md",
         "From Python" => "FromPython.md",
         "Internals" => "internals.md",

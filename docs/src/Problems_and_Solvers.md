@@ -1,11 +1,11 @@
 
 ## Equations
 
-The most straightforward workflow for solving MCT-like equations is to first construct a `MemoryKernel`, a `AbstractMemoryEquation`, and optionally a `Solver`, in that order. The `MemoryKernel` is an object that evaluates the memory kernel when passed to the function `evaluate_kernel`. The `AbstractMemoryEquation` holds the coefficients, initial conditions, and the just defined `MemoryKernel` belonging to the equation that need to be solved, and the `Solver` stores information related to the numerical integration procedure, such as the time step. Once these three objects have been defined, the function `solve(::AbstractMemoryEquation, ::Solver)` can be called on them to solve the equation
+The most straightforward workflow for solving MCT-like equations is to construct objects that represent the memory kernel (of type `MemoryKernel`), the equation to solve (of type `AbstractMemoryEquation`), and optionally the solver (of type `Solver`), in that order. The `MemoryKernel` is an object that is passed to the function `evaluate_kernel` to compute the memory kernel. The `AbstractMemoryEquation` holds the coefficients, initial conditions, and the just defined `MemoryKernel` belonging to the equation that needs to be solved, and the `Solver` stores information related to the numerical integration procedure, such as the time step. Once these three objects have been defined, the function `solve(::AbstractMemoryEquation, ::Solver)` can be called on them to solve the equation
 
 $$\alpha \ddot{F}(t) + \beta \dot{F}(t) + \gamma F(t) + δ + \int_0^t d\tau K(t-\tau)\dot{F}(\tau) = 0$$
 
-A `MemoryEquation` defined by the equation above is constructed by the constructor `MemoryEquation(α, β, γ, δ, F₀, ∂ₜF₀, kernel::MemoryKernel)`. Here, `F₀` and `∂ₜF₀` are the initial conditions of $F$ and its time derivative. In the case of vector-valued functions `F`, this package requires that the operation `α*F` is defined and returns the same type as `F`. This means that in general, when `F` is a vector, `α` must either be a matrix with a compatible element type, or a scalar. However, because it is common in practice to find equations in which `α` and `F` are both vectors (such that the multiplication `α*F` is understood to be conducted element-wise), vector-valued `α`s will automatically be promoted to diagonal matrices. `β` and `γ` are treated in the same way. `δ` must in the same way be additively compatible with `F`. `MemoryEquation` will also evaluate the `kernel` at $t=0$ to find its initial condition.
+A `MemoryEquation` defined by the equation above is constructed by the constructor `MemoryEquation(α, β, γ, δ, F₀, ∂ₜF₀, kernel::MemoryKernel)`. Here, `F₀` and `∂ₜF₀` are the initial conditions of $F$ and its time derivative. In the case of vector-valued functions `F`, this package requires that the operation `α*F` is defined and that it returns the same type as `F`. This means that in general, when `F` is a vector, `α` must either be a matrix with a compatible element type, or a scalar. However, because it is common in practice to find equations in which `α` and `F` are both vectors (such that the multiplication `α*F` is understood to be conducted element-wise), vector-valued `α`s will automatically be promoted to diagonal matrices. `β` and `γ` are treated in the same way. `δ` must be additively compatible with `F`.
 
 ### Examples
 
@@ -22,15 +22,15 @@ For vector-valued problems, the coefficients can be scalar, vector or matrix-val
 
 ```
 julia> N = 5;
-julia> kernel = SchematicDiagonalKernel(rand(N));
+julia> kernel = SchematicDiagonalKernel(rand(N)); # again, ignore this for now
 julia> α = 1.0; β = rand(N); γ = rand(N,N); δ = 0.0; F0 = ones(N); ∂F0 = zeros(N);
 julia> problem = MemoryEquation(α, β, γ, δ, F0, ∂F0, kernel);
 
-julia> problem.coeffs.α
+julia> problem.coeffs.α # a scalar is promoted to a multiple of the identity matrix
 LinearAlgebra.UniformScaling{Float64}
 1.0*I
 
-julia> problem.coeffs.β
+julia> problem.coeffs.β # a vector is promoted to a diagonal matrix
 5×5 LinearAlgebra.Diagonal{Float64, Vector{Float64}}:
  0.789182   ⋅         ⋅        ⋅         ⋅
   ⋅        0.379832   ⋅        ⋅         ⋅
@@ -38,7 +38,7 @@ julia> problem.coeffs.β
   ⋅         ⋅         ⋅       0.241663   ⋅
   ⋅         ⋅         ⋅        ⋅        0.857202
 
-julia> problem.coeffs.γ
+julia> problem.coeffs.γ # a matrix is already in the right format
 5×5 Matrix{Float64}:
  0.746936  0.963531  0.724356  0.31979   0.600617
  0.731198  0.217209  0.603705  0.373079  0.930195
@@ -61,7 +61,7 @@ This package is not tested for and is not expected to work when the type of `F` 
 
 ## Solvers
 
-A `Solver` object holds the settings for a specific integration method. This package defines two solvers: `EulerSolver` and `TimeDoublingSolver`. The `EulerSolver` implements a simple forward Euler method (with trapezoidal integration) which is wildly inefficient if the domain of $t$ spans many orders of magnitude (such as it often does in Mode-Coupling Theory). It should therefore mainly be used for testing purposes. The `TimeDoublingSolver` should be used in almost all other cases. The scheme it implements is outlined in [1] and in the appendix of [2]. If no solver is provided to a `solve` call, the default `TimeDoublingSolver` is used.
+A `Solver` object holds the settings for a specific integration method. This package defines two solvers: `EulerSolver` and `TimeDoublingSolver`. The `EulerSolver` implements a simple forward Euler method (with trapezoidal integration) which is wildly inefficient if the domain of $t$ spans many orders of magnitude (such as it often does in Mode-Coupling Theory). It should therefore mainly be used for testing purposes. The `TimeDoublingSolver` is preferred in almost all other cases. The scheme it implements is outlined in [1] and in the appendix of [2]. If no solver is provided to a `solve` call, the default `TimeDoublingSolver` is used.
 
 In short, the equation is discretised and solved on a grid of `4N` time-points, which are equally spaced over an interval `Δt`. It is solved using an implicit method, and thus a fixed point has to be found for each time point. This is done by recursive iteration. When the solution is found, the interval is doubled `Δt => 2Δt` and the solution on the previous grid is mapped onto the first `2N` time points of the new grid. The solution on the other`2N` points is again found by recursive iteration. This is repeated until some final time `t_max` is reached.
 
@@ -85,7 +85,7 @@ As optional keyword arguments `TimeDoublingSolver` accepts:
 * `verbose`: if `true`, some information will be printed. default = `false`
 * `inplace`: if `true` and if the type of `F` is mutable, the solver will try to avoid allocating many temporaries. default = `true`
 
-Having defined a `MemoryKernel`, `AbstractMemoryEquation` and a `Solver`, one can call `sol = solve(problem, solver)` to solve the problem. It outputs an object `sol` that contains a `Vector` `sol.t` of time points and the solution `sol.F` and memory kernel `sol.K` evaluated at those times points. These can be extracted with `get_t(sol)`, `get_F(sol)` and `get_K(sol)`, respectively. These functions also allow for easy indexing. For example, suppose one has obtained the solution to a vector-valued equation, then extracting the solution over time of the second equation can be done with `get_F(sol, :, 2)`. If instead one wants to extract the solution at the 53th time point for all equations, one may run `get_F(sol, 53, :)`.
+Having defined a `MemoryKernel`, `AbstractMemoryEquation` and a `Solver`, one can call `sol = solve(problem, solver)` to solve the problem. It outputs an object `sol` that contains a `Vector` `sol.t` of time points and the solution `sol.F` and memory kernel `sol.K` evaluated at those times points. They can be extracted with `get_t(sol)`, `get_F(sol)` and `get_K(sol)`, respectively. These functions also allow for easy indexing. For example, suppose one has obtained the solution to a vector-valued equation, then extracting the solution over time of the second equation can be done with `get_F(sol, :, 2)`. If instead one wants to extract the solution at the 53th time point for all equations, one may run `get_F(sol, 53, :)`.
 
 ### References
 [1] Fuchs, Matthias, et al. "Comments on the alpha-peak shapes for relaxation in supercooled liquids." Journal of Physics: Condensed Matter 3.26 (1991): 5047.
