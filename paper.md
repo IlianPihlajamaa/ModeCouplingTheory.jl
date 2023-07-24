@@ -41,7 +41,7 @@ bibliography: paper.bib
 # Summary
 
 The mode-coupling theory of the glass transition is one of the most succesful theories for predicting the dynamics of dense liquids to date.
-In the regime where it is applicable, the theory gives a set of detailed numerical and analytical predictions for the structural relaxation dynamics upon supercooling. In particular, the theory provides closed equations for dynamic correlation functions of the microscopic density field, including observables such as the coherent and incoherent intermediate scattering functions and the mean-squared displacement.  These MCT equations take the form of an integro-differential equation, i.e. a generalized Langevin equation, the kernel of which represents the coupling between different "relaxation modes". Because these equations are difficult to solve numerically due to their non-linearity and the long-livedness of the solutions, specialized algorithms have been developed to tackle this issue. `ModeCouplingTheory.jl` is a package that implements these algorithms, including a number of convenient features that make it simple to solve the complex equations involved even for those not well-versed in the theoretical and numerical background traditionally required.  
+In the regime where it is applicable, the theory gives a set of detailed numerical and analytical predictions for the structural relaxation dynamics upon supercooling. In particular, the theory provides closed equations for dynamic correlation functions of the microscopic density field, including observables such as the coherent and incoherent intermediate scattering functions and the mean-squared displacement.  These MCT equations take the form of an integro-differential equation, i.e. a generalized Langevin equation, the kernel of which represents the coupling between different "relaxation modes". Because these equations are difficult to solve numerically due to their non-linearity and the long-livedness of the solutions, specialized algorithms have been developed to tackle this issue. `ModeCouplingTheory.jl` is a package that implements such an algorithm, including a number of convenient features that make it simple to solve the complex equations involved even for those not well-versed in the theoretical and numerical background traditionally required.  
 
 # Statement of need
 
@@ -57,6 +57,8 @@ The documentation details the features of this software, which among others incl
 
 1.  Generality: the code was developed with generality in mind. For example, the code works for types between which product operation is defined among $\alpha$, $\beta$, $\gamma$, $K$ on the left and $F$ on the right, returning something of the same type as $F$ and $\delta$. This implies that the code works for functions $F$ that are scalar valued (schematic models), as well as those that are vectors of floating point numbers (standard MCT), and vectors with elements of different types. The latter could include, for example, numbers with measurement errors, dual numbers, and immutable matrices. 
 
+2. Extensibility: the solvers are easily extended to deal with coupled sets of equations that arive, e.g., in extensions of MCT to describe tagged-particle dynamics, or certain asymptotic models.
+
 2. Speed: the code is developed for performance. The solver allocates little memory and uses BLAS implementations for linear algebra where applicable [@lawson1979basic]. The memory kernels of the single component and multi-component MCT as well as their tagged variants are implemented using Bengtzelius' trick, yielding algorithmic speed-up compared to more naive implementations.
 
 3. Ease of use: solving the equations of standard MCT takes very few lines of code, see the example below. While written in `Julia`, the code can straightforwardly be called from `Python` and other languages. 
@@ -65,7 +67,7 @@ The documentation details the features of this software, which among others incl
 
 5.  Automatic differentiation: similarly, the use of dual numbers allows for forward-mode automatic differentiation. This enables, for example, the use of neural networks as surrogates for memory kernels or efficient methods for the solution of inverse problems.
 
-6.  Non-ergodicity parameters: there is built-in functionality for finding the steady-state solutions of the equation. 
+6.  Non-ergodicity parameters: there is built-in functionality for finding the long-time limits of the equation. 
 
 # Example Use
 
@@ -74,28 +76,36 @@ To solve the standard MCT equations in three dimensions, one may run the followi
 ```julia
 using ModeCouplingTheory
 # the wave vector grid
-Nk = 100; kmax = 40.0; dk = kmax/Nk; k_array = range(dk/2, kmax-dk/2, length=Nk)
-# a very bad approximation of the structure factor:
-Sk = @. 1 - cos(k_array)*exp(-k_array) 
+Nk = 100; kmax = 40.0; dk = kmax/Nk; k = range(dk/2, kmax-dk/2, length=Nk)
 
-# physical parameters and coefficients
-kBT = 1.0; m = 1.0; ρ = 1.5
+
+# physical parameters
+kBT = 1.0; m = 1.0; ρ = 0.983
+
+# Percus-Yevick structure factor for this density:
+A = 5688.95; B = 2183.01; C = 661.463; D = 66.0759; E = 314.311;
+Sk = @. k^6 /
+  (A + B*k^2 + k^6 - (A - C*k^2 + D*k^4)*cos(k) - (A + E*k^2)*k*sin(k))
+
+# initial conditions and coefficients
 F0 = Sk; ∂F0 = zeros(Nk)
 α = 0.0; β = 1.0; γ = @. k_array^2*kBT/(m*Sk); δ = 0.0
 
 # construct the equation and solve it
-kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sk)
+kernel = ModeCouplingKernel(ρ, kBT, m, k, Sk)
 equation = MemoryEquation(α, β, γ, δ, F0, ∂F0, kernel)
 sol = solve(equation)
 
 # plot the solution for several values of k
 using Plots
-p = plot(xlabel="log10(t)", ylabel="F(k,t)", ylims=(0,1), xlims=(-4, 1))
+p = plot(xlabel="log10(t)", ylabel="F(k,t)/S(k)", 
+         ylims=(0,1), xlims=(-6, 6))
 for ik = [7, 18, 25, 39]
     Fk = get_F(sol, :, ik)
-    plot!(p, log10.(get_t(sol)), Fk/Sk[ik], label="k = $(k_array[ik])", lw=3)
+    plot!(p, log10.(get_t(sol)), Fk/Sk[ik], label="k = $(k[ik])", lw=3)
 end
 display(p)
+
 ```
 ![The code above yields this figure, which shows the intermediate scattering function, obtained with MCT, as a function of time for different values of $k$.\label{fig:example}](paperfig.pdf)
 
