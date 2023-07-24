@@ -57,7 +57,7 @@ The documentation details the features of this software, which among others incl
 
 1.  Generality: the code was developed with generality in mind. For example, the code works for types between which product operation is defined among $\alpha$, $\beta$, $\gamma$, $K$ on the left and $F$ on the right, returning something of the same type as $F$ and $\delta$. This implies that the code works for functions $F$ that are scalar valued (schematic models), as well as those that are vectors of floating point numbers (standard MCT), and vectors with elements of different types. The latter could include, for example, numbers with measurement errors, dual numbers, and immutable matrices. 
 
-2. Extensibility: the solvers are easily extended to deal with coupled sets of equations that arive, e.g., in extensions of MCT to describe tagged-particle dynamics, or certain asymptotic models.
+2. Extensibility: the solvers are easily extended to deal with coupled sets of equations that arive, e.g., in extensions of MCT to describe tagged-particle dynamics, or in certain asymptotic models.
 
 2. Speed: the code is developed for performance. The solver allocates little memory and uses BLAS implementations for linear algebra where applicable [@lawson1979basic]. The memory kernels of the single component and multi-component MCT as well as their tagged variants are implemented using Bengtzelius' trick, yielding algorithmic speed-up compared to more naive implementations.
 
@@ -71,7 +71,7 @@ The documentation details the features of this software, which among others incl
 
 # Example Use
 
-To solve the standard MCT equations in three dimensions, one may run the following code. See the documentation for more explanations.
+To solve the standard MCT equations in three dimensions for hard spheres using the Percus-Yevick structure factor [@wertheim1963exact], one may run the following code. See the documentation for more an in-depth explanation.
 
 ```julia
 using ModeCouplingTheory
@@ -82,7 +82,7 @@ Nk = 100; kmax = 40.0; dk = kmax/Nk; k = range(dk/2, kmax-dk/2, length=Nk)
 # physical parameters
 kBT = 1.0; m = 1.0; ρ = 0.983
 
-# Percus-Yevick structure factor for this density
+# Hard-Sphere Percus-Yevick structure factor for this density
 A = 5688.95; B = 2183.01; C = 661.463; D = 66.0759; E = 314.311;
 Sk = @. k^6 /
   (A + B*k^2 + k^6 - (A - C*k^2 + D*k^4)*cos(k) - (A + E*k^2)*k*sin(k))
