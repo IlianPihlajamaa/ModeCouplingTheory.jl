@@ -21,7 +21,7 @@ which will install the latest stable version of Julia the first time it is calle
 
 ```python
 
-jl.Pkg.add("ModeCouplingTheory.jl")
+jl.Pkg.add("ModeCouplingTheory")
 ```
 
 To import this package in order to use it we need to run:
@@ -29,10 +29,11 @@ To import this package in order to use it we need to run:
 ```python
 jl.seval("using ModeCouplingTheory")
 ```
+The `jl.seval` function let's us evaluate any julia code from within Python.
 
 ## Usage
 
-And now we can use ModeCouplingTheory.jl in Python:
+We can now use ModeCouplingTheory.jl in Python:
 
 ```python
 # since Python doesn't like all unicode symbols (α, β, ∂, ...), we use standard letters:
@@ -49,8 +50,8 @@ sol = jl.solve(problem)
 
 import matplotlib.pyplot as plt
 import numpy as np
-t = get_t(sol)
-F = get_t(sol)
+t = jl.get_t(sol)
+F = jl.get_F(sol)
 plt.plot(np.log10(t), F)
 plt.show()
 ```
@@ -59,4 +60,4 @@ et voilà!
 
 ![image](images/Figure 2022-08-26 115331.png)
 
-See the documentation of [pyjulia](https://pyjulia.readthedocs.io/en/latest/usage.html) for more information on how to call julia from python.
+See the documentation of [juliacall](https://pypi.org/project/juliacall/) for more information on how to call Julia from Python.
