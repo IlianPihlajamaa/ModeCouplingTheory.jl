@@ -82,14 +82,14 @@ Nk = 100; kmax = 40.0; dk = kmax/Nk; k = range(dk/2, kmax-dk/2, length=Nk)
 # physical parameters
 kBT = 1.0; m = 1.0; ρ = 0.983
 
-# Percus-Yevick structure factor for this density:
+# Percus-Yevick structure factor for this density
 A = 5688.95; B = 2183.01; C = 661.463; D = 66.0759; E = 314.311;
 Sk = @. k^6 /
   (A + B*k^2 + k^6 - (A - C*k^2 + D*k^4)*cos(k) - (A + E*k^2)*k*sin(k))
 
 # initial conditions and coefficients
 F0 = Sk; ∂F0 = zeros(Nk)
-α = 0.0; β = 1.0; γ = @. k_array^2*kBT/(m*Sk); δ = 0.0
+α = 0.0; β = 1.0; γ = @. k^2*kBT/(m*Sk); δ = 0.0
 
 # construct the equation and solve it
 kernel = ModeCouplingKernel(ρ, kBT, m, k, Sk)
