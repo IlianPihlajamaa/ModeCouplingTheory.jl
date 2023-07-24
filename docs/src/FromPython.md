@@ -4,29 +4,30 @@ Using `ModeCouplingTheory` from Python can be useful for solving mode-coupling t
 
 ## Installing
 
-First, install `julia` through the `pip` package manager, with
+First, install `juliacall` through the `pip` package manager, with
 
 ```bash
-% pip install julia
+pip install juliacall
 ```
+This package allows one to call julia from python 
 
-Using `ipython3` (only Python $\geq$ 3 is supported), do:
+In `Python` (only versions $\geq$ 3 are supported), run:
 
 ```python
-from julia import Main
+from juliacall import Main as jl
 ```
 
 which will install the latest stable version of Julia the first time it is called. Now install `ModeCouplingTheory.jl`, with
 
 ```python
-from julia import Pkg
-Pkg.add("ModeCouplingTheory")
+
+jl.Pkg.add("ModeCouplingTheory.jl")
 ```
 
 To import this package in order to use it we need to run:
 
 ```python
-from julia import ModeCouplingTheory as mct
+jl.seval("using ModeCouplingTheory")
 ```
 
 ## Usage
@@ -42,9 +43,9 @@ c = 1.0
 d = 0.0
 F0 = 1.0
 dF0 = 0.0
-kernel = mct.SchematicF2Kernel(k)
-problem = mct.MemoryEquation(a, b, c, d, F0, dF0, kernel)
-sol = mct.solve(problem)
+kernel = jl.SchematicF2Kernel(k)
+problem = jl.MemoryEquation(a, b, c, d, F0, dF0, kernel)
+sol = jl.solve(problem)
 
 import matplotlib.pyplot as plt
 import numpy as np
