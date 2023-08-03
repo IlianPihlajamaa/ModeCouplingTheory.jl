@@ -78,7 +78,6 @@ using ModeCouplingTheory
 # the wave vector grid
 Nk = 100; kmax = 40.0; dk = kmax/Nk; k = range(dk/2, kmax-dk/2, length=Nk)
 
-
 # physical parameters
 kBT = 1.0; m = 1.0; ρ = 0.983
 
@@ -101,11 +100,11 @@ using Plots
 p = plot(xlabel="log10(t)", ylabel="F(k,t)/S(k)", 
          ylims=(0,1), xlims=(-6, 6))
 for ik = [7, 18, 25, 39]
+    t = get_t(sol)
     Fk = get_F(sol, :, ik)
-    plot!(p, log10.(get_t(sol)), Fk/Sk[ik], label="k = $(k[ik])", lw=3)
+    plot!(p, log10.(t), Fk/Sk[ik], label="k = $(k[ik])", lw=3)
 end
 display(p)
-
 ```
 ![The code above yields this figure, which shows the intermediate scattering function, obtained with MCT, as a function of time for different values of $k$.\label{fig:example}](paperfig.pdf)
 
