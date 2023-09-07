@@ -5,7 +5,7 @@ In order to allow the coefficients $\alpha$, $\beta$, $\gamma$, and $\delta$ to 
 The default is that all coefficients are independent of time, that is: `update_coefficients! = (coeffs, t) -> nothing`. 
 
 ### Example
-Let's say we want the coefficient `γ` to be equal to $2 + \cos(sqrt(t))$, this can be achieved like this:
+Let's say we want the coefficient `γ` to be equal to $2 + \cos(\sqrt(t))$, this can be achieved like this:
 
 ```julia
 α=1.0, β=0.0, γ=3.0, δ=0.0; F0=1.0; dF0=0.0
