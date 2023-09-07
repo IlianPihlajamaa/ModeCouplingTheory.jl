@@ -1,6 +1,6 @@
 # Calling from Python
 
-Using `ModeCouplingTheory` from Python can be useful for solving mode-coupling theory repeatedly or for large systems of equations, making the overhead of initializing Julia negligible. (Or perhaps if one prefers to work in Python.)
+Using `ModeCouplingTheory` from Python is straightforward. 
 
 ## Installing
 
