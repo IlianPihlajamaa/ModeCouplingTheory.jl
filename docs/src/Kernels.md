@@ -6,7 +6,7 @@ A memory kernel `kernel` is an instance of a type of which `MemoryKernel` is a s
 
 This package includes a couple of schematic memory kernels.
 
-### 1. `ExponentiallyDecayingKernel`
+### `ExponentiallyDecayingKernel`
 
 The `ExponentiallyDecayingKernel` implements the kernel $K(t) = λ \exp(-t/τ)$. It has fields `λ <: Number` and `τ <: Number`.
 
