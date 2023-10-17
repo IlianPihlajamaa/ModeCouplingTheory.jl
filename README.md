@@ -52,4 +52,6 @@ julia> plot(log10.(t), F)
 
 ![image](readmefig.png)
 
-Please open an issue if anything is unclear in the documentation, if any unexpected errors arise or for feature requests (such as additional kernels). PRs are of course also welcome.
+# Contributing
+
+Please open an issue if anything is unclear in the documentation, if any unexpected errors arise or for feature requests (such as additional kernels). Pull requests are of course also welcome.
