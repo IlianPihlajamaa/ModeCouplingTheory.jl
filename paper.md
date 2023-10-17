@@ -41,7 +41,7 @@ bibliography: paper.bib
 # Summary
 
 The mode-coupling theory of the glass transition is one of the most succesful theories for predicting the dynamics of dense liquids to date.
-In the regime where it is applicable, the theory gives a set of detailed numerical and analytical predictions for the structural relaxation dynamics upon supercooling. In particular, the theory provides closed equations for dynamic correlation functions of the microscopic density field, including observables such as the coherent and incoherent intermediate scattering functions and the mean-squared displacement.  These MCT equations take the form of an integro-differential equation, i.e. a generalized Langevin equation, the kernel of which represents the coupling between different "relaxation modes". Because these equations are difficult to solve numerically due to their non-linearity and the long-livedness of the solutions, specialized algorithms have been developed to tackle this issue. `ModeCouplingTheory.jl` is a package that implements such an algorithm, including a number of convenient features that make it simple to solve the complex equations involved even for those not well-versed in the theoretical and numerical background traditionally required.  
+In the regime where it is applicable, the theory gives a set of detailed numerical and analytical predictions for the structural relaxation dynamics upon supercooling. In particular, the theory provides closed equations for dynamic correlation functions of the microscopic density field, including observables such as the coherent and incoherent intermediate scattering functions and the mean-squared displacement.  These mode-coupling theory equations take the form of an integro-differential equation, i.e. a generalized Langevin equation, the kernel of which represents the coupling between different "relaxation modes". Because these equations are difficult to solve numerically due to their non-linearity and the long-livedness of the solutions, specialized algorithms have been developed to tackle this issue. `ModeCouplingTheory.jl` is a package that implements such an algorithm, including a number of convenient features that make it simple to solve the complex equations involved even for those not well-versed in the theoretical and numerical background traditionally required.  
 
 # Statement of need
 
@@ -59,15 +59,13 @@ The documentation details the features of this software, which among others incl
 
 2. Extensibility: the solvers are easily extended to deal with coupled sets of equations that arive, e.g., in extensions of MCT to describe tagged-particle dynamics, or in certain asymptotic models.
 
-2. Speed: the code is developed for performance. The solver allocates little memory and uses BLAS implementations for linear algebra where applicable [@lawson1979basic]. The memory kernels of the single component and multi-component MCT as well as their tagged variants are implemented using Bengtzelius' trick, yielding algorithmic speed-up compared to more naive implementations.
+2. Speed: the code is developed for performance. The solver allocates little memory and uses BLAS implementations for linear algebra where applicable [@lawson1979basic]. The memory kernels of the single component and multi-component MCT as well as their tagged variants are implemented using Bengtzelius' trick, yielding algorithmic speed-up compared to more naive implementations [@bengtzelius1986dynamics].
 
 3. Ease of use: solving the equations of standard MCT takes very few lines of code, see the example below. While written in `Julia`, the code can straightforwardly be called from `Python` and other languages. 
 
 4.  Measurement errors: by leveraging the generality of the software it is straightforward to do standard error propagation through the solver. 
 
-5.  Automatic differentiation: similarly, the use of dual numbers allows for forward-mode automatic differentiation. This enables, for example, the use of neural networks as surrogates for memory kernels or efficient methods for the solution of inverse problems.
-
-6.  Non-ergodicity parameters: there is built-in functionality for finding the long-time limits of the equation. 
+5.  Non-ergodicity parameters: there is built-in functionality for finding the long-time limits of the solution of the MCT equations. 
 
 # Example Use
 
