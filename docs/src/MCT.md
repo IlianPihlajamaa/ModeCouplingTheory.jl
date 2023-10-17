@@ -265,7 +265,7 @@ msdsol = solve(msdequation, solver)
 
 ## Bengtzelius' Trick
 
-Bengtzelius' trick is a fast way to evaluate the integral $I(k) = \int d \mathbf{q} A(q, |\mathbf{k}-\mathbf{q}|)$. It is used in the evaluation of all memory kernels listed on this page. Very briefly: after discretisation of the integral, one is left with terms such as $T_{i}[A]=\sum_{j=1}^{N_k}\sum_{l=|j-i|+1}^{i+j-1}  A(p_{l},q_{j})$ which are largely independent of $i$. Because of this, one can calculate $T_{i}[A]$ from $T_{i-1}[A]$ in order $N_k$ operations. Wrting $A_{i,j} = A(i\Delta k, j\Delta k)$, the recurrence relation that allows one to do so is given by 
+Bengtzelius' trick is a fast way to evaluate the integral $I(k) = \int d \mathbf{q} A(q, |\mathbf{k}-\mathbf{q}|)$. It is used in the evaluation of all memory kernels listed on this page. Very briefly: after discretisation of the integral, one is left with terms such as $T_{i}[A]=\sum_{j=1}^{N_k}\sum_{l=|j-i|+1}^{i+j-1}  A(p_{l},q_{j})$ which are largely independent of $i$. Because of this, one can calculate $T_{i}[A]$ from $T_{i-1}[A]$ in order $N_k$ operations. Wrting $A_{l,j} = A(l\Delta k, j\Delta k)$, the recurrence relation that allows one to do so is given by 
 
 $$T_{i}[A] = T_{i-1}[A] + \sum_{j=1}^{N_k-i+1}(A_{j, j+i-1}+A_{j+i-1, j}) - \sum_{j=1}^{i-1}A_{j,i-j}$$
 
