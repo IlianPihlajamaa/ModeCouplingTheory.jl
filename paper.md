@@ -40,7 +40,7 @@ bibliography: paper.bib
 
 # Summary
 
-The mode-coupling theory of the glass transition is one of the most succesful theories for predicting the dynamics of dense liquids to date.
+The mode-coupling theory of the glass transition is one of the most successful theories for predicting the dynamics of dense liquids to date.
 In the regime where it is applicable, the theory gives a set of detailed numerical and analytical predictions for the structural relaxation dynamics upon supercooling. In particular, the theory provides closed equations for dynamic correlation functions of the microscopic density field, including observables such as the coherent and incoherent intermediate scattering functions and the mean-squared displacement.  These mode-coupling theory equations take the form of an integro-differential equation, i.e. a generalized Langevin equation, the kernel of which represents the coupling between different "relaxation modes". Because these equations are difficult to solve numerically due to their non-linearity and the long-livedness of the solutions, specialized algorithms have been developed to tackle this issue. `ModeCouplingTheory.jl` is a package that implements such an algorithm, including a number of convenient features that make it simple to solve the complex equations involved even for those not well-versed in the theoretical and numerical background traditionally required.  
 
 # Statement of need
