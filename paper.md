@@ -12,7 +12,7 @@ authors:
   - name: Ilian Pihlajamaa
     orcid: 0000-0003-3779-4281
     affiliation: 1 # (Multiple affiliations must be quoted)
-  - name: Corentin C.L. laudicina
+  - name: Corentin C.L. Laudicina
     orcid: 0009-0000-1888-2417
     affiliation: 1
   - name: Thomas Voigtmann
