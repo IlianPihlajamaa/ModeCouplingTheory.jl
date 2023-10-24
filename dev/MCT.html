@@ -37,7 +37,7 @@ end
 η = 0.51591; ρ = η*6/π; kBT = 1.0; m = 1.0
 
 Nk = 100; kmax = 40.0; 
-dk = kmax/Nk; k_array = dk*(collect(1:Nk) .- 0.5) # construct the grid this way to satisfy the assumtions
+dk = kmax/Nk; k_array = dk*(collect(1:Nk) .- 0.5) # construct the grid this way to satisfy the assumptions
                                                   # of the discretisation.
 Sₖ = find_analytical_S_k(k_array, η)
 
