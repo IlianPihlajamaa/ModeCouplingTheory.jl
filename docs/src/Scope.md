@@ -195,7 +195,7 @@ Sₖ = find_analytical_S_k(k_array, ρ*π/6)
 γ = @. k_array^2*kBT/(m*Sₖ)
 kernel = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 sol = solve_steady_state(γ, Sₖ, kernel; tolerance=10^-8, verbose=false)
-fk = get_F(sol.F, 1, :)
+fk = get_F(sol, 1, :)
 p = plot(k_array, fk, ylabel="non-ergodicity parameter", xlabel="k")
 ```
 
