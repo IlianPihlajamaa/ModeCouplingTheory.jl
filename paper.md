@@ -69,7 +69,7 @@ The documentation details the features of this software, which among others incl
 
 # Example Use
 
-To solve the standard MCT equations in three dimensions for hard spheres using the Percus-Yevick structure factor [@wertheim1963exact], one may run the following code. See the documentation for more an in-depth explanation.
+To solve the standard MCT equations in three dimensions for hard spheres using the Percus-Yevick structure factor [@wertheim1963exact], one may run the following code. See the documentation for a more in-depth explanation.
 
 ```julia
 using ModeCouplingTheory
