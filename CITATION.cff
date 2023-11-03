@@ -1,0 +1,50 @@
+cff-version: "1.2.0"
+authors:
+- family-names: Pihlajamaa
+  given-names: Ilian
+  orcid: "https://orcid.org/0000-0003-3779-4281"
+- family-names: Laudicina
+  given-names: Corentin C. L.
+  orcid: "https://orcid.org/0009-0000-1888-2417"
+- family-names: Voigtmann
+  given-names: Thomas
+  orcid: "https://orcid.org/0000-0002-1261-9295"
+- family-names: Janssen
+  given-names: Liesbeth M. C.
+  orcid: "https://orcid.org/0000-0001-5283-1330"
+contact:
+- family-names: Janssen
+  given-names: Liesbeth M. C.
+  orcid: "https://orcid.org/0000-0001-5283-1330"
+doi: 10.5281/zenodo.10036791
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Pihlajamaa
+    given-names: Ilian
+    orcid: "https://orcid.org/0000-0003-3779-4281"
+  - family-names: Laudicina
+    given-names: Corentin C. L.
+    orcid: "https://orcid.org/0009-0000-1888-2417"
+  - family-names: Voigtmann
+    given-names: Thomas
+    orcid: "https://orcid.org/0000-0002-1261-9295"
+  - family-names: Janssen
+    given-names: Liesbeth M. C.
+    orcid: "https://orcid.org/0000-0001-5283-1330"
+  date-published: 2023-11-03
+  doi: 10.21105/joss.05737
+  issn: 2475-9066
+  issue: 91
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 5737
+  title: "ModeCouplingTheory.jl: A solver for mode-coupling-theory-like
+    integro-differential equations"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.05737"
+  volume: 8
+title: "ModeCouplingTheory.jl: A solver for mode-coupling-theory-like
+  integro-differential equations"
