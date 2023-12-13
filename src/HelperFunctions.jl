@@ -198,3 +198,21 @@ get_K(sol::MemoryEquationSolution, it) = get_K(sol)[it]
 obtains the time grid `t` from a `MemoryEquationSolution` object. Equivalent to `sol.t`.
 """
 get_t(sol::MemoryEquationSolution) = sol.t
+
+
+
+
+
+"""
+Surface of a d-dimensional sphere 
+"""
+function surface_d_dim_unit_sphere(d)
+    return 2*pi^(d/2)/gamma(d/2)
+end
+
+"""
+Volume of a d-dimensional sphere 
+"""
+function volume_d_dim_sphere(dim, diameter)
+    return pi^(dim/2)*(diameter/2)^dim / gamma(dim/2+1)
+end
