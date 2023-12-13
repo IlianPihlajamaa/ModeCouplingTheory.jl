@@ -20,7 +20,7 @@ end
 Evaluates the memory kernel out-place. It may mutate the content of `kernel`.
 
 Returns
-* `out` the kernel evaluated at (F, t)
+* `out` the kernel evaluated at (F, t) HELP
 """
 function evaluate_kernel(kernel::MemoryKernel, F, t)
     @show typeof(kernel)
