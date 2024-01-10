@@ -283,4 +283,4 @@ kernel_tagged_MCT = TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol; dim
 kernel_MSD_MCT = MSDModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol; dims=d)
 ```
 
-Beware, this code is inadapted for spatial dimensions higher than $d \gtrapprox 30$. 
+Note, this code is not written or tested for spatial dimensions higher than $d \gtrapprox 20$. 
