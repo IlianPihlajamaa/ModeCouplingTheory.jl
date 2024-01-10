@@ -75,7 +75,6 @@ d = 2
 γ_low = (kBT/m) .* k_array.^2 ./ Sk_low 
 γ_high = (kBT/m) .* k_array.^2 ./ Sk_high 
 
-# kernel2D_low = ModeCouplingTheory.dDimModeCouplingKernel(ρ_low, kBT, m, k_array, Sk_low, d) 
 
 kernel2D_low = ModeCouplingKernel(ρ_low, kBT, m, k_array, Sk_low ; dims=d)
 sol_steady_state_low = solve_steady_state(γ_low, Sk_low, kernel2D_low, verbose=false)
