@@ -30,7 +30,6 @@ mutable struct TimeDoublingSolver{I,F} <: Solver
 end
 
 """
-    TimeDoublingSolver(N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true, init_with_memory=true)
 
 Uses the algorithm devised by Fuchs et al.
 
