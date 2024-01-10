@@ -114,10 +114,6 @@ Fills the first 2N entries of the temporary arrays of F using forward Euler with
 
 """
 function initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
-    if solver.init_with_memory
-        initialize_F_temp_Euler!(equation, solver, temp_arrays)
-        return 
-    end
     N = solver.N
     δt = solver.Δt / (4 * N)
 
