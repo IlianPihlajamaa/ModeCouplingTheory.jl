@@ -240,7 +240,7 @@ function evaluate_kernel!(out::Diagonal, kernel::dDimModeCouplingKernel, F::Vect
     Sk = kernel.Sk
     Nk = kernel.Nk
     prefactor = kernel.prefactor
-    kernel.P .= 0 
+    kernel.P .= zero(eltype(kernel.P)) 
     
     for iq = 1:Nk, ik = 1:Nk, ip = 1:Nk
         kernel.P[iq] += prefactor * J[iq, ik, ip] * V[iq, ik, ip] * F[ik] * F[ip]
