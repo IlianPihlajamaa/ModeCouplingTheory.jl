@@ -1,6 +1,9 @@
 using ModeCouplingTheory, Test, SpecialFunctions
 
-function find_analytical_Ck_2dPY(σ, k_array, ϕ)
+# Direct correlation function of a monodisperse hard-sphere system in 
+# two spatial dimensions as obtained from FMT 
+#[A. L. Thorneywork et al. Mol. Phys. 116(21-22), 3245-3257 (2018)]
+function find_analytical_Ck_2dFMT(σ, k_array, ϕ)
     Nk = length(k_array)
     ck = zeros(Nk)
 
@@ -17,6 +20,8 @@ function find_analytical_Ck_2dPY(σ, k_array, ϕ)
     return ck
 end
 
+# Direct correlation function of a monodisperse hard-sphere system in 
+# five spatial dimensions as obtained from FMT E. Leutheusser, Physica A 127(3), 667-676 (1984)]
 function find_analytical_Ck_5dPY(η, k)
     T = 1+18η+6η^2 
     Q0 = 1/(120η*(1-η)^3)*(1-33η-87η^2-6η^3-T^(3/2))   
@@ -63,10 +68,10 @@ k_array = dk*(collect(1:Nk) .- 0.5)
 ρ_low = 4*ϕ_low/(pi*σ^2) 
 ρ_high = 4*ϕ_high/(pi*σ^2) 
 
-ck_low = find_analytical_Ck_2dPY(σ, k_array, ϕ_low)
+ck_low = find_analytical_Ck_2dFMT(σ, k_array, ϕ_low)
 Sk_low = 1 .+ ρ_low .* ck_low ./ (1 .- ρ_low.*ck_low)
 
-ck_high = find_analytical_Ck_2dPY(σ, k_array, ϕ_high)
+ck_high = find_analytical_Ck_2dFMT(σ, k_array, ϕ_high)
 Sk_high = 1 .+ ρ_high .* ck_high ./ (1 .- ρ_high.*ck_high)
 
 d = 2
