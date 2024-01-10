@@ -35,7 +35,7 @@ function dDimModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, d)
     Nk = length(k_array)
 
     Δk = k_array[2] - k_array[1]
-    @assert k_array[1] ≈ Δk / 2
+    @assert k_array[1] ≈ Δk / 2 "The first grid point must be exactly half the grid spacing."
     @assert all(diff(k_array) .≈ Δk) "The grid must be equidistant"
 
     S⁻¹ = inv.(Sₖ)
