@@ -355,7 +355,7 @@ function evaluate_kernel!(out::Diagonal, kernel::dDimTaggedModeCouplingKernel, F
     end
 
     for ik = 1:Nk
-        @views out.diag[ik] = kernel.P[ik]
+        out.diag[ik] = kernel.P[ik]
     end
 end
 
