@@ -35,8 +35,8 @@ function dDimModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, d)
     Nk = length(k_array)
 
     Δk = k_array[2] - k_array[1]
-    @assert k_array[1] ≈ Δk / 2
-    @assert all(diff(k_array) .≈ Δk)
+    @assert k_array[1] ≈ Δk / 2 "The first grid point must be exactly half the grid spacing."
+    @assert all(diff(k_array) .≈ Δk) "The grid must be equidistant"
 
     S⁻¹ = inv.(Sₖ)
     Cₖ = similar(Sₖ)
@@ -240,10 +240,14 @@ function evaluate_kernel!(out::Diagonal, kernel::dDimModeCouplingKernel, F::Vect
     Sk = kernel.Sk
     Nk = kernel.Nk
     prefactor = kernel.prefactor
-    kernel.P .= 0 
+    kernel.P .= zero(eltype(kernel.P)) 
     
-    for iq = 1:Nk, ik = 1:Nk, ip = 1:Nk
-        kernel.P[iq] += prefactor * J[iq, ik, ip] * V[iq, ik, ip] * F[ik] * F[ip]
+    @turbo for iq = 1:Nk 
+        for ik = 1:Nk
+            for ip = 1:Nk
+                kernel.P[iq] += prefactor * J[iq, ik, ip] * V[iq, ik, ip] * F[ik] * F[ip]
+            end
+        end
     end
 
     for ik = 1:Nk
@@ -300,6 +304,9 @@ function dDimTaggedModeCouplingKernel(d, ρ, kBT, m, k_array, Sₖ, sol_col)
 
     Nk = length(k_array)
 
+    T = promote_type(eltype(Sₖ), eltype(k_array), typeof(ρ), typeof(kBT), typeof(m))
+    ρ, kBT, m = T(ρ), T(kBT), T(m)
+
     Δk = k_array[2] - k_array[1]
     @assert k_array[1] ≈ Δk / 2
     @assert all(diff(k_array) .≈ Δk)
@@ -312,9 +319,9 @@ function dDimTaggedModeCouplingKernel(d, ρ, kBT, m, k_array, Sₖ, sol_col)
     end
 
     prefactor = 2 * (kBT/m) * ρ * (Δk)^2 * surface_d_dim_unit_sphere(d-1) / (4*pi)^d
-    P = zeros(Nk)
-    V = zeros(Nk, Nk, Nk)
-    J = zeros(Nk, Nk, Nk)
+    P = zeros(T, Nk)
+    V = zeros(T, Nk, Nk, Nk)
+    J = zeros(T, Nk, Nk, Nk)
 
     for ik = 1:Nk, iq = 1:Nk, ip = 1:Nk
         q = k_array[iq]
@@ -348,7 +355,7 @@ function evaluate_kernel!(out::Diagonal, kernel::dDimTaggedModeCouplingKernel, F
     end
 
     for ik = 1:Nk
-        @views out.diag[ik] = kernel.P[ik]
+        out.diag[ik] = kernel.P[ik]
     end
 end
 

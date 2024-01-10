@@ -199,10 +199,6 @@ obtains the time grid `t` from a `MemoryEquationSolution` object. Equivalent to 
 """
 get_t(sol::MemoryEquationSolution) = sol.t
 
-
-
-
-
 """
 Surface of a d-dimensional sphere 
 """

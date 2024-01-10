@@ -70,7 +70,7 @@ for ik in [5, 10, 15]
 end
 
 
-γ_tagged = [γ[iq] * Sk[iq] for iq in 1:Nk]
+γ_tagged = (kBT / m) .* k_array.^2
 F_tagged0 = ones(Nk)
 kernel_tagged = ModeCouplingTheory.dDimTaggedModeCouplingKernel(d, ρ, kBT, m, k_array, Sk, sol_d)
 equation_tagged_d = MemoryEquation(α, β, γ_tagged, δ, F_tagged0, ∂F0, kernel_tagged)
