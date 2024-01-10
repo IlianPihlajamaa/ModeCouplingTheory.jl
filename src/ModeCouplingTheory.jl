@@ -14,7 +14,7 @@ module ModeCouplingTheory
     export MemoryKernel, evaluate_kernel, evaluate_kernel!
     export find_relaxation_time, solve_steady_state
     export convert_multicomponent_structure_factor
-    export MSDModeCouplingKernel, MSDMultiComponentModeCouplingKernel, dDimMSDModeCouplingKernel
+    export MSDModeCouplingKernel, MSDMultiComponentModeCouplingKernel
     export get_F, get_K, get_t
     abstract type AbstractMemoryEquation end
 
