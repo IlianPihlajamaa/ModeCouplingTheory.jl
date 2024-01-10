@@ -7,7 +7,7 @@ module ModeCouplingTheory
     import LinearSolve
     
     export solve, TimeDoublingSolver, EulerSolver
-    export ModeCouplingKernel, MultiComponentModeCouplingKernel, dDimModeCouplingKernel,  ExponentiallyDecayingKernel, SchematicDiagonalKernel, SchematicF123Kernel, SchematicF1Kernel, SchematicF2Kernel, SchematicMatrixKernel
+    export ModeCouplingKernel, MultiComponentModeCouplingKernel,  ExponentiallyDecayingKernel, SchematicDiagonalKernel, SchematicF123Kernel, SchematicF1Kernel, SchematicF2Kernel, SchematicMatrixKernel
     export SjogrenKernel, TaggedSchematicF2Kernel, TaggedModeCouplingKernel, TaggedMultiComponentModeCouplingKernel, dDimTaggedModeCouplingKernel
     export InterpolatingKernel
     export AbstractMemoryEquation, MemoryEquation
