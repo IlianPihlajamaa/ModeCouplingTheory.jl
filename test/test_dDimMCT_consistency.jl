@@ -52,7 +52,7 @@ Sk = find_analytical_S_k.(k_array, η)
 
 solver = TimeDoublingSolver(Δt=10.0^-6, t_max=10.0^-3, N = 32, tolerance=10^-12, verbose=false, max_iterations = 10^8)
 
-kernel_d = dDimModeCouplingKernel(ρ, kBT, m, k_array, Sk, d)
+kernel_d = ModeCouplingTheory.dDimModeCouplingKernel(ρ, kBT, m, k_array, Sk, d)
 equation_d = MemoryEquation(α, β, γ, δ, Sk, ∂F0, kernel_d)
 sol_d = solve(equation_d, solver)
 
@@ -72,7 +72,7 @@ end
 
 γ_tagged = [γ[iq] * Sk[iq] for iq in 1:Nk]
 F_tagged0 = ones(Nk)
-kernel_tagged = dDimTaggedModeCouplingKernel(d, ρ, kBT, m, k_array, Sk, sol_d)
+kernel_tagged = ModeCouplingTheory.dDimTaggedModeCouplingKernel(d, ρ, kBT, m, k_array, Sk, sol_d)
 equation_tagged_d = MemoryEquation(α, β, γ_tagged, δ, F_tagged0, ∂F0, kernel_tagged)
 sol_tagged_d = solve(equation_tagged_d, solver)
 
@@ -91,7 +91,7 @@ end
 γ_MSD = 0.0 ; δ_MSD = -2*d*kBT/m 
 Δ0 = 0.0 ; ∂Δ0 = 0.0
 
-kernel_MSD = dDimMSDModeCouplingKernel(d, ρ, kBT, m, k_array, Sk, sol_d, sol_tagged_d)
+kernel_MSD = ModeCouplingTheory.dDimMSDModeCouplingKernel(d, ρ, kBT, m, k_array, Sk, sol_d, sol_tagged_d)
 equation_MSD = MemoryEquation(α_MSD, β_MSD, γ_MSD, δ_MSD, Δ0, ∂Δ0, kernel_MSD)
 
 kernel_MSDMCT = MSDModeCouplingKernel(ρ, 1.0, 1.0, k_array, Sk, solMCT, sol_taggedMCT)
