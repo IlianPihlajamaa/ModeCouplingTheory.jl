@@ -1,7 +1,6 @@
 using ModeCouplingTheory, Test
 
-"""
-    find_analytical_C_k(k, η)
+    find_analytical_C_k_PY(k, η)
 Finds the direct correlation function given by the 
 analytical Percus-Yevick solution of the Ornstein-Zernike 
 equation for hard spheres for a given volume fraction η.
@@ -22,13 +21,13 @@ function find_analytical_C_k_PY(k, η)
 end
 
 """
-    find_analytical_S_k(k, η)
+    find_analytical_S_k_PY(k, η)
 Finds the static structure factor given by the 
 analytical Percus-Yevick solution of the Ornstein-Zernike 
 equation for hard spheres for a given volume fraction η.
 """ 
 function find_analytical_S_k_PY(k, η)
-        Cₖ = find_analytical_C_k(k, η)
+        Cₖ = find_analytical_C_k_PY(k, η)
         ρ = 6/π * η
         Sₖ = @. 1 + ρ*Cₖ / (1 - ρ*Cₖ)
     return Sₖ
@@ -37,7 +36,7 @@ end
 ## Here, we test the consistence of the two different implementations for d=3.
 ## The first one uses straightforward discretisation, while the second one uses Bengtzelius' trick.
 ## The test for equivalence is performed for the collective ISF, the tagged ISF as well as the MSD. 
-## For the sake of testing we use a veyr coarse wave-vector grid. 
+## For the sake of testing we use a very coarse wave-vector grid. 
 
 η = 0.50; ρ = η*6/π; kBT = 1.0; m=1.0 ; d = 3
 kmax = 40.0
@@ -46,7 +45,7 @@ dk = kmax/Nk
 k_array = dk*(collect(1:Nk) .- 0.5)
 
 ∂F0 = zeros(Nk)
-Sk = find_analytical_S_k.(k_array, η)
+Sk = find_analytical_S_k_PY.(k_array, η)
 α = 0.0 ; β = 1.0 ;  δ = 0
 γ = (kBT / m) .* k_array.^2 ./ Sk 
 
