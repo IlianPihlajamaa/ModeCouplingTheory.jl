@@ -43,8 +43,8 @@ Uses the algorithm devised by Fuchs et al.
 * `verbose`: if `true`, information will be printed to STDOUT
 * `ismutable`: if `true` and if the type of F is mutable, the solver will try to avoid allocating many temporaries
 """
-function TimeDoublingSolver(; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true, init_with_memory=true)
-    return TimeDoublingSolver(N, Δt, t_max, 0, max_iterations, tolerance, verbose, ismutable, init_with_memory)
+function TimeDoublingSolver(; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true)
+    return TimeDoublingSolver(N, Δt, t_max, 0, max_iterations, tolerance, verbose, ismutable)
 end
 
 """
