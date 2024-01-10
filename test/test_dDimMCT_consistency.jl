@@ -9,7 +9,7 @@ equation for hard spheres for a given volume fraction η.
 Reference: Wertheim, M. S. "Exact solution of the Percus-Yevick integral equation 
 for hard spheres." Physical Review Letters 10.8 (1963): 321.
 """ 
-function find_analytical_C_k(k, η)
+function find_analytical_C_k_PY(k, η)
     A = -(1 - η)^-4 *(1 + 2η)^2
     B = (1 - η)^-4*  6η*(1 + η/2)^2
     D = -(1 - η)^-4 * 1/2 * η*(1 + 2η)^2
