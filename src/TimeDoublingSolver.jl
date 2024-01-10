@@ -85,8 +85,6 @@ function allocate_temporary_arrays(equation::MemoryEquation, solver::TimeDoublin
 end
 
 """
- 
-"""
     initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
 
 Fills the first 2N entries of the temporary arrays of F using forward Euler without a memory kernel in order to kickstart the algorithm' scheme.
