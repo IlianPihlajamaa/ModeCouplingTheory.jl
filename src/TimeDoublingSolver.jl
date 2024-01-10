@@ -86,25 +86,7 @@ function allocate_temporary_arrays(equation::MemoryEquation, solver::TimeDoublin
 end
 
 """
-    initialize_F_temp_Euler!(equation, solver::TimeDoublingSolver, temp_arrays::SolverCache
-
-Fills the first 2N entries of the temporary arrays of F using forward Euler with a memory kernel in order to kickstart the algorithm' scheme.
-"""
-
-function initialize_F_temp_Euler!(equation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
-    N = solver.N 
-    Δt_Euler = solver.Δt / (4 * N)
-    tmax_Euler = Δt_Euler * 2* N
-
-    eulersolver = EulerSolver(Δt=Δt_Euler, t_max=tmax_Euler, verbose=solver.verbose)
-    sol = solve(equation, eulersolver)
-
-    for it in 1:2N 
-        F_euler_it = get_F(sol, it)
-        temp_arrays.F_temp[it] = F_euler_it
-    end
-    return 
-end
+ 
 """
     initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
 
