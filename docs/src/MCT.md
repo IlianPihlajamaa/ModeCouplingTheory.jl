@@ -275,7 +275,7 @@ $$T_{1}[A] = \sum_{j=1}^{N_k}A_{j, j}.$$
 
 ## Other dimensions
 
-The equations present above for $F(k,t),\ F_s(k,t)$ and $\delta r^2(t)$ have also been implemented for $d$-dimensional Euclidean space. By default, the solver will assume that we are working in $d=3$. To change this, one should simply modify the keyword argument ``` dim ``` when calling the appropriate kernel. For instance :
+The equations present above for $F(k,t),\ F_s(k,t)$ and $\delta r^2(t)$ have also been implemented for $d$-dimensional Euclidean space. By default, the solver will assume that we are working in $d=3$. To change this, one should simply modify the keyword argument `dim` when calling the appropriate kernel. For instance:
 
 ```julia 
 kernel_MCT = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ ; dims=d)
