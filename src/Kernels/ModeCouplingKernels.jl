@@ -31,7 +31,6 @@ struct dDimModeCouplingKernel{I, F, AF1, AF3} <: MemoryKernel
     P::AF1
 end
 
-
 function dDimModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, d)
     Nk = length(k_array)
 
@@ -334,6 +333,30 @@ function dDimTaggedModeCouplingKernel(d, ρ, kBT, m, k_array, Sₖ, sol_col)
     return kernel
 end
 
+function evaluate_kernel!(out::Diagonal, kernel::dDimTaggedModeCouplingKernel, F::Vector, t)
+    V = kernel.V
+    J = kernel.J
+    Sk = kernel.Sk
+    Nk = kernel.Nk
+    prefactor = kernel.prefactor
+    it = kernel.tDict[t]
+    F_col = get_F(kernel.sol_col, it)
+
+    kernel.P .= 0 
+    for iq = 1:Nk, ik = 1:Nk, ip = 1:Nk
+        kernel.P[iq] += prefactor * J[iq, ik, ip] * V[iq, ik, ip] * F_col[ik] * F[ip]
+    end
+
+    for ik = 1:Nk
+        @views out.diag[ik] = kernel.P[ik]
+    end
+end
+
+function evaluate_kernel(kernel::dDimTaggedModeCouplingKernel, F::Vector, t)
+    out = Diagonal(similar(F))
+    evaluate_kernel!(out, kernel, F, t)
+    return out
+end
 
 """
 TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol; dims=3)
@@ -467,8 +490,6 @@ struct dDimMSDModeCouplingKernel{I, F, T, AF1, sol1, sol2} <: MemoryKernel
     Sk::AF1
     sol_col::sol1
     sol_tagged::sol2
-    V::AF1
-    J::AF1
 end
 
 function dDimMSDModeCouplingKernel(d, ρ, kBT, m, k_array, Sₖ, sol_col, sol_tagged)
@@ -489,16 +510,8 @@ function dDimMSDModeCouplingKernel(d, ρ, kBT, m, k_array, Sₖ, sol_col, sol_ta
     end
 
     prefactor = (kBT/m) * ρ * Δk * surface_d_dim_unit_sphere(d) / (d * (2*pi)^d)
-    V = zeros(Nk)
-    J = zeros(Nk)
 
-    for ik = 1:Nk
-        k = k_array[ik]
-        J[ik] = k^(d+1)
-        V[ik] = Cₖ[ik]^2
-    end
-
-    kernel = dDimMSDModeCouplingKernel(d, ρ, kBT, m, Nk, tDict, k_array, prefactor, Cₖ, Sₖ, sol_col, sol_tagged, V, J)
+    kernel = dDimMSDModeCouplingKernel(d, ρ, kBT, m, Nk, tDict, k_array, prefactor, Cₖ, Sₖ, sol_col, sol_tagged)
     
     return kernel
 end
@@ -567,7 +580,8 @@ function evaluate_kernel(kernel::dDimMSDModeCouplingKernel, F, t)
     k_array = kernel.k_array
     Ck = kernel.C
     it = kernel.tDict[t]
-
+    d = kernel.d
+    
     F = get_F(kernel.sol_col, it)
     Fs = get_F(kernel.sol_tagged, it)
     
