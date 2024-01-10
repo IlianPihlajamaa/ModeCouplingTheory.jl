@@ -26,9 +26,11 @@ mutable struct TimeDoublingSolver{I,F} <: Solver
     tolerance::F
     verbose::Bool
     inplace::Bool
+    init_with_memory::Bool
 end
 
 """
+    TimeDoublingSolver(N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true, init_with_memory=true)
 
 Uses the algorithm devised by Fuchs et al.
 
@@ -41,9 +43,10 @@ Uses the algorithm devised by Fuchs et al.
 * `tolerance`: while the error is bigger than this value, convergence is not reached. The error by default is computed as the absolute sum of squares
 * `verbose`: if `true`, information will be printed to STDOUT
 * `ismutable`: if `true` and if the type of F is mutable, the solver will try to avoid allocating many temporaries
+* `init_with_memory` if `true`, the solver will include the memory kernels for the short time expansion to bootstrap the algorithm. Sacrifices performance and memory for accuracy.
 """
-function TimeDoublingSolver(; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true)
-    return TimeDoublingSolver(N, Δt, t_max, 0, max_iterations, tolerance, verbose, ismutable)
+function TimeDoublingSolver(; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true, init_with_memory=true)
+    return TimeDoublingSolver(N, Δt, t_max, 0, max_iterations, tolerance, verbose, ismutable, init_with_memory)
 end
 
 """
@@ -85,12 +88,36 @@ function allocate_temporary_arrays(equation::MemoryEquation, solver::TimeDoublin
 end
 
 """
+    initialize_F_temp_Euler!(equation, solver::TimeDoublingSolver, temp_arrays::SolverCache
+
+Fills the first 2N entries of the temporary arrays of F using forward Euler with a memory kernel in order to kickstart the algorithm' scheme.
+"""
+
+function initialize_F_temp_Euler!(equation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
+    N = solver.N 
+    Δt_Euler = solver.Δt / (4 * N)
+    tmax_Euler = Δt_Euler * 2* N
+
+    eulersolver = EulerSolver(Δt=Δt_Euler, t_max=tmax_Euler, verbose=solver.verbose)
+    sol = solve(equation, eulersolver)
+
+    for it in 1:2N 
+        F_euler_it = get_F(sol, it)
+        temp_arrays.F_temp[it] = F_euler_it
+    end
+    return 
+end
+"""
     initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
 
 Fills the first 2N entries of the temporary arrays of F using forward Euler without a memory kernel in order to kickstart the algorithm' scheme.
 
 """
 function initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
+    if solver.init_with_memory
+        initialize_F_temp_Euler!(equation, solver, temp_arrays)
+        return 
+    end
     N = solver.N
     δt = solver.Δt / (4 * N)
 
