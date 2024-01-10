@@ -36,7 +36,7 @@ function dDimModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, d)
 
     Δk = k_array[2] - k_array[1]
     @assert k_array[1] ≈ Δk / 2
-    @assert all(diff(k_array) .≈ Δk)
+    @assert all(diff(k_array) .≈ Δk) "The grid must be equidistant"
 
     S⁻¹ = inv.(Sₖ)
     Cₖ = similar(Sₖ)
