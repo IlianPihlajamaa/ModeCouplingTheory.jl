@@ -26,7 +26,6 @@ mutable struct TimeDoublingSolver{I,F} <: Solver
     tolerance::F
     verbose::Bool
     inplace::Bool
-    init_with_memory::Bool
 end
 
 """
