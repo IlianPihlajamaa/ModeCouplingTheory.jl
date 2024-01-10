@@ -27,7 +27,7 @@ Finds the static structure factor given by the
 analytical Percus-Yevick solution of the Ornstein-Zernike 
 equation for hard spheres for a given volume fraction η.
 """ 
-function find_analytical_S_k(k, η)
+function find_analytical_S_k_PY(k, η)
         Cₖ = find_analytical_C_k(k, η)
         ρ = 6/π * η
         Sₖ = @. 1 + ρ*Cₖ / (1 - ρ*Cₖ)
