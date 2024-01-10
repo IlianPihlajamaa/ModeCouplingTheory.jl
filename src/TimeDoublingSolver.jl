@@ -42,7 +42,6 @@ Uses the algorithm devised by Fuchs et al.
 * `tolerance`: while the error is bigger than this value, convergence is not reached. The error by default is computed as the absolute sum of squares
 * `verbose`: if `true`, information will be printed to STDOUT
 * `ismutable`: if `true` and if the type of F is mutable, the solver will try to avoid allocating many temporaries
-* `init_with_memory` if `true`, the solver will include the memory kernels for the short time expansion to bootstrap the algorithm. Sacrifices performance and memory for accuracy.
 """
 function TimeDoublingSolver(; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true, init_with_memory=true)
     return TimeDoublingSolver(N, Δt, t_max, 0, max_iterations, tolerance, verbose, ismutable, init_with_memory)
