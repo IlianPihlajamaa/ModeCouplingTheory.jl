@@ -278,9 +278,8 @@ $$T_{1}[A] = \sum_{j=1}^{N_k}A_{j, j}.$$
 The equations present above for $F(k,t),\ F_s(k,t)$ and $\delta r^2(t)$ have also been implemented for $d$-dimensional Euclidean space. By default, the solver will assume that we are working in $d=3$. To change this, one should simply modify the keyword argument `dim` when calling the appropriate kernel. For instance:
 
 ```julia 
-kernel_MCT = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ ; dims=d)
-kernel_tagged_MCT = TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol; dims=d)
-kernel_MSD_MCT = MSDModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol; dims=d)
-```
+kernel_MCT = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ ; dims=5)
+kernel_tagged_MCT = TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol; dims=5)
+kernel_MSD_MCT = MSDModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol; dims=5)
 
 Note, this code is not written or tested for spatial dimensions higher than $d \gtrapprox 20$. 
