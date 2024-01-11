@@ -1,4 +1,4 @@
-mutable struct EulerSolver{I, F} <: Solver
+mutable struct EulerSolver{I,F} <: Solver
     N::I
     Δt::F
     t_max::F
@@ -19,24 +19,24 @@ inefficient way to solve MCT-like equations.
 * `verbose` if `true`, information will be printed to STDOUT
 """
 function EulerSolver(; t_max=10.0^2, Δt=10^-3, verbose=false)
-    N = ceil(Int, t_max/Δt)
+    N = ceil(Int, t_max / Δt)
     return EulerSolver(N, Δt, t_max, verbose)
 end
 
 function construct_euler_integrand!(integrand, K_array, ∂ₜF_array_reverse, it)
     @assert it <= length(K_array)
     @inbounds @simd for i = 1:it # fill temporary array for the integrand
-        integrand[i] = K_array[i]*∂ₜF_array_reverse[i]
+        integrand[i] = K_array[i] * ∂ₜF_array_reverse[i]
     end
 end
 
 function trapezoidal_integration(f, δt, it)
     if it == 1
-        return f[1]*δt
+        return f[1] * δt
     end
-    result = f[1]/2    
-    result += f[it]/2
-    itmin1 = it-1
+    result = f[1] / 2
+    result += f[it] / 2
+    itmin1 = it - 1
     @inbounds @simd for it2 = 2:itmin1
         result += f[it2]
     end
@@ -53,20 +53,20 @@ function Euler_step(F_old, ∂ₜF_old, time_integral, equation, solver::EulerSo
     δ = equation.coeffs.δ
     Δt = solver.Δt
     if !iszero(α)
-        ∂ₜₜF  = -α\(β*∂ₜF_old + γ*F_old + δ + time_integral)
-        ∂ₜF = ∂ₜF_old + Δt* ∂ₜₜF
+        ∂ₜₜF = -α \ (β * ∂ₜF_old + γ * F_old + δ + time_integral)
+        ∂ₜF = ∂ₜF_old + Δt * ∂ₜₜF
         F = F_old + Δt * ∂ₜF
     else
-        ∂ₜF = -β\(γ * F_old + δ + time_integral)
+        ∂ₜF = -β \ (γ * F_old + δ + time_integral)
         F = F_old + Δt * ∂ₜF
     end
     return F, ∂ₜF
 end
 
 function log_results(solver::EulerSolver, tstart, t, it)
-    if solver.verbose && it%(solver.N÷50) == 0
-        println("t = ", round(t, digits=4),"/", solver.t_max, 
-        ", elapsed time = ", round(time()-tstart, digits=4))
+    if solver.verbose && it % (solver.N ÷ 50) == 0
+        println("t = ", round(t, digits=4), "/", solver.t_max,
+            ", elapsed time = ", round(time() - tstart, digits=4))
     end
 end
 
@@ -83,7 +83,7 @@ function initialize_output_arrays(equation::AbstractMemoryEquation, solver::Eule
     ∂ₜF_array_reverse = typeof(dF0)[dF0]
     integrand_array = typeof(F0)[]
     for _ in 1:solver.N
-        push!(integrand_array, F0.*Ref(zero(eltype(F0))))
+        push!(integrand_array, F0 .* Ref(zero(eltype(F0))))
     end
     return typeof(0.0)[0.0], typeof(F0)[F0], typeof(equation.K₀)[equation.K₀], ∂ₜF_array_reverse, integrand_array
 end

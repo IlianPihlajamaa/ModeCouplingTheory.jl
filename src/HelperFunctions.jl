@@ -106,23 +106,23 @@ convert_multicomponent_structure_factor(S)
 ```
 
 """
-function convert_multicomponent_structure_factor(Sk_in::Matrix{Vector{T}}) where T 
+function convert_multicomponent_structure_factor(Sk_in::Matrix{Vector{T}}) where {T}
     if !(size(Sk_in, 1) == size(Sk_in, 2))
         error("the input must be a square matrix of species")
     end
     Ns = size(Sk_in, 1)
-    Nk = length(Sk_in[1,1])
+    Nk = length(Sk_in[1, 1])
     if !all(length.(Sk_in) .== Nk)
         error("There are not an equal number of k-points for every specie")
     end
     for α = 1:Ns
         for β = 1:α-1
-            if !(all(Sk_in[α,β] .≈ Sk_in[β, α]))
+            if !(all(Sk_in[α, β] .≈ Sk_in[β, α]))
                 error("The structure factor is not symmetric in species $α and $β")
             end
         end
     end
-    Sk_out = Vector{SMatrix{Ns, Ns, T, Ns*Ns}}()
+    Sk_out = Vector{SMatrix{Ns,Ns,T,Ns * Ns}}()
     for i = 1:Nk
         Ski = SMatrix{Ns,Ns}(getindex.(Sk_in, i))
         push!(Sk_out, Ski)
@@ -157,12 +157,12 @@ gets the solution at the 5th time point for vector indices 2:43, for species 1 a
 """
 get_F(sol::MemoryEquationSolution) = sol.F
 get_F(sol::MemoryEquationSolution, it::Int, ik::Int, is) = get_F(sol)[it][ik][is...]
-get_F(sol::MemoryEquationSolution, it::Int, ik::Union{Colon, AbstractArray}, is) = getindexelementwise(get_F(sol)[it][ik], Ref(is[1]), Ref(is[2]))
-get_F(sol::MemoryEquationSolution, it::Union{Colon, AbstractArray}, ik::Int, is) = getindexelementwise(getindexelementwise(get_F(sol)[it], ik), Ref(is[1]), Ref(is[2]))
-get_F(sol::MemoryEquationSolution, it::AbstractArray, ik::Union{Colon, AbstractArray}, is) = [getindexelementwise(get_F(sol)[iit][ik], Ref(is[1]), Ref(is[2])) for iit in it]
-get_F(sol::MemoryEquationSolution, ::Colon, ik::Union{Colon, AbstractArray}, is) = [getindexelementwise(get_F(sol)[iit][ik], Ref(is[1]), Ref(is[2])) for iit in eachindex(sol.F)]
+get_F(sol::MemoryEquationSolution, it::Int, ik::Union{Colon,AbstractArray}, is) = getindexelementwise(get_F(sol)[it][ik], Ref(is[1]), Ref(is[2]))
+get_F(sol::MemoryEquationSolution, it::Union{Colon,AbstractArray}, ik::Int, is) = getindexelementwise(getindexelementwise(get_F(sol)[it], ik), Ref(is[1]), Ref(is[2]))
+get_F(sol::MemoryEquationSolution, it::AbstractArray, ik::Union{Colon,AbstractArray}, is) = [getindexelementwise(get_F(sol)[iit][ik], Ref(is[1]), Ref(is[2])) for iit in it]
+get_F(sol::MemoryEquationSolution, ::Colon, ik::Union{Colon,AbstractArray}, is) = [getindexelementwise(get_F(sol)[iit][ik], Ref(is[1]), Ref(is[2])) for iit in eachindex(sol.F)]
 get_F(sol::MemoryEquationSolution, it::Int, ik) = get_F(sol)[it][ik]
-get_F(sol::MemoryEquationSolution, it::Union{Colon, AbstractArray}, ik) = getindexelementwise(get_F(sol)[it], ik)
+get_F(sol::MemoryEquationSolution, it::Union{Colon,AbstractArray}, ik) = getindexelementwise(get_F(sol)[it], ik)
 get_F(sol::MemoryEquationSolution, it) = get_F(sol)[it]
 
 
@@ -183,12 +183,12 @@ get_K(sol::MemoryEquationSolution, i, j, k) = hasdiagkernel(sol) ? _get_K_diag(s
 
 get_K(sol::MemoryEquationSolution) = sol.K
 _get_K_diag(sol::MemoryEquationSolution, it::Int, ik::Int, is) = get_K(sol)[it].diag[ik][is...]
-_get_K_diag(sol::MemoryEquationSolution, it::Int, ik::Union{Colon, AbstractArray}, is) = getindexelementwise(get_K(sol)[it].diag[ik], Ref(is[1]), Ref(is[2]))
-_get_K_diag(sol::MemoryEquationSolution, it::Union{Colon, AbstractArray}, ik::Int, is) = getindexelementwise(getindexelementwise(getproperty.(get_K(sol)[it], :diag), ik), Ref(is[1]), Ref(is[2]))
-_get_K_diag(sol::MemoryEquationSolution, it::AbstractArray, ik::Union{Colon, AbstractArray}, is) = [getindexelementwise(get_K(sol)[iit].diag[ik], Ref(is[1]), Ref(is[2])) for iit in it]
-_get_K_diag(sol::MemoryEquationSolution, ::Colon, ik::Union{Colon, AbstractArray}, is) = [getindexelementwise(get_K(sol)[iit].diag[ik], Ref(is[1]), Ref(is[2])) for iit in eachindex(sol.F)]
+_get_K_diag(sol::MemoryEquationSolution, it::Int, ik::Union{Colon,AbstractArray}, is) = getindexelementwise(get_K(sol)[it].diag[ik], Ref(is[1]), Ref(is[2]))
+_get_K_diag(sol::MemoryEquationSolution, it::Union{Colon,AbstractArray}, ik::Int, is) = getindexelementwise(getindexelementwise(getproperty.(get_K(sol)[it], :diag), ik), Ref(is[1]), Ref(is[2]))
+_get_K_diag(sol::MemoryEquationSolution, it::AbstractArray, ik::Union{Colon,AbstractArray}, is) = [getindexelementwise(get_K(sol)[iit].diag[ik], Ref(is[1]), Ref(is[2])) for iit in it]
+_get_K_diag(sol::MemoryEquationSolution, ::Colon, ik::Union{Colon,AbstractArray}, is) = [getindexelementwise(get_K(sol)[iit].diag[ik], Ref(is[1]), Ref(is[2])) for iit in eachindex(sol.F)]
 _get_K_diag(sol::MemoryEquationSolution, it::Int, ik) = get_K(sol)[it].diag[ik]
-_get_K_diag(sol::MemoryEquationSolution, it::Union{Colon, AbstractArray}, ik) = getindexelementwise(getproperty.(get_K(sol)[it], :diag), ik)
+_get_K_diag(sol::MemoryEquationSolution, it::Union{Colon,AbstractArray}, ik) = getindexelementwise(getproperty.(get_K(sol)[it], :diag), ik)
 get_K(sol::MemoryEquationSolution, it) = get_K(sol)[it]
 
 
@@ -203,12 +203,12 @@ get_t(sol::MemoryEquationSolution) = sol.t
 Surface of a d-dimensional sphere 
 """
 function surface_d_dim_unit_sphere(d)
-    return 2*pi^(d/2)/gamma(d/2)
+    return 2 * pi^(d / 2) / gamma(d / 2)
 end
 
 """
 Volume of a d-dimensional sphere 
 """
 function volume_d_dim_sphere(dim, diameter)
-    return pi^(dim/2)*(diameter/2)^dim / gamma(dim/2+1)
+    return pi^(dim / 2) * (diameter / 2)^dim / gamma(dim / 2 + 1)
 end

@@ -94,18 +94,18 @@ Fills the first 2N entries of the temporary arrays of F using forward Euler with
 """
 
 function initialize_F_temp_Euler!(equation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
-    N = solver.N 
+    N = solver.N
     Δt_Euler = solver.Δt / (4 * N)
     tmax_Euler = Δt_Euler * 2 * N
 
     eulersolver = EulerSolver(Δt=Δt_Euler, t_max=tmax_Euler, verbose=solver.verbose)
     sol = solve(equation, eulersolver)
 
-    for it in 1:2N 
-        F_euler_it = get_F(sol, it+1) # it = 1 corresponds to t=0 in Euler, whereas it corresponds to Δt in F_temp
+    for it in 1:2N
+        F_euler_it = get_F(sol, it + 1) # it = 1 corresponds to t=0 in Euler, whereas it corresponds to Δt in F_temp
         temp_arrays.F_temp[it] = copy(F_euler_it) # need to make copy for vector valued code.
     end
-    return 
+    return
 end
 """
     initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
@@ -116,7 +116,7 @@ Fills the first 2N entries of the temporary arrays of F using forward Euler with
 function initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
     if solver.init_with_memory
         initialize_F_temp_Euler!(equation, solver, temp_arrays)
-        return 
+        return
     end
     N = solver.N
     δt = solver.Δt / (4 * N)
@@ -127,7 +127,7 @@ function initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver
     ∂ₜF_old = ∂ₜF₀
     F_old = F₀
     for it = 1:2N
-        equation.update_coefficients!(equation.coeffs, δt*it)
+        equation.update_coefficients!(equation.coeffs, δt * it)
         α = equation.coeffs.α
         β = equation.coeffs.β
         γ = equation.coeffs.γ
@@ -302,7 +302,7 @@ function update_Fuchs_parameters!(equation::MemoryEquation, solver::TimeDoubling
     δt = solver.Δt / (4N)
     K_I = temp_arrays.K_I
     F_I = temp_arrays.F_I
-    equation.update_coefficients!(equation.coeffs, δt*it)
+    equation.update_coefficients!(equation.coeffs, δt * it)
     α = equation.coeffs.α
     β = equation.coeffs.β
     γ = equation.coeffs.γ
@@ -492,10 +492,10 @@ end
 function log_results(solver, temp_arrays)
     if solver.verbose
         @printf("elapsed time = %5.2fs, t = %6.2e / %5.2e, kernel evals = %i.\n",
-        time()-temp_arrays.start_time,
-        solver.Δt,
-        solver.t_max, 
-        solver.kernel_evals)
+            time() - temp_arrays.start_time,
+            solver.Δt,
+            solver.t_max,
+            solver.kernel_evals)
     end
 end
 
@@ -557,7 +557,7 @@ function update_integrals!(temp_arrays::SolverCache, ::AbstractNoKernelEquation,
     F_I[it] = (F_temp[it] + F_temp[it-1]) / 2
 end
 
-function allocate_results!(t_array, F_array, K_array,::AbstractNoKernelEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache; istart=2(solver.N) + 1, iend=4(solver.N))
+function allocate_results!(t_array, F_array, K_array, ::AbstractNoKernelEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache; istart=2(solver.N) + 1, iend=4(solver.N))
     N = solver.N
     δt = solver.Δt / (4N)
     for it = istart:iend

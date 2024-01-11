@@ -5,21 +5,21 @@ F0 = @SVector ones(N)
 β = 10.0
 δ = 0.0
 
-γ = @SMatrix [sin(i*j/π)^4/N^2 for i = 1:N, j = 1:N] #some random matrix
-λ = @SVector [cos(i)^2*N^2 for i = 1:N] #some random vector
+γ = @SMatrix [sin(i * j / π)^4 / N^2 for i = 1:N, j = 1:N] #some random matrix
+λ = @SVector [cos(i)^2 * N^2 for i = 1:N] #some random vector
 
 #SMatrix
 kernel1 = SchematicDiagonalKernel(λ)
 system1 = MemoryEquation(α, β, γ, δ, F0, ∂F0, kernel1)
-solver1 = TimeDoublingSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 2, tolerance=10^-10, max_iterations=10^6)
+solver1 = TimeDoublingSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N=2, tolerance=10^-10, max_iterations=10^6)
 
 #Matrix
 kernel2 = SchematicDiagonalKernel(Vector(λ))
 system2 = MemoryEquation(α, β, Matrix(γ), δ, Vector(F0), Vector(∂F0), kernel2)
-solver2 = TimeDoublingSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 2, tolerance=10^-10, max_iterations=10^6)
+solver2 = TimeDoublingSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N=2, tolerance=10^-10, max_iterations=10^6)
 
 inFS = @SVector rand(N)
-inF =  Vector(inFS)
+inF = Vector(inFS)
 out0 = evaluate_kernel(kernel1, inFS, 0.0)
 out1 = evaluate_kernel(kernel2, inF, 0.0)
 out2 = similar(out1)
@@ -27,8 +27,8 @@ evaluate_kernel!(out2, kernel2, inF, 0.0)
 
 @test all(out0 .≈ out1 .≈ out2)
 
-sol1 =  solve(system1, solver1);
-sol2 =  solve(system2, solver2);
+sol1 = solve(system1, solver1);
+sol2 = solve(system2, solver2);
 
 @test all(sol1.t .≈ sol2.t)
 @test all(sol2.F .≈ sol2.F)
@@ -47,18 +47,18 @@ sol2 =  solve(system2, solver2);
 ## SchematicMatrixKernel
 Nc = 4
 N = 2Nc
-α = zeros(2*Nc)
-β = Matrix{Float64}(I, 2*Nc, 2*Nc)
-γ = zeros(2*Nc, 2*Nc)
+α = zeros(2 * Nc)
+β = Matrix{Float64}(I, 2 * Nc, 2 * Nc)
+γ = zeros(2 * Nc, 2 * Nc)
 
 for i in 1:Nc
-    γ[i,i] = i 
-    γ[Nc+i,Nc+i] = i
-    γ[Nc+i,i] = i
+    γ[i, i] = i
+    γ[Nc+i, Nc+i] = i
+    γ[Nc+i, i] = i
 end
 
-F₀ = ones(2*Nc)
-∂ₜF₀ = zeros(2*Nc)
+F₀ = ones(2 * Nc)
+∂ₜF₀ = zeros(2 * Nc)
 
 maxiter = 100
 thresh = 10^-6
@@ -67,20 +67,20 @@ thresh = 10^-6
 #Matrix
 kernel1 = SchematicMatrixKernel(λ)
 system1 = MemoryEquation(α, β, γ, δ, F₀, ∂ₜF₀, kernel1)
-solver1 = TimeDoublingSolver(Δt=10^-2, t_max=10.0^1, verbose=false, N = 4, tolerance=10^-10, max_iterations=10^6)
+solver1 = TimeDoublingSolver(Δt=10^-2, t_max=10.0^1, verbose=false, N=4, tolerance=10^-10, max_iterations=10^6)
 
 #SMatrix
-kernel2 = SchematicMatrixKernel(SMatrix{2*Nc, 2*Nc}(λ))
-system2 = MemoryEquation(SVector{2*Nc}(α), SMatrix{2*Nc, 2*Nc}(β), SMatrix{2*Nc, 2*Nc}(γ), δ, SVector{2*Nc}(F₀), SVector{2*Nc}(∂ₜF₀), kernel2)
-solver2 = TimeDoublingSolver(Δt=10^-2, t_max=10.0^1, verbose=false, N = 4, tolerance=10^-10, max_iterations=10^6)
+kernel2 = SchematicMatrixKernel(SMatrix{2 * Nc,2 * Nc}(λ))
+system2 = MemoryEquation(SVector{2 * Nc}(α), SMatrix{2 * Nc,2 * Nc}(β), SMatrix{2 * Nc,2 * Nc}(γ), δ, SVector{2 * Nc}(F₀), SVector{2 * Nc}(∂ₜF₀), kernel2)
+solver2 = TimeDoublingSolver(Δt=10^-2, t_max=10.0^1, verbose=false, N=4, tolerance=10^-10, max_iterations=10^6)
 
 #SparseMatrix
 kernel3 = SchematicMatrixKernel(sparse(λ))
 system3 = MemoryEquation(α, β, sparse(γ), δ, F₀, ∂ₜF₀, kernel3)
-solver3 = TimeDoublingSolver(Δt=10^-2, t_max=10.0^1, verbose=false, N = 4, tolerance=10^-10, max_iterations=10^6)
+solver3 = TimeDoublingSolver(Δt=10^-2, t_max=10.0^1, verbose=false, N=4, tolerance=10^-10, max_iterations=10^6)
 
 inFS = @SVector rand(N)
-inF =  Vector(inFS)
+inF = Vector(inFS)
 out0 = evaluate_kernel(kernel1, inFS, 0.0)
 out1 = evaluate_kernel(kernel2, inF, 0.0)
 out3 = evaluate_kernel(kernel3, inF, 0.0)
@@ -88,9 +88,9 @@ out2 = similar(out1)
 evaluate_kernel!(out2, kernel2, inF, 0.0)
 @test all(out0 .≈ out1 .≈ out2 .≈ out3)
 
-sol1 =  solve(system1, solver1);
-sol2 =  solve(system2, solver2);
-sol3 =  solve(system3, solver3);
+sol1 = solve(system1, solver1);
+sol2 = solve(system2, solver2);
+sol3 = solve(system3, solver3);
 
 @test all(sol1.t .≈ sol2.t .≈ sol3.t)
 @test all(sol1.F .≈ sol2.F .≈ sol3.F)
@@ -105,5 +105,5 @@ for i = 1:5
     b2 = Spline1D(sol2.t, sol2[i])(t_test)
     c2 = Spline1D(sol3.t, sol3[i])(t_test)
     @test(a2 ≈ b2)
-    @test(abs(b2-c2) < 10^-2)
+    @test(abs(b2 - c2) < 10^-2)
 end

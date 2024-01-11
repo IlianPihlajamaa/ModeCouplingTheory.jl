@@ -3,13 +3,13 @@
 
 Scalar kernel with fields `ν` and `τ` which when called returns `ν exp(-t/τ)`.
 """
-struct ExponentiallyDecayingKernel{T1<:Number, T2<:Number} <: MemoryKernel
+struct ExponentiallyDecayingKernel{T1<:Number,T2<:Number} <: MemoryKernel
     ν::T1
     τ::T2
 end
 
 function evaluate_kernel(kernel::ExponentiallyDecayingKernel, F::Number, t)
-    return kernel.ν * exp(-t/kernel.τ)
+    return kernel.ν * exp(-t / kernel.τ)
 end
 
 
@@ -46,7 +46,7 @@ end
 
 Scalar tagged particle kernel with field `ν` which when called returns `ν F*Fs`.
 """
-struct TaggedSchematicF2Kernel{T1, T2, T3} <: MemoryKernel
+struct TaggedSchematicF2Kernel{T1,T2,T3} <: MemoryKernel
     ν::T1
     tDict::T2
     F::T3
@@ -74,7 +74,7 @@ struct SjogrenKernel{T} <: MemoryKernel
 end
 
 function evaluate_kernel(kernel::SjogrenKernel, F, t)
-    return Diagonal(@SVector [kernel.ν1*F[1]^2, kernel.ν2*F[1]*F[2]])
+    return Diagonal(@SVector [kernel.ν1 * F[1]^2, kernel.ν2 * F[1] * F[2]])
 end
 
 
@@ -99,7 +99,7 @@ end
 
 Matrix kernel with field `ν` which when called returns `Diagonal(ν .* F .^ 2)`, i.e., it implements a non-coupled system of SchematicF2Kernels.
 """
-struct SchematicDiagonalKernel{T<:Union{SVector, Vector}} <: MemoryKernel
+struct SchematicDiagonalKernel{T<:Union{SVector,Vector}} <: MemoryKernel
     ν::T
     SchematicDiagonalKernel(ν::T) where {T<:Union{SVector,Vector}} = eltype(ν) <: Number ? new{T}(ν) : error("element type of this kernel must be a number")
 end
@@ -143,7 +143,7 @@ function evaluate_kernel!(out::Matrix, kernel::SchematicMatrixKernel, F::Vector,
 end
 
 struct InterpolatingKernel{T} <: MemoryKernel
-    M :: T
+    M::T
 end
 
 """
