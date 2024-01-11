@@ -41,25 +41,6 @@ evaluate_kernel(kernel::MyKernel, F, t) = Diagonal(kernel.ν .* F .^ 2)
 sol = solve_steady_state(γ, F0, kernel; tolerance=10^-10, verbose=false, inplace=false)
 @test sum(sol.F[1]) ≈ 4.892831203320679
 
-function find_analytical_C_k(k, η)
-    A = -(1 - η)^-4 *(1 + 2η)^2
-    B = (1 - η)^-4*  6η*(1 + η/2)^2
-    D = -(1 - η)^-4 * 1/2 * η*(1 + 2η)^2
-    Cₖ = @. 4π/k^6 * 
-    (
-        24*D - 2*B * k^2 - (24*D - 2 * (B + 6*D) * k^2 + (A + B + D) * k^4) * cos(k)
-     + k * (-24*D + (A + 2*B + 4*D) * k^2) * sin(k)
-     )
-    return Cₖ
-end
-
-function find_analytical_S_k(k, η)
-        Cₖ = find_analytical_C_k(k, η)
-        ρ = 6/π * η
-        Sₖ = @. 1 + ρ*Cₖ / (1 - ρ*Cₖ)
-    return Sₖ
-end
-
 #### MCT ###
 
 

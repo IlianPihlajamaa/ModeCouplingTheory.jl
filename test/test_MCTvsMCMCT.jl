@@ -1,28 +1,3 @@
-function find_analytical_C_k(k, η)
-    A = -(1 - η)^-4 *(1 + 2η)^2
-    B = (1 - η)^-4*  6η*(1 + η/2)^2
-    D = -(1 - η)^-4 * 1/2 * η*(1 + 2η)^2
-    Cₖ = @. 4π/k^6 * 
-    (
-        24*D - 2*B * k^2 - (24*D - 2 * (B + 6*D) * k^2 + (A + B + D) * k^4) * cos(k)
-     + k * (-24*D + (A + 2*B + 4*D) * k^2) * sin(k)
-     )
-    return Cₖ
-end
-
-"""
-Finds the static structure factor given by the 
-analytical percus yevick solution of the Ornstein Zernike 
-equation for hard spheres for a given volume fraction η on the coordinates r
-in units of one over the diameter of the particles
-""" 
-function find_analytical_S_k(k, η)
-        Cₖ = find_analytical_C_k(k, η)
-        ρ = 6/π * η
-        Sₖ = @. 1 + ρ*Cₖ / (1 - ρ*Cₖ)
-    return Sₖ
-end
-
 
 N = 100
 η0 = 0.50
@@ -61,10 +36,6 @@ solMCMCTEuler = solve(systemMCMCT, solverMCMCTEuler);
 
 solverMCMCTFuchs = TimeDoublingSolver(Δt=10^-10, t_max=10.0^10, verbose=false, N = 16, tolerance=10^-10, max_iterations=10^8)
 solMCMCTFuchs = solve(systemMCMCT, solverMCMCTFuchs);
-
-# plot(log10.(tMCT), FMCT[19,:]/Sₖ[19], lw=3, label="MCT")
-# plot!(log10.(tMCMCTEuler), getindex.(FMCMCTEuler[19, :], 1)/Sₖ[19][1], lw=3, label="MCMCT Euler", ls=:dash)
-# plot!(log10.(tMCMCTFuchs), getindex.(FMCMCTFuchs[19, :], 1)/Sₖ[19][1], ls=:dashdot, lw=3, ylims=(0.6,1), xlims=(-6,0), label="MCMCT Fuchs")|>display
 
 using Dierckx
 t_test = 10.0^-2
