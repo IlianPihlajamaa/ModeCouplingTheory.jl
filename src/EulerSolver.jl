@@ -97,7 +97,7 @@ function solve(equation::MemoryEquation, solver::EulerSolver)
     t_array, F_array, K_array, ∂ₜF_array_reverse, integrand_array = initialize_output_arrays(equation, solver)
     t = 0.0
     for it = 1:N
-        t += Δt
+        t = Δt * it
         ∂ₜF_old = ∂ₜF_array_reverse[1]
         F_old = F_array[end]
         construct_euler_integrand!(integrand_array, K_array, ∂ₜF_array_reverse, it)
