@@ -16,6 +16,60 @@ struct ModeCouplingKernel3D{F,V,M, M2} <: MemoryKernel
     V3::M
 end
 
+struct dDimModeCouplingKernel{I, F, AF1, AF3} <: MemoryKernel
+    d::I
+    ρ::F
+    kBT::F
+    m::F
+    Nk::I
+    k_array::AF1
+    prefactor::F
+    C::AF1
+    Sk::AF1
+    V::AF3
+    J::AF3
+    P::AF1
+end
+
+function dDimModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, d)
+    Nk = length(k_array)
+
+    Δk = k_array[2] - k_array[1]
+    @assert k_array[1] ≈ Δk / 2 "The first grid point must be exactly half the grid spacing."
+    @assert all(diff(k_array) .≈ Δk) "The grid must be equidistant"
+
+    S⁻¹ = inv.(Sₖ)
+    Cₖ = similar(Sₖ)
+
+    for i = 1:Nk
+        Cₖ[i] = (1 - S⁻¹[i]) / ρ
+    end
+
+    prefactor = (kBT / m) * ρ * (Δk)^2 * surface_d_dim_unit_sphere(d-1) / (4*pi)^d
+    P = zeros(Nk)
+    V = zeros(Nk, Nk, Nk)
+    J = zeros(Nk, Nk, Nk)
+
+    for iq = 1:Nk, ik = 1:Nk, ip = 1:Nk
+        q = k_array[iq]
+        p = k_array[ip]
+        k = k_array[ik]
+
+        c_p = Cₖ[ip]
+        c_k = Cₖ[ik]
+        S_q = Sₖ[iq]
+
+        if abs(iq - ik) + 1 <= ip <= min(Nk, ik + iq - 1) 
+            J[iq, ik, ip] = k * p * (4*q^2*k^2 - (q^2+k^2-p^2)^2)^((d-3)/2) / q^d
+            V[iq, ik, ip] = ((q^2+k^2-p^2)*c_k + (q^2-k^2+p^2)*c_p)^2
+        end
+    end
+
+    kernel = dDimModeCouplingKernel(d, ρ, kBT, m, Nk, k_array, prefactor, Cₖ, Sₖ, V, J, P)
+    
+    return kernel
+end
+
 """
     ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ; dims=3)
 
@@ -39,7 +93,7 @@ an instance `k` of `ModeCouplingKernel <: MemoryKernel`, which can be called bot
 """
 function ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ; dims=3)
     if dims != 3
-        error("MCT for dimensions other than 3 is not implemented")
+        return dDimModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, dims)
     end
     Nk = length(k_array)
     T = promote_type(eltype(Sₖ), eltype(k_array), typeof(ρ), typeof(kBT), typeof(m))
@@ -180,6 +234,34 @@ function evaluate_kernel(kernel::ModeCouplingKernel3D, F::Vector, t)
     return out
 end
 
+function evaluate_kernel!(out::Diagonal, kernel::dDimModeCouplingKernel, F::Vector, t)
+    V = kernel.V
+    J = kernel.J
+    Sk = kernel.Sk
+    Nk = kernel.Nk
+    prefactor = kernel.prefactor
+    kernel.P .= zero(eltype(kernel.P)) 
+    
+    for iq = 1:Nk 
+        for ik = 1:Nk
+            for ip = 1:Nk
+                kernel.P[iq] += prefactor * J[iq, ik, ip] * V[iq, ik, ip] * F[ik] * F[ip]
+            end
+        end
+    end
+
+    for ik = 1:Nk
+        out.diag[ik] = kernel.P[ik]
+    end
+end
+
+function evaluate_kernel(kernel::dDimModeCouplingKernel, F::Vector, t)
+    out = Diagonal(similar(F))
+    evaluate_kernel!(out, kernel, F, t)
+    return out
+end
+
+
 struct TaggedModeCouplingKernel3D{F, V, M2, M, T5, FF} <: MemoryKernel
     ρ::F
     kBT::F
@@ -197,6 +279,90 @@ struct TaggedModeCouplingKernel3D{F, V, M2, M, T5, FF} <: MemoryKernel
     V3::M
     tDict::T5
     F::FF
+end
+
+struct dDimTaggedModeCouplingKernel{I, F, AF1, AF3, T, sol} <: MemoryKernel
+    d::I
+    ρ::F
+    kBT::F
+    m::F
+    Nk::I
+    tDict::T
+    k_array::AF1
+    prefactor::F
+    C::AF1
+    Sk::AF1
+    sol_col::sol
+    V::AF3
+    J::AF3
+    P::AF1
+end
+
+function dDimTaggedModeCouplingKernel(d, ρ, kBT, m, k_array, Sₖ, sol_col)
+
+    tDict = Dict(zip(sol_col.t, eachindex(sol_col.t)))
+
+    Nk = length(k_array)
+
+    T = promote_type(eltype(Sₖ), eltype(k_array), typeof(ρ), typeof(kBT), typeof(m))
+    ρ, kBT, m = T(ρ), T(kBT), T(m)
+
+    Δk = k_array[2] - k_array[1]
+    @assert k_array[1] ≈ Δk / 2
+    @assert all(diff(k_array) .≈ Δk)
+
+    S⁻¹ = inv.(Sₖ)
+    Cₖ = similar(Sₖ)
+
+    for i = 1:Nk
+        Cₖ[i] = (1 - S⁻¹[i]) / ρ
+    end
+
+    prefactor = 2 * (kBT/m) * ρ * (Δk)^2 * surface_d_dim_unit_sphere(d-1) / (4*pi)^d
+    P = zeros(T, Nk)
+    V = zeros(T, Nk, Nk, Nk)
+    J = zeros(T, Nk, Nk, Nk)
+
+    for ik = 1:Nk, iq = 1:Nk, ip = 1:Nk
+        q = k_array[iq]
+        p = k_array[ip]
+        k = k_array[ik]
+
+        c_p = Cₖ[ip]
+        c_k = Cₖ[ik]
+
+        if abs(iq - ik) + 1 <= ip <= min(Nk, ik + iq - 1) 
+            J[iq, ik, ip] = k * p * (4*q^2*k^2 - (q^2+k^2-p^2)^2)^((d-3)/2) / q^d
+            V[iq, ik, ip] = ((q^2+k^2-p^2)*c_k)^2
+        end
+    end
+    kernel = dDimTaggedModeCouplingKernel(d, ρ, kBT, m, Nk, tDict, k_array, prefactor, Cₖ, Sₖ, sol_col, V, J, P)
+    return kernel
+end
+
+function evaluate_kernel!(out::Diagonal, kernel::dDimTaggedModeCouplingKernel, F::Vector, t)
+    V = kernel.V
+    J = kernel.J
+    Sk = kernel.Sk
+    Nk = kernel.Nk
+    prefactor = kernel.prefactor
+    it = kernel.tDict[t]
+    F_col = get_F(kernel.sol_col, it)
+
+    kernel.P .= 0 
+    for iq = 1:Nk, ik = 1:Nk, ip = 1:Nk
+        kernel.P[iq] += prefactor * J[iq, ik, ip] * V[iq, ik, ip] * F_col[ik] * F[ip]
+    end
+
+    for ik = 1:Nk
+        out.diag[ik] = kernel.P[ik]
+    end
+end
+
+function evaluate_kernel(kernel::dDimTaggedModeCouplingKernel, F::Vector, t)
+    out = Diagonal(similar(F))
+    evaluate_kernel!(out, kernel, F, t)
+    return out
 end
 
 """
@@ -223,7 +389,7 @@ an instance `k` of `TaggedModeCouplingKernel <: MemoryKernel`, which can be call
 """
 function TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol; dims=3)
     if dims != 3
-        error("Tagged MCT is not implemented for dimensions other than 3")
+        return dDimTaggedModeCouplingKernel(dims, ρ, kBT, m, k_array, Sₖ, sol)
     end
     tDict = Dict(zip(sol.t, eachindex(sol.t)))
     Nk = length(k_array)
@@ -306,8 +472,6 @@ function evaluate_kernel(kernel::TaggedModeCouplingKernel3D, Fs, t)
     return out
 end
 
-
-
 struct MSDModeCouplingKernel3D{F, V, TDICT, FF, FS} <: MemoryKernel
     ρ::F
     kBT::F
@@ -319,6 +483,47 @@ struct MSDModeCouplingKernel3D{F, V, TDICT, FF, FS} <: MemoryKernel
     F::FF
     Fs::FS
 end
+
+struct dDimMSDModeCouplingKernel{I, F, T, AF1, sol1, sol2} <: MemoryKernel
+    d::I
+    ρ::F
+    kBT::F
+    m::F
+    Nk::I
+    tDict::T
+    k_array::AF1
+    prefactor::F
+    C::AF1
+    Sk::AF1
+    sol_col::sol1
+    sol_tagged::sol2
+end
+
+function dDimMSDModeCouplingKernel(d, ρ, kBT, m, k_array, Sₖ, sol_col, sol_tagged)
+    
+    tDict = Dict(zip(sol_col.t, eachindex(sol_col.t)))
+
+    Nk = length(k_array)
+
+    Δk = k_array[2] - k_array[1]
+    @assert k_array[1] ≈ Δk / 2
+    @assert all(diff(k_array) .≈ Δk)
+
+    S⁻¹ = inv.(Sₖ)
+    Cₖ = similar(Sₖ)
+
+    for i = 1:Nk
+        Cₖ[i] = (1 - S⁻¹[i]) / ρ
+    end
+
+    prefactor = (kBT/m) * ρ * Δk * surface_d_dim_unit_sphere(d) / (d * (2*pi)^d)
+
+    kernel = dDimMSDModeCouplingKernel(d, ρ, kBT, m, Nk, tDict, k_array, prefactor, Cₖ, Sₖ, sol_col, sol_tagged)
+    
+    return kernel
+end
+
+
 
 """
 MSDModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol; dims=3)
@@ -346,7 +551,7 @@ an instance `k` of `MSDModeCouplingKernel <: MemoryKernel`, which can be evaluat
 """
 function MSDModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol; dims=3)
     if dims != 3
-        error("MSD is not implemented for dimentions other than 3")
+        return dDimMSDModeCouplingKernel(dims, ρ, kBT, m, k_array, Sₖ, sol, taggedsol)
     end
     tDict = Dict(zip(sol.t, eachindex(sol.t)))
     Nk = length(k_array)
@@ -376,5 +581,23 @@ function evaluate_kernel(kernel::MSDModeCouplingKernel3D, MSD, t)
     return K
 end
 
+function evaluate_kernel(kernel::dDimMSDModeCouplingKernel, F, t)
+
+    K = zero(typeof(F))
+    k_array = kernel.k_array
+    Ck = kernel.C
+    it = kernel.tDict[t]
+    d = kernel.d
+    
+    F = get_F(kernel.sol_col, it)
+    Fs = get_F(kernel.sol_tagged, it)
+    
+    for iq in eachindex(k_array)
+        K += k_array[iq]^(d+1) * Ck[iq]^2 * F[iq] * Fs[iq]
+    end
+    
+    K *= kernel.prefactor
+    return K
+end
 
 

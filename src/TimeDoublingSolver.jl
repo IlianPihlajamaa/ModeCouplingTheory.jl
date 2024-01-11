@@ -29,7 +29,6 @@ mutable struct TimeDoublingSolver{I,F} <: Solver
 end
 
 """
-    TimeDoublingSolver(N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true)
 
 Uses the algorithm devised by Fuchs et al.
 
@@ -84,7 +83,6 @@ function allocate_temporary_arrays(equation::MemoryEquation, solver::TimeDoublin
     end
     return temp_arrays
 end
-
 
 """
     initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)

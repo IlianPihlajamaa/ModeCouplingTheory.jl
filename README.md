@@ -4,6 +4,8 @@
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://IlianPihlajamaa.github.io/ModeCouplingTheory.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://IlianPihlajamaa.github.io/ModeCouplingTheory.jl/dev)
 [![Downloads](https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/ModeCouplingTheory)](https://pkgs.genieframework.com?packages=ModeCouplingTheory)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.05737/status.svg)](https://doi.org/10.21105/joss.05737)
+
 
 A generic and fast solver of mode-coupling theory-like integrodifferential equations. It uses the algorithm outlined in [Fuchs et al.](https://iopscience.iop.org/article/10.1088/0953-8984/3/26/022/meta) to solve equations of the form
 $$\alpha \ddot{F}(t) + \beta \dot{F}(t) + \gamma F(t) + \delta + \int_0^t d\tau K(t-\tau)\dot{F}(\tau) = 0, $$
