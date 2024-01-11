@@ -9,7 +9,7 @@ function solve_steady_state_immutable(γ, F₀, kernel; tolerance=10^-8, max_ite
     F = F₀
     iterations = 0
     begintime = time()
-    while error > tolerance
+    while err > tolerance
         iterations += 1
         if iterations > max_iterations
             error("The recursive iteration did not converge. The error is $err after $iterations iterations.")
