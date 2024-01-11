@@ -4,7 +4,7 @@ function solve_steady_state_immutable(γ, F₀, kernel; tolerance=10^-8, max_ite
         γ = Diagonal(γ)
     end
     K = evaluate_kernel(kernel, F₀, t)
-    error = tolerance*2
+    err = tolerance*2
     Fold = F₀*one(eltype(F₀))
     F = F₀
     iterations = 0
@@ -12,14 +12,14 @@ function solve_steady_state_immutable(γ, F₀, kernel; tolerance=10^-8, max_ite
     while error > tolerance
         iterations += 1
         if iterations > max_iterations
-            error("The recursive iteration did not converge. The error is $error after $iterations iterations.")
+            error("The recursive iteration did not converge. The error is $err after $iterations iterations.")
         end
         F = (K + γ)\(K*F₀)
         K = evaluate_kernel(kernel, F, t)
-        error = find_error(F, Fold)
+        err = find_error(F, Fold)
         Fold = F
         if verbose 
-            println("The error is $(error) after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
+            println("The error is $(err) after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
         end
     end
     if verbose 
@@ -64,17 +64,17 @@ function solve_steady_state_mutable(γ, F₀, kernel; tolerance=10^-8, max_itera
         γ = γ*I(length(F₀))
     end
     K = evaluate_kernel(kernel, F₀, t)
-    error = tolerance*2
+    err = tolerance*2
     F = K*F₀
     Fold = copy(F₀)
     tempvec = copy(F₀)
     tempmat = copy(K+γ)
     iterations = 0
     begintime = time()
-    while error > tolerance
+    while err > tolerance
         iterations += 1
         if iterations > max_iterations
-            error("The recursive iteration did not converge. The error is $error after $iterations iterations.")
+            error("The recursive iteration did not converge. The error is $err after $iterations iterations.")
         end
         # the following lines compute F = (K + γ)\K*F₀
         # F = (K + γ)\K*F₀
@@ -87,10 +87,10 @@ function solve_steady_state_mutable(γ, F₀, kernel; tolerance=10^-8, max_itera
             F .= tempmat\tempvec
         end
         evaluate_kernel!(K, kernel, F, t)
-        error = find_error(F, Fold)
+        err = find_error(F, Fold)
         Fold .= F
         if verbose 
-            println("The error is $(error) after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
+            println("The error is $(err) after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
         end
     end
     if verbose 
