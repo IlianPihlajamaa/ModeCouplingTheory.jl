@@ -96,14 +96,14 @@ Fills the first 2N entries of the temporary arrays of F using forward Euler with
 function initialize_F_temp_Euler!(equation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
     N = solver.N 
     Δt_Euler = solver.Δt / (4 * N)
-    tmax_Euler = Δt_Euler * 2* N
+    tmax_Euler = Δt_Euler * 2 * N
 
     eulersolver = EulerSolver(Δt=Δt_Euler, t_max=tmax_Euler, verbose=solver.verbose)
     sol = solve(equation, eulersolver)
 
     for it in 1:2N 
-        F_euler_it = get_F(sol, it)
-        temp_arrays.F_temp[it] = F_euler_it
+        F_euler_it = get_F(sol, it+1) # it = 1 corresponds to t=0 in Euler, whereas it corresponds to Δt in F_temp
+        temp_arrays.F_temp[it] = copy(F_euler_it) # need to make copy for vector valued code.
     end
     return 
 end
@@ -528,6 +528,7 @@ function solve(equation::AbstractMemoryEquation, solver::TimeDoublingSolver)
         new_time_mapping!(equation, solver, temp_arrays)
     end
     solver.Δt = startΔt
+    @show t_array
     sol = MemoryEquationSolution(t_array, F_array, K_array, solver)
     return sol
 end
