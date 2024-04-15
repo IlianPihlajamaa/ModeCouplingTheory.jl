@@ -64,7 +64,7 @@ function Euler_step(F_old, ∂ₜF_old, time_integral, equation, solver::EulerSo
 end
 
 function log_results(solver::EulerSolver, tstart, t, it)
-    if solver.verbose && it % (solver.N ÷ 50) == 0
+    if solver.verbose && it % max(1, (solver.N ÷ 50)) == 0
         println("t = ", round(t, digits=4), "/", solver.t_max,
             ", elapsed time = ", round(time() - tstart, digits=4))
     end
