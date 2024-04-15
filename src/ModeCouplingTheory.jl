@@ -3,7 +3,7 @@
 Package to solve mode-coupling theory like equations
 """
 module ModeCouplingTheory
-using StaticArrays, SparseArrays, LinearAlgebra, Random, LoopVectorization, Dierckx, Printf, SpecialFunctions, Test
+using StaticArrays, SparseArrays, LinearAlgebra, Random, LoopVectorization, Dierckx, Printf, SpecialFunctions
 import LinearSolve
 
 export solve, TimeDoublingSolver, EulerSolver

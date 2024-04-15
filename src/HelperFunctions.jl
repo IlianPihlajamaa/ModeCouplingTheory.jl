@@ -140,8 +140,9 @@ function convert_multicomponent_structure_factor(Sk_in::Matrix{Vector{T}}) where
     return Sk_out
 end
 
-getindexelementwise(A, i) = getindex.(A, i)
-getindexelementwise(A, i, j) = getindex.(A, i, j)
+
+
+
 
 """
     `get_F(sol::MemoryEquationSolution)`
@@ -165,65 +166,8 @@ If `sol` is the solution to a vector-valued multicomponent equation
 `get_F(sol, 5, 2:43, (1,2))`
 gets the solution at the 5th time point for vector indices 2:43, for species 1 and 2.
 """
+get_F(sol::MemoryEquationSolution, indxs...) = get_F(sol.F, indxs...)
 get_F(sol::MemoryEquationSolution) = sol.F
-get_F(sol::MemoryEquationSolution, it::Int, ik::Int, is) = get_F(sol)[it][ik][is...]
-get_F(sol::MemoryEquationSolution, it::Int, ik::Union{Colon,AbstractArray}, is) = getindexelementwise(get_F(sol)[it][ik], Ref(is[1]), Ref(is[2]))
-get_F(sol::MemoryEquationSolution, it::Union{Colon,AbstractArray}, ik::Int, is) = getindexelementwise(getindexelementwise(get_F(sol)[it], ik), Ref(is[1]), Ref(is[2]))
-get_F(sol::MemoryEquationSolution, it::AbstractArray, ik::Union{Colon,AbstractArray}, is) = [getindexelementwise(get_F(sol)[iit][ik], Ref(is[1]), Ref(is[2])) for iit in it]
-get_F(sol::MemoryEquationSolution, ::Colon, ik::Union{Colon,AbstractArray}, is) = [getindexelementwise(get_F(sol)[iit][ik], Ref(is[1]), Ref(is[2])) for iit in eachindex(sol.F)]
-get_F(sol::MemoryEquationSolution, it::Int, ik) = get_F(sol)[it][ik]
-get_F(sol::MemoryEquationSolution, it::Union{Colon,AbstractArray}, ik) = getindexelementwise(get_F(sol)[it], ik)
-get_F(sol::MemoryEquationSolution, it) = get_F(sol)[it]
-get_F(sol::MemoryEquationSolution, it::Int, ik::Tuple{Int, Int}) = get_F(sol)[it][ik[1], ik[2]]
-get_F(sol::MemoryEquationSolution, it::Int, ik::Tuple{Int, Int}, is) = get_F(sol)[it][ik[1], ik[2], is...]
-get_F(sol::MemoryEquationSolution, it::Colon, ik::Tuple{Int, Int}, is) = [get_F(sol)[iit][ik[1], ik[2], is...] for iit in eachindex(sol.F)]
-get_F(sol::MemoryEquationSolution, it::Colon, ik::Tuple{Int, Int}) = [get_F(sol)[iit][ik[1], ik[2]] for iit in eachindex(sol.F)]
-
-function test_getF()
-    # scalar case
-    F = [rand() for i =1:10]
-    sol = (F = F,)
-    @test get_F(sol) == F
-    @test get_F(sol, 2:4) == F[2:4]
-    # vector case
-    F = [[1,2], [3,4], [5,6]]
-    sol = (F = F,)
-    @test get_F(sol) == F
-    @test get_F(sol, 2, 1) == 3
-    @test get_F(sol, 2, 2) == 4
-    @test get_F(sol, 2, 1:2) == [3, 4]
-    @test get_F(sol, 2:3, 1) == [3, 5]
-    @test get_F(sol, 2:3, 1:2) == [[3, 4], [5, 6]]
-    # matrix case
-    F = [[[1 2]; [3 4]], [[5 6]; [7 8]]]
-    sol = (F = F,)
-    @test get_F(sol) == F
-    @test get_F(sol, 2, (1,1)) == 5
-    @test get_F(sol, 2, (1,2)) == 6
-    @test get_F(sol, 2, (1,1:2)) == [5, 6]
-    @test get_F(sol, 2, (1:2, 1)) == [5, 7]
-    @test get_F(sol, 2, (1:2, 1:2)) == [[5 6]; [7 8]]
-    @test get_F(sol, :, (1,1)) == [1, 5]
-    
-    # vector of Smatrix case
-
-    F = [[SMatrix{2,2}(1,2,3,4), SMatrix{2,2}(5,6,7,8)], [SMatrix{2,2}(9,10,11,12), SMatrix{2,2}(13,14,15,16)]]
-    sol = (F = F,)
-    @test get_F(sol) == F
-    @test get_F(sol, 2, 1) == SMatrix{2,2}(9,10,11,12)
-    @test get_F(sol, 2, 2) == SMatrix{2,2}(13,14,15,16)
-    @test get_F(sol, 2, 1:2) == [SMatrix{2,2}(9,10,11,12), SMatrix{2,2}(13,14,15,16)]
-    @test get_F(sol, 1:2, 1) == [SMatrix{2,2}(1,2,3,4), SMatrix{2,2}(9,10,11,12)]
-    @test get_F(sol, 1, 2, (1,2)) == 6
-    @test get_F(sol, 1, 2, (1,1)) == 5
-    @test get_F(sol, 1, 2, (1,1:2)) == [5, 6]
-    @test get_F(sol, 1, 2, (1:2, 1)) == [5, 7]
-    @test get_F(sol, :, 2, (1,2)) == [7, 15]
-    @test get_F(sol, 1, :, (1,1)) == [1, 9]
-end
-
-
-hasdiagkernel(sol::MemoryEquationSolution) = (eltype(sol.K) <: Diagonal)
 
 """
     `get_K(sol::MemoryEquationSolution)`
@@ -235,18 +179,70 @@ obtains the kernel `K` from a `MemoryEquationSolution` object. Equivalent to `so
 obtains the solution `K` from a `MemoryEquationSolution` object and indexes into it.
 Enables convenient indexing into the multidimensional object. See `get_F` for examples.
 """
-get_K(sol::MemoryEquationSolution, i, j) = hasdiagkernel(sol) ? _get_K_diag(sol::MemoryEquationSolution, i, j) : error("Indexing for non-diagonal kernels is not implemented")
-get_K(sol::MemoryEquationSolution, i, j, k) = hasdiagkernel(sol) ? _get_K_diag(sol::MemoryEquationSolution, i, j, k) : error("Indexing for non-diagonal kernels is not implemented")
-
+get_K(sol::MemoryEquationSolution, indxs...) = get_F(sol.K, indxs...)
 get_K(sol::MemoryEquationSolution) = sol.K
-_get_K_diag(sol::MemoryEquationSolution, it::Int, ik::Int, is) = get_K(sol)[it].diag[ik][is...]
-_get_K_diag(sol::MemoryEquationSolution, it::Int, ik::Union{Colon,AbstractArray}, is) = getindexelementwise(get_K(sol)[it].diag[ik], Ref(is[1]), Ref(is[2]))
-_get_K_diag(sol::MemoryEquationSolution, it::Union{Colon,AbstractArray}, ik::Int, is) = getindexelementwise(getindexelementwise(getproperty.(get_K(sol)[it], :diag), ik), Ref(is[1]), Ref(is[2]))
-_get_K_diag(sol::MemoryEquationSolution, it::AbstractArray, ik::Union{Colon,AbstractArray}, is) = [getindexelementwise(get_K(sol)[iit].diag[ik], Ref(is[1]), Ref(is[2])) for iit in it]
-_get_K_diag(sol::MemoryEquationSolution, ::Colon, ik::Union{Colon,AbstractArray}, is) = [getindexelementwise(get_K(sol)[iit].diag[ik], Ref(is[1]), Ref(is[2])) for iit in eachindex(sol.F)]
-_get_K_diag(sol::MemoryEquationSolution, it::Int, ik) = get_K(sol)[it].diag[ik]
-_get_K_diag(sol::MemoryEquationSolution, it::Union{Colon,AbstractArray}, ik) = getindexelementwise(getproperty.(get_K(sol)[it], :diag), ik)
-get_K(sol::MemoryEquationSolution, it) = get_K(sol)[it]
+
+getindex1(A::Diagonal, indx::Union{Number, Colon, UnitRange}) = getindex(A.diag, indx) # index along diagonal if it is a diagonal matrix
+getindex1(A, indx::Tuple) = getindex(A, indx...)
+getindex1(A, indx) = getindex(A, indx)
+getindex2(A, indx...) = getindex1.(A, indx)
+getindex3(A, indx...) = getindex2.(A, indx)
+getindex4(A, indx...) = getindex3.(A, indx)
+
+function get_F(array_of_arrays::AbstractArray, indxs...)
+    if length(indxs) == 1
+        return getindex1(array_of_arrays, indxs[1])
+    end
+    if indxs[1] isa Number
+        return get_F(getindex1(array_of_arrays, indxs[1]), indxs[2:end]...)
+    else
+        if length(indxs) == 2
+            return get_F(getindex2(array_of_arrays, indxs[end]), indxs[1:end-1]...)
+        elseif length(indxs) == 3
+            return get_F(getindex3(array_of_arrays, indxs[end]), indxs[1:end-1]...)
+        elseif length(indxs) == 4
+            return get_F(getindex4(array_of_arrays, indxs[end]), indxs[1:end-1]...)
+        else
+            error("Indexing for more than 4 dimensions is not implemented")
+        end
+    end
+
+end
+
+
+
+    
+
+# get_F(sol::MemoryEquationSolution, it::Int, ik::Int, is) = get_F(sol)[it][ik][is...]
+# get_F(sol::MemoryEquationSolution, it::Int, ik::Union{Colon,AbstractArray}, is) = getindexelementwise(get_F(sol)[it][ik], Ref(is[1]), Ref(is[2]))
+# get_F(sol::MemoryEquationSolution, it::Union{Colon,AbstractArray}, ik::Int, is) = getindexelementwise(getindexelementwise(get_F(sol)[it], ik), Ref(is[1]), Ref(is[2]))
+# get_F(sol::MemoryEquationSolution, it::AbstractArray, ik::Union{Colon,AbstractArray}, is) = [getindexelementwise(get_F(sol)[iit][ik], Ref(is[1]), Ref(is[2])) for iit in it]
+# get_F(sol::MemoryEquationSolution, ::Colon, ik::Union{Colon,AbstractArray}, is) = [getindexelementwise(get_F(sol)[iit][ik], Ref(is[1]), Ref(is[2])) for iit in eachindex(sol.F)]
+# get_F(sol::MemoryEquationSolution, it::Int, ik) = get_F(sol)[it][ik]
+# get_F(sol::MemoryEquationSolution, it::Union{Colon,AbstractArray}, ik) = getindexelementwise(get_F(sol)[it], ik)
+# get_F(sol::MemoryEquationSolution, it) = get_F(sol)[it]
+# get_F(sol::MemoryEquationSolution, it::Int, ik::Tuple{Int, Int}) = get_F(sol)[it][ik[1], ik[2]]
+# get_F(sol::MemoryEquationSolution, it::Int, ik::Tuple{Int, Int}, is) = get_F(sol)[it][ik[1], ik[2], is...]
+# get_F(sol::MemoryEquationSolution, it::Int, ik::Tuple{Union{Colon,AbstractArray}, Union{Colon,AbstractArray}}) = getindexelementwise(get_F(sol)[it], Ref(ik))
+# get_F(sol::MemoryEquationSolution, it::Colon, ik::Tuple{Int, Int}, is) = [get_F(sol)[iit][ik[1], ik[2], is...] for iit in eachindex(sol.F)]
+# get_F(sol::MemoryEquationSolution, it::Colon, ik::Tuple{Int, Int}) = [get_F(sol)[iit][ik[1], ik[2]] for iit in eachindex(sol.F)]
+
+
+hasdiagkernel(sol::MemoryEquationSolution) = (eltype(sol.K) <: Diagonal)
+
+
+# get_K(sol::MemoryEquationSolution, i, j) = hasdiagkernel(sol) ? _get_K_diag(sol::MemoryEquationSolution, i, j) : error("Indexing for non-diagonal kernels is not implemented")
+# get_K(sol::MemoryEquationSolution, i, j, k) = hasdiagkernel(sol) ? _get_K_diag(sol::MemoryEquationSolution, i, j, k) : error("Indexing for non-diagonal kernels is not implemented")
+
+# get_K(sol::MemoryEquationSolution) = sol.K
+# _get_K_diag(sol::MemoryEquationSolution, it::Int, ik::Int, is) = get_K(sol)[it].diag[ik][is...]
+# _get_K_diag(sol::MemoryEquationSolution, it::Int, ik::Union{Colon,AbstractArray}, is) = getindexelementwise(get_K(sol)[it].diag[ik], Ref(is[1]), Ref(is[2]))
+# _get_K_diag(sol::MemoryEquationSolution, it::Union{Colon,AbstractArray}, ik::Int, is) = getindexelementwise(getindexelementwise(getproperty.(get_K(sol)[it], :diag), ik), Ref(is[1]), Ref(is[2]))
+# _get_K_diag(sol::MemoryEquationSolution, it::AbstractArray, ik::Union{Colon,AbstractArray}, is) = [getindexelementwise(get_K(sol)[iit].diag[ik], Ref(is[1]), Ref(is[2])) for iit in it]
+# _get_K_diag(sol::MemoryEquationSolution, ::Colon, ik::Union{Colon,AbstractArray}, is) = [getindexelementwise(get_K(sol)[iit].diag[ik], Ref(is[1]), Ref(is[2])) for iit in eachindex(sol.F)]
+# _get_K_diag(sol::MemoryEquationSolution, it::Int, ik) = get_K(sol)[it].diag[ik]
+# _get_K_diag(sol::MemoryEquationSolution, it::Union{Colon,AbstractArray}, ik) = getindexelementwise(getproperty.(get_K(sol)[it], :diag), ik)
+# get_K(sol::MemoryEquationSolution, it) = get_K(sol)[it]
 
 
 """

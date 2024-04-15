@@ -1,8 +1,6 @@
 
-# using ModeCouplingTheory, LinearAlgebra, StaticArrays
-# import ModeCouplingTheory: MemoryKernel, evaluate_kernel
+import ModeCouplingTheory: MemoryKernel, evaluate_kernel, evaluate_kernel!
 
-# test 
 struct MyWeirdKernel{T} <: MemoryKernel
     α :: T
 end
@@ -56,8 +54,9 @@ dat2 = get_F(sol2, :, (1,1))
 dat3 = get_F(sol3, :)
 dat4 = get_F(sol4, :, (1,1), (1,1))
 
-@test allequal(dat1, dat2)
-@test allequal(dat1, dat3)
-@test allequal(dat1, dat4)
+@test maximum(abs.(dat1 - dat2)) < 1e-14
+@test maximum(abs.(dat1 - dat3)) < 1e-14
+@test maximum(abs.(dat1 - dat4)) < 1e-14
+ 
 
 
