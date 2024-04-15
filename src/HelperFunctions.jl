@@ -41,14 +41,21 @@ end
 Finds the error between a new and old iteration of F. The returned scalar will be compared 
 to the tolerance to establish convergence. 
 """
-function find_error(F_new::T, F_old::T) where {T}
-    return maximum(abs.(F_new - F_old))
+function find_error(F_new::T, F_old::T) where T
+    error = zero(eltype(eltype(F_old)))
+    for i in eachindex(F_old)
+        new_error = maximum(abs, F_new[i] - F_old[i])
+        if new_error > error
+            error = new_error
+        end
+    end
+    return error
 end
 
 function find_error(F_new::T, F_old::T) where {T<:Vector}
     error = zero(eltype(eltype(F_old)))
     for i in eachindex(F_old)
-        new_error = abs(maximum(F_new[i] - F_old[i]))
+        new_error = maximum(abs, F_new[i] - F_old[i])
         if new_error > error
             error = new_error
         end
@@ -61,16 +68,19 @@ function find_error(F_new::Number, F_old::Number)
 end
 
 
+
+
 clean_mulitplicative_coefficient(coeff::Vector, F₀::Vector) = Diagonal(coeff)
 clean_mulitplicative_coefficient(coeff::SVector, F₀::SVector) = Diagonal(coeff)
 clean_mulitplicative_coefficient(coeff::Vector, F₀::SVector) = Diagonal(SVector{length(coeff)}(coeff))
-clean_mulitplicative_coefficient(coeff::Number, F₀::Vector) = coeff * I
-clean_mulitplicative_coefficient(coeff::Number, F₀::SVector) = coeff * I
+clean_mulitplicative_coefficient(coeff::Number, F₀::AbstractMatrix) = coeff * I
+clean_mulitplicative_coefficient(coeff::Number, F₀::AbstractVector) = coeff * I
 clean_mulitplicative_coefficient(coeff, F₀) = coeff
 
 clean_additive_coefficient(coeff::Number, F₀::SVector) = coeff .+ F₀ * zero(eltype(F₀))
 clean_additive_coefficient(coeff::Number, F₀::Vector) = coeff .+ F₀ * zero(eltype(F₀))
 clean_additive_coefficient(coeff::SMatrix, F₀::Vector{<:SMatrix}) = Ref(coeff) .+ F₀ .* Ref(zero(eltype(F₀)))
+clean_additive_coefficient(coeff::Number, F₀::AbstractMatrix) = coeff .+ F₀ * zero(eltype(F₀))
 clean_additive_coefficient(coeff, F₀) = coeff
 
 
@@ -164,6 +174,53 @@ get_F(sol::MemoryEquationSolution, ::Colon, ik::Union{Colon,AbstractArray}, is) 
 get_F(sol::MemoryEquationSolution, it::Int, ik) = get_F(sol)[it][ik]
 get_F(sol::MemoryEquationSolution, it::Union{Colon,AbstractArray}, ik) = getindexelementwise(get_F(sol)[it], ik)
 get_F(sol::MemoryEquationSolution, it) = get_F(sol)[it]
+get_F(sol::MemoryEquationSolution, it::Int, ik::Tuple{Int, Int}) = get_F(sol)[it][ik[1], ik[2]]
+get_F(sol::MemoryEquationSolution, it::Int, ik::Tuple{Int, Int}, is) = get_F(sol)[it][ik[1], ik[2], is...]
+get_F(sol::MemoryEquationSolution, it::Colon, ik::Tuple{Int, Int}, is) = [get_F(sol)[iit][ik[1], ik[2], is...] for iit in eachindex(sol.F)]
+get_F(sol::MemoryEquationSolution, it::Colon, ik::Tuple{Int, Int}) = [get_F(sol)[iit][ik[1], ik[2]] for iit in eachindex(sol.F)]
+
+function test_getF()
+    # scalar case
+    F = [rand() for i =1:10]
+    sol = (F = F,)
+    @test get_F(sol) == F
+    @test get_F(sol, 2:4) == F[2:4]
+    # vector case
+    F = [[1,2], [3,4], [5,6]]
+    sol = (F = F,)
+    @test get_F(sol) == F
+    @test get_F(sol, 2, 1) == 3
+    @test get_F(sol, 2, 2) == 4
+    @test get_F(sol, 2, 1:2) == [3, 4]
+    @test get_F(sol, 2:3, 1) == [3, 5]
+    @test get_F(sol, 2:3, 1:2) == [[3, 4], [5, 6]]
+    # matrix case
+    F = [[[1 2]; [3 4]], [[5 6]; [7 8]]]
+    sol = (F = F,)
+    @test get_F(sol) == F
+    @test get_F(sol, 2, (1,1)) == 5
+    @test get_F(sol, 2, (1,2)) == 6
+    @test get_F(sol, 2, (1,1:2)) == [5, 6]
+    @test get_F(sol, 2, (1:2, 1)) == [5, 7]
+    @test get_F(sol, 2, (1:2, 1:2)) == [[5 6]; [7 8]]
+    @test get_F(sol, :, (1,1)) == [1, 5]
+    
+    # vector of Smatrix case
+
+    F = [[SMatrix{2,2}(1,2,3,4), SMatrix{2,2}(5,6,7,8)], [SMatrix{2,2}(9,10,11,12), SMatrix{2,2}(13,14,15,16)]]
+    sol = (F = F,)
+    @test get_F(sol) == F
+    @test get_F(sol, 2, 1) == SMatrix{2,2}(9,10,11,12)
+    @test get_F(sol, 2, 2) == SMatrix{2,2}(13,14,15,16)
+    @test get_F(sol, 2, 1:2) == [SMatrix{2,2}(9,10,11,12), SMatrix{2,2}(13,14,15,16)]
+    @test get_F(sol, 1:2, 1) == [SMatrix{2,2}(1,2,3,4), SMatrix{2,2}(9,10,11,12)]
+    @test get_F(sol, 1, 2, (1,2)) == 6
+    @test get_F(sol, 1, 2, (1,1)) == 5
+    @test get_F(sol, 1, 2, (1,1:2)) == [5, 6]
+    @test get_F(sol, 1, 2, (1:2, 1)) == [5, 7]
+    @test get_F(sol, :, 2, (1,2)) == [7, 15]
+    @test get_F(sol, 1, :, (1,1)) == [1, 9]
+end
 
 
 hasdiagkernel(sol::MemoryEquationSolution) = (eltype(sol.K) <: Diagonal)

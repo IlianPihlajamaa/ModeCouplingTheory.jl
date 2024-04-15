@@ -460,10 +460,10 @@ function new_time_mapping!(equation::AbstractMemoryEquation, solver::TimeDoublin
             K[j] = K[2j]
         end
         for j = 2N+1:4N
-            F_I[j] = equation.F₀ * zero(eltype(eltype(F_I)))
-            K_I[j] = equation.K₀ * zero(eltype(eltype(K_I)))
-            F[j] = equation.F₀ * zero(eltype(eltype(F)))
-            K[j] = equation.K₀ * zero(eltype(eltype(K)))
+            F_I[j] = equation.F₀ * zero(eltype(eltype(eltype(F_I))))
+            K_I[j] = equation.K₀ * zero(eltype(eltype(eltype(K_I))))
+            F[j] = equation.F₀ * zero(eltype(eltype(eltype(F))))
+            K[j] = equation.K₀ * zero(eltype(eltype(eltype(K))))
         end
     else
         isdiag = check_if_diag(K_I[1])
