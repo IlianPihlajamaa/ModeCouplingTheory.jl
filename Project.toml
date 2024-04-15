@@ -1,7 +1,7 @@
 name = "ModeCouplingTheory"
 uuid = "6cad4188-63cb-4528-a10f-dbb409b456c6"
 authors = ["s158686 "]
-version = "0.8.2"
+version = "0.8.4"
 
 [deps]
 Dierckx = "39dd38d3-220a-591b-8e3c-4c3a8c710a94"
@@ -18,7 +18,8 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 [compat]
 Dierckx = "0.5"
 LinearSolve = "2"
-LoopVectorization = "0.12"
+LoopVectorization = "0.12.160"
 SpecialFunctions = "2"
-StaticArrays = "1"
-julia = "1.7"
+StaticArrays = "1.5"
+julia = "1.8"
+
