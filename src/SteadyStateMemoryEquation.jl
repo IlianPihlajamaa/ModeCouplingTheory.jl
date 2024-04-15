@@ -18,7 +18,7 @@ function solve_steady_state_immutable(γ, F₀, kernel; tolerance=10^-8, max_ite
         K = evaluate_kernel(kernel, F, t)
         err = find_error(F, Fold)
         Fold = F
-        if verbose
+        if verbose && iterations % 10 == 0
             println("The error is $(err) after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
         end
     end
@@ -89,7 +89,7 @@ function solve_steady_state_mutable(γ, F₀, kernel; tolerance=10^-8, max_itera
         evaluate_kernel!(K, kernel, F, t)
         err = find_error(F, Fold)
         Fold .= F
-        if verbose
+        if verbose && iterations % 10 == 0
             println("The error is $(err) after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
         end
     end
