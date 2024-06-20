@@ -1,8 +1,8 @@
-struct SCGLEKernel <: MemoryKernel
-    k::Vector{Float64}
-    λ::Vector{Float64}
-    M::Vector{Float64}
-    prefactor::Float64
+struct SCGLEKernel{T, T2} <: MemoryKernel
+    k::Vector{T}
+    λ::Vector{T}
+    M::Vector{T}
+    prefactor::T2
 end
 
 """
@@ -50,7 +50,7 @@ function evaluate_kernel!(out::Diagonal, kernel::SCGLEKernel, F, t)
     Nk = length(k_array)
     Nk2 = div(Nk,2)
     # Δζ(q) Integral 
-    Δζ = 0.0
+    Δζ = zero(eltype(M))
     for i in 1:Nk2
         Δζ += M[i]*F[i]*F[Nk2+i]
     end
