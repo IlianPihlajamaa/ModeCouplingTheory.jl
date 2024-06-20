@@ -11,7 +11,7 @@ end
 Constructor of a SCGLEKernel. It implements the kernel
 K(k,t) = λ(k)Δζ(t)
 where 
-Δζ(t) = kBT / (36πϕ) ∫dq M^2(k,q) Fs(q,t) F(q,t)
+Δζ(t) = kBT / (144 π^2 ϕ) ∫dq⃗ M^2(k,q) Fs(q,t) F(q,t)
 in which k and q are vectors. For Fs and F being the self- and collective-intermediate scattering function.
 
 # Arguments:

@@ -6,7 +6,7 @@ $$ \frac{\partial F}{\partial t} + \frac{k^2D_0}{S(k)}F(k,t) + \lambda(k)\int_0^
 
 In this case, $\alpha=0$, $\beta=1.0$, $\gamma=k^2D_0/S(k)$, $\delta=0.0$ and $K(k,t) = \lambda(k)\Delta\zeta(t)$. In the context of the SCGLE theory, $\Delta\zeta(t)$ is defined as
 
-$$\Delta \zeta(t) = \frac{k_BT}{36\pi\varphi} \int d\textbf{q} M^2(q) F_s(q,t) F(q,t),$$
+$$\Delta \zeta(t) = \frac{k_BT}{144\pi^2\varphi} \int d\textbf{q} M^2(q) F_s(q,t) F(q,t),$$
 
 where $M(k) = k \frac{S(k)-1}{S(k)}$, and $\varphi$ is the volume fraction.
 
