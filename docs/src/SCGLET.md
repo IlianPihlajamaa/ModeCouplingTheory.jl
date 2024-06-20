@@ -29,11 +29,11 @@ end
 k_VW(ϕ :: Float64, k :: Float64) = k*((ϕ_VW(ϕ)/ϕ)^(1.0/3.0))
 
 # initial setup
-Nk = 100; dk = 0.4; k = [dk/2 + dk*i for i=0:Nk-1]; η = 0.5
-Ck = find_analytical_C_k(k, η)
+Nk = 800; dk = 0.4; k = [dk/2 + dk*i for i=0:Nk-1]; η = 0.5
+S = find_analytical_S_k(k, η)
 ∂F0 = zeros(2*Nk); α = 0.0; β = 1.0; γ = @. k^2/S; δ = 0.0
 
-kernel = SCGLEKernel(ϕ, k, S);
+kernel = SCGLEKernel(η, k, S);
 equation = MemoryEquation(α, β, γ, δ, S, ∂F0, kernel);
 solver = TimeDoublingSolver(Δt=10^-5, t_max=10.0^10, 
     N = 8, tolerance=10^-8, verbose=true);
