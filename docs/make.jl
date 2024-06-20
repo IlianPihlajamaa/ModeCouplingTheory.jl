@@ -10,6 +10,7 @@ makedocs(
         "Equations and Solvers" => "Problems_and_Solvers.md",
         "Kernels" => "Kernels.md",
         "Mode-Coupling Theory" => "MCT.md",
+        "Self-Consistent Generalized Langevin Equation Theory" => "SCGLET.md",
         "Scope" => "Scope.md",
         "From Python" => "FromPython.md",
         "Internals" => "internals.md",

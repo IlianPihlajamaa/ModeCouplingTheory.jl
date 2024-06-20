@@ -3,6 +3,7 @@ abstract type MemoryKernel end
 include("Kernels/SchematicKernels.jl")
 include("Kernels/ModeCouplingKernels.jl")
 include("Kernels/MultiComponentKernels.jl")
+include("Kernels/SCGLEkernel.jl")
 
 
 """
