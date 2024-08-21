@@ -10,7 +10,7 @@ $$K(k,t) =\frac{\rho k_BT}{16\pi^3 m} \int d\mathbf{q} V(\mathbf{k}, \mathbf{q})
 
 in which the vertex $V(\textbf{k}, \textbf{q}) = (\textbf{k}\cdot\textbf{q})c(q)/k+(\textbf{k}\cdot(\textbf{k}-\textbf{q})c(|\textbf{k}-\textbf{q}|)/k$. For more details and the meaning of the symbols, see [1, 2].
 
-This memory kernel integral is discretised as follows:
+This memory kernel integral is discretized as follows:
 
 $$\int d\textbf{q}f(q, |\textbf{k}-\textbf{q}|) = 2\pi\int_0^\infty dq q^2 \int_0^\pi d\theta \sin \theta f(q, |\textbf{k}-\textbf{q}|) = \frac{2\pi}{k}\int_0^\infty dq \int_{|k-q|}^{k+q}dp pq f(q, p) \approx \frac{2\pi \Delta k^2}{k_i}\sum_{j=1}^{N_k} \sum_{l=|j-i|+1}^{j+i-1} \frac{p_l q_j}{k_i}f(q_j, p_l).$$
  
@@ -58,7 +58,7 @@ end
 
 Nk = 100; kmax = 40.0; 
 dk = kmax/Nk; k_array = dk*(collect(1:Nk) .- 0.5) # construct the grid this way to satisfy the assumptions
-                                                  # of the discretisation.
+                                                  # of the discretization.
 Sₖ = find_analytical_S_k(k_array, η)
 
 ∂F0 = zeros(Nk); α = 1.0; β = 0.0; γ = @. k_array^2*kBT/(m*Sₖ); δ = 0.0
@@ -140,7 +140,7 @@ in which $\Omega^2_{\alpha\gamma} = k^2 k_B T x_\alpha/m_\alpha \cdot \left(S^{-
 
 $$K_{\alpha\beta}(k,t) =\frac{k_B T \rho}{2 x_\beta m_\alpha (2\pi)^3} \int d\mathbf{q} V_{\mu'\nu'\alpha}(\mathbf{k}, \mathbf{q})F_{\mu\mu'}(q, t)F_{\nu\nu'}(|\mathbf{k}-\mathbf{q}|,t)V_{\mu\nu\beta}(\mathbf{k}, \mathbf{q})$$
 
-in which the vertex $V_{\mu\nu\alpha}(\mathbf{k}, \mathbf{q}) = (\textbf{k}\cdot\textbf{q})c_{\alpha\mu}(q)\delta_{\alpha\nu}/k+(\textbf{k}\cdot(\textbf{k}-\textbf{q})c_{\alpha\nu}(|\textbf{k}-\textbf{q}|)\delta_{\alpha\mu}/k$. Here, the Greek indices indicate species labels, and we have adopted the convention that we sum over repeated indices. This memory kernel has also been implemented using the Bengtzelius' trick. It requires $O(N_k^2 N_s^2)$ storage and runs in $O(N_k^2 N_s^4)$ in which $N_s$ is the number of species.
+in which the vertex $V_{\mu\nu\alpha}(\mathbf{k}, \mathbf{q}) = (\textbf{k}\cdot\textbf{q})c_{\alpha\mu}(q)\delta_{\alpha\nu}/k+(\textbf{k}\cdot(\textbf{k}-\textbf{q})c_{\alpha\nu}(|\textbf{k}-\textbf{q}|)\delta_{\alpha\mu}/k$. Here, the Greek indices indicate species labels, and we have adopted the convention that we sum over repeated indices. This memory kernel has also been implemented using the Bengtzelius trick. It requires $O(N_k^2 N_s^2)$ storage and runs in $O(N_k^2 N_s^4)$ in which $N_s$ is the number of species.
 
 Numerically, the correlator $F_{\alpha\beta}(k)$ is implemented as a `Vector` of length `Nk` of which each of the elements is a small `Ns` x `Ns` static matrix. This means that this is also the expected form of the initial condition. If, instead you have the data in a matrix format where each element of the matrix is a list of k-vales, use the `convert_multicomponent_structure_factor(S)` function to convert it into the right format, see the API page. 
 
@@ -208,7 +208,7 @@ plot!(log10.(t), Fk_22/Sₖ[ik][2,2], ls=:dash, lw=2, color=4, label="Fbb(k=$k, 
 
 ![image](images/MCMCTKernel.png)
 
-### Tagged multi-compontent mode-coupling theory
+### Tagged multi-component mode-coupling theory
 
 The tagged multi-component mode-coupling theory equation reads
 
@@ -233,7 +233,7 @@ taggedkernel = TaggedMultiComponentModeCouplingKernel(s, ρ, kBT, m, k_array, S�
 taggedequation = MemoryEquation(α, β, γ, δ, F0, dF0, taggedkernel);
 taggedsol = solve(taggedequation, solver)
 ```
-In order to solve the tagged particle equation for all species, one should loop over the above code, changing specie index $s$ from 1 to the number of species.
+In order to solve the tagged particle equation for all species, one should loop over the above code, changing species index $s$ from 1 to the number of species.
 
 ### Multi-component mean-squared displacements
 
@@ -265,7 +265,7 @@ msdsol = solve(msdequation, solver)
 
 ## Bengtzelius' Trick
 
-Bengtzelius' trick is a fast way to evaluate the integral $I(k) = \int d \mathbf{q} A(q, |\mathbf{k}-\mathbf{q}|)$. It is used in the evaluation of all memory kernels listed on this page. Very briefly: after discretisation of the integral, one is left with terms such as $T_{i}[A]=\sum_{j=1}^{N_k}\sum_{l=|j-i|+1}^{i+j-1}  A(p_{l},q_{j})$ which are largely independent of $i$. Because of this, one can calculate $T_{i}[A]$ from $T_{i-1}[A]$ in order $N_k$ operations. Wrting $A_{l,j} = A(l\Delta k, j\Delta k)$, the recurrence relation that allows one to do so is given by 
+Bengtzelius' trick is a fast way to evaluate the integral $I(k) = \int d \mathbf{q} A(q, |\mathbf{k}-\mathbf{q}|)$. It is used in the evaluation of all memory kernels listed on this page. Very briefly: after discretization of the integral, one is left with terms such as $T_{i}[A]=\sum_{j=1}^{N_k}\sum_{l=|j-i|+1}^{i+j-1}  A(p_{l},q_{j})$ which are largely independent of $i$. Because of this, one can calculate $T_{i}[A]$ from $T_{i-1}[A]$ in order $N_k$ operations. Writing $A_{l,j} = A(l\Delta k, j\Delta k)$, the recurrence relation that allows one to do so is given by 
 
 $$T_{i}[A] = T_{i-1}[A] + \sum_{j=1}^{N_k-i+1}(A_{j, j+i-1}+A_{j+i-1, j}) - \sum_{j=1}^{i-1}A_{j,i-j}$$
 
@@ -275,11 +275,11 @@ $$T_{1}[A] = \sum_{j=1}^{N_k}A_{j, j}.$$
 
 ## Other dimensions
 
-The equations present above for $F(k,t),\ F_s(k,t)$ and $\delta r^2(t)$ have also been implemented for $d$-dimensional Euclidean space. By default, the solver will assume that we are working in $d=3$. To change this, one should simply modify the keyword argument `dim` when calling the appropriate kernel. For instance:
+The equations presented above for $F(k,t),\ F_s(k,t)$ and $\delta r^2(t)$ have also been implemented for $d$-dimensional Euclidean space. By default, the solver will assume that we are working in $d=3$. To change this, one should simply modify the keyword argument `dim` when calling the appropriate kernel. For instance:
 
 ```julia 
 kernel_MCT = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ ; dims=5)
 kernel_tagged_MCT = TaggedModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol; dims=5)
 kernel_MSD_MCT = MSDModeCouplingKernel(ρ, kBT, m, k_array, Sₖ, sol, taggedsol; dims=5)
 ```
-Note, this code is not written or tested for spatial dimensions higher than $d \gtrapprox 20$. 
+Note that this code is not written or tested for spatial dimensions higher than $d \gtrapprox 20$. 
