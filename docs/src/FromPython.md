@@ -9,7 +9,7 @@ First, install `juliacall` through the `pip` package manager, with
 ```bash
 pip install juliacall
 ```
-This package allows one to call julia from python 
+This package allows one to call Julia from Python 
 
 In `Python` (only versions $\geq$ 3 are supported), run:
 
@@ -29,14 +29,14 @@ To import this package in order to use it we need to run:
 ```python
 jl.seval("using ModeCouplingTheory")
 ```
-The `jl.seval` function let's us evaluate any julia code from within Python.
+The `jl.seval` function lets us evaluate any Julia code from within Python.
 
 ## Usage
 
 We can now use ModeCouplingTheory.jl in Python:
 
 ```python
-# since Python doesn't like all unicode symbols (α, β, ∂, ...), we use standard letters:
+# Since Python doesn't like all Unicode symbols (α, β, ∂, ...), we use standard letters:
 k = 3.99999
 a = 1.0
 b = 0.0
