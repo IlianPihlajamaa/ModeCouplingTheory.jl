@@ -38,11 +38,11 @@ plot!(log10.(t), log10.(t .+ cos.(t) .- sin.(t)), ls=:dash, lw=3)
 
 ## Automatic differentiation
 
-This package is compatible with forward-mode automatic differentiation. This makes it possible to calculate quatities such as $\frac{dF(t)}{d\lambda}$ for example, where $\lambda$ is a parameter of the memory kernel.
+This package is compatible with forward-mode automatic differentiation. This makes it possible to calculate quantities such as $\frac{dF(t)}{d\lambda}$ for example, where $\lambda$ is a parameter of the memory kernel.
 
 ### Example
 
-Let's take the derivative of the solution to the generalized Langevin equation with the exponentially decaying kernel with respect to the coupling parameter. First we need to write a function that solves this equation and outputs the solution for a given coupling parameter. Since we know the analytical solution, we can compare with the derivative of that.
+Let's take the derivative of the solution to the generalized Langevin equation with the exponentially decaying kernel with respect to the coupling parameter. First, we need to write a function that solves this equation and outputs the solution for a given coupling parameter. Since we know the analytical solution, we can compare it with the derivative of that.
 
 ```julia
 using ModeCouplingTheory, Plots
@@ -89,8 +89,8 @@ plot!(log10.(sol.t), sol.dF, ls=:dash, lw=3, label="Numerical solution", legend=
 
 ## Measurement errors and other number types
 
-Similar to automatically evaluating derivatives, it is also possible to automatically propagate measurement errors through the entire solution process. This does however cause a serious performace loss. It works by instead of doing arithmetic with standard floating point numbers, it uses numbers with an error attached. The 
-[Measurements.jl](https://juliaphysics.github.io/Measurements.jl/stable/) package implements how arithmetic with such numbers should be performed. Analagously, one can use arbitrary precision arithmetic (when many decimal places of precision are required) or complex valued numbers together with this package.
+Similar to automatically evaluating derivatives, it is also possible to automatically propagate measurement errors through the entire solution process. This does however cause a serious performance loss. It works by instead of doing arithmetic with standard floating point numbers, it uses numbers with an error attached. The 
+[Measurements.jl](https://juliaphysics.github.io/Measurements.jl/stable/) package implements how arithmetic with such numbers should be performed. Analogously, one can use arbitrary precision arithmetic (when many decimal places of precision are required) or complex-valued numbers together with this package.
 
 ### Example
 
@@ -115,8 +115,8 @@ We use the same functions to find the structure factor as before:
 
 ```
 """
-Finds the fourier transform of the direct correlation function given by the 
-analytical percus yevick solution of the Ornstein Zernike 
+Finds the Fourier transform of the direct correlation function given by the 
+analytical Percus-Yevick solution of the Ornstein Zernike 
 equation for hard spheres for a given volume fraction η on the coordinates r
 in units of one over the diameter of the particles
 """ 
@@ -134,7 +134,7 @@ end
 
 """
 Finds the static structure factor given by the 
-analytical percus yevick solution of the Ornstein Zernike 
+analytical Percus-Yevick solution of the Ornstein Zernike 
 equation for hard spheres for a given volume fraction η on the coordinates r
 in units of one over the diameter of the particles
 """ 
@@ -178,7 +178,7 @@ plot!(p, log10.(get_t(sol)[2:10:end]), get_F(sol, :, 19)/Sₖ_uncertain[19], lab
 
 ## Steady state (non-ergodicity parameter)
 
-This package also exports a function `solve_steady_state(γ, F₀, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false)` to find the steady-state solution of a mode-coupling like equation. In order to find it, it performs a recursive iteration of the mapping 
+This package also exports a function `solve_steady_state(γ, F₀, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false)` to find the steady-state solution of a mode-coupling-like equation. In order to find it, it performs a recursive iteration of the mapping 
 
 $$F^\infty = (K(F^\infty,t=\infty) + γ)^{-1} \cdot K(F^\infty, t=\infty) \cdot F(t=0)$$
 
