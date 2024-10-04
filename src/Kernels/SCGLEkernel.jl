@@ -126,9 +126,9 @@ function MSD(k::Vector{Float64}, sol, solver)
     return msdsol.t, msdsol.F, msdkernel.Δζ
 end
 
-@doc"""
+"""
 ΔG = (kBT/60π²)∫dk k⁴[(1/S)(∂S/∂k)]²[(F/S)]²
-just the G. Naegele formula for shear viscosity relaxation. It must works for the MCT kernel.
+just the G. Naegele formula for shear viscosity relaxation. It must work for the MCT kernel.
 """
 function get_ΔG(sol, k_array, Sₖ)
     t = sol.t
