@@ -2,29 +2,29 @@
 
 The differential equation to solve is
 
-$$ \frac{\partial F}{\partial t} + \frac{k^2D_0}{S(k)}F(k,t) + \lambda(k)\int_0^t dt' \Delta\zeta(t-t')\frac{\partial F}{\partial t'} = 0$$
+$\frac{\partial F}{\partial t} + \frac{k^2D_0}{S(k)}F(k,t) + \lambda(k)\int_0^t dt' \Delta\zeta(t-t')\frac{\partial F}{\partial t'} = 0$
 
 In this case, $\alpha=0$, $\beta=1.0$, $\gamma=k^2D_0/S(k)$, $\delta=0.0$ and $K(k,t) = \lambda(k)\Delta\zeta(t)$. In the context of the SCGLE theory, $\Delta\zeta(t)$ is defined as
 
-$$\Delta \zeta(t) = \frac{k_BT}{36\pi\varphi} \int dq  q^2 M^2(q) F_s(q,t) F(q,t),$$
+$\Delta \zeta(t) = \frac{k_BT}{36\pi\varphi} \int dq  q^2 M^2(q) F_s(q,t) F(q,t),$
 
 where $M(k) = k \frac{S(k)-1}{S(k)}$, and $\varphi$ is the volume fraction.
 
 This means we need to solve a time integral of the form of the first equation for the collective part, coupled with a similar equation for the self component. To do this, we create a long array of the form
 
-$$ F(t) = [f_s(t) , f(t)]=[f_s[1], f_s[2], ..., f_s[Nk], f[1], f[2], ..., f[Nk]]$$
+$F(t) = [f_s(t) , f(t)]=[f_s[1], f_s[2], ..., f_s[Nk], f[1], f[2], ..., f[Nk]]$
 
 and thus the coefficient $\gamma$ for $D_0=1.0$ becomes
 
-$$\gamma = [k_i^2, k_i^2/S(k_i)].$$
+$\gamma = [k_i^2, k_i^2/S(k_i)].$
 
 Analogously, the $\lambda(k)$ array is
 
-$$ \lambda = [\lambda_s(k_i), \lambda_c(k_i)],$$
+$\lambda = [\lambda_s(k_i), \lambda_c(k_i)],$
 
 where 
 
-$$\lambda_s = \lambda_c = \frac{1}{1+(k/k_c)^2}$$
+$\lambda_s = \lambda_c = \frac{1}{1+(k/k_c)^2}$
 with $k_c/2\pi=1.302$. 
 
 The following example shows how to solve these equations with `ModeCouplingTheory.jl`:
