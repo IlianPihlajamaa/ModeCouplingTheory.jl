@@ -3,7 +3,6 @@
 [![codecov](https://codecov.io/github/IlianPihlajamaa/ModeCouplingTheory.jl/graph/badge.svg?token=e6V2TA22Bg)](https://codecov.io/github/IlianPihlajamaa/ModeCouplingTheory.jl)
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://IlianPihlajamaa.github.io/ModeCouplingTheory.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://IlianPihlajamaa.github.io/ModeCouplingTheory.jl/dev)
-[![Downloads](https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/ModeCouplingTheory)](https://pkgs.genieframework.com?packages=ModeCouplingTheory)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.05737/status.svg)](https://doi.org/10.21105/joss.05737)
 
 
