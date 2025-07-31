@@ -142,7 +142,7 @@ $$K_{\alpha\beta}(k,t) =\frac{k_B T \rho}{2 x_\beta m_\alpha (2\pi)^3} \int d\ma
 
 in which the vertex $V_{\mu\nu\alpha}(\mathbf{k}, \mathbf{q}) = (\textbf{k}\cdot\textbf{q})c_{\alpha\mu}(q)\delta_{\alpha\nu}/k+(\textbf{k}\cdot(\textbf{k}-\textbf{q})c_{\alpha\nu}(|\textbf{k}-\textbf{q}|)\delta_{\alpha\mu}/k$. Here, the Greek indices indicate species labels, and we have adopted the convention that we sum over repeated indices. This memory kernel has also been implemented using the Bengtzelius trick. It requires $O(N_k^2 N_s^2)$ storage and runs in $O(N_k^2 N_s^4)$ in which $N_s$ is the number of species.
 
-Numerically, the correlator $F_{\alpha\beta}(k)$ is implemented as a `Vector` of length `Nk` of which each of the elements is a small `Ns` x `Ns` static matrix. This means that this is also the expected form of the initial condition. If, instead you have the data in a matrix format where each element of the matrix is a list of k-vales, use the `convert_multicomponent_structure_factor(S)` function to convert it into the right format, see the API page. 
+Numerically, the correlator $F_{\alpha\beta}(k)$ is implemented as a `Vector` of length `Nk` of which each of the elements is a small `Ns` x `Ns` static matrix. This means that this is also the expected form of the initial condition. If, instead you have the data in a matrix format where each element of the matrix is a list of k-values, use the `convert_multicomponent_structure_factor(S)` function to convert it into the right format, see the API page. 
 
 All symbols have the same meaning as those presented in "Weysser, F., Puertas, A. M., Fuchs, M., & Voigtmann, T. (2010). Structural relaxation of polydisperse hard spheres: Comparison of the mode-coupling theory to a Langevin dynamics simulation. Physical review E, 82(1), 011504."
 
@@ -195,10 +195,10 @@ ik = 19
 k = k_array[ik]
 t = get_t(sol)
 
-Fk_11 = get_F(:, ik, (1,1))
-Fk_12 = get_F(:, ik, (1,2))
-Fk_21 = get_F(:, ik, (2,1))
-Fk_22 = get_F(:, ik, (2,2))
+Fk_11 = get_F(sol, :, ik, (1,1))
+Fk_12 = get_F(sol, :, ik, (1,2))
+Fk_21 = get_F(sol, :, ik, (2,1))
+Fk_22 = get_F(sol, :, ik, (2,2))
 
 p = plot(log10.(t), Fk_11/Sₖ[ik][1,1], ls=:dash, lw=2, color=1, label="Faa(k=$k, t)") 
 plot!(log10.(t), Fk_12/Sₖ[ik][1,2], lw=2, color=2, label="Fab(k=$k, t)") 
@@ -275,7 +275,7 @@ $$T_{1}[A] = \sum_{j=1}^{N_k}A_{j, j}.$$
 
 ## Other dimensions
 
-The equations presented above for $F(k,t),\ F_s(k,t)$ and $\delta r^2(t)$ have also been implemented for $d$-dimensional Euclidean space. By default, the solver will assume that we are working in $d=3$. To change this, one should simply modify the keyword argument `dim` when calling the appropriate kernel. For instance:
+The equations presented above for $F(k,t),\ F_s(k,t)$ and $\delta r^2(t)$ have also been implemented for $d$-dimensional Euclidean space. By default, the solver will assume that we are working in $d=3$. To change this, one should simply modify the keyword argument `dims` when calling the appropriate kernel. For instance:
 
 ```julia 
 kernel_MCT = ModeCouplingKernel(ρ, kBT, m, k_array, Sₖ ; dims=5)
