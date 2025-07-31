@@ -10,6 +10,7 @@ export solve, TimeDoublingSolver, EulerSolver
 export ModeCouplingKernel, MultiComponentModeCouplingKernel, ExponentiallyDecayingKernel, SchematicDiagonalKernel, SchematicF123Kernel, SchematicF1Kernel, SchematicF2Kernel, SchematicMatrixKernel
 export SjogrenKernel, TaggedSchematicF2Kernel, TaggedModeCouplingKernel, TaggedMultiComponentModeCouplingKernel
 export InterpolatingKernel, SCGLEKernel
+export ActiveMCTKernel
 export AbstractMemoryEquation, MemoryEquation
 export MemoryKernel, evaluate_kernel, evaluate_kernel!
 export find_relaxation_time, solve_steady_state
