@@ -67,21 +67,23 @@ end
 
 ######################################################################
 
-struct TaggedActiveMCTKernel <: MemoryKernel
-    k_array ::Vector{Float64}
-    prefactor ::Float64
-    J ::Array{Float64, 3}
-    V2 ::Array{Float64, 3}
-    Fsol
+struct TaggedActiveMCTKernel{V,F,VA,FF,tD} <: MemoryKernel
+    k_array ::V
+    prefactor ::F
+    J ::VA
+    V2 ::VA
+    Fsol ::FF
+    tDict ::tD
 end
 
 """
+    TaggedActiveMCTkernel(ρ, k_array, w0, wk, Sk, Fsol, dim)
+
 M(k,t) =  ρ w0 / ((2π)^dim ) ∫ dq  V(k,q)^2 F(q,t) Fs(k-q,t)
 V(k,q) = 1/k (k * q) c(q)
 """
-function TaggedActiveMCTKernel(ρ, k_array, w0, wk, Sk, Fsol)
+function TaggedActiveMCTKernel(ρ, k_array, w0, wk, Sk, Fsol, dim)
     Δk = k_array[2] - k_array[1];
-    dim=3;
     prefactor = ρ * Δk^2 / ((2*π)^dim) * surface_d_dim_unit_sphere(dim-1);
     Nk = length(k_array);
     
@@ -93,13 +95,16 @@ function TaggedActiveMCTKernel(ρ, k_array, w0, wk, Sk, Fsol)
         k = k_array[i];
         q = k_array[j];
         p = k_array[l];
+
         cp = mCk[l];
-        V = cp/(2*k)*(k^2 + p^2 - q^2);
-        V2[l,j,i] = w0 * V^2;
+        
+        V2[l,j,i] = w0 * ( cp/(2*k)*(k^2 + p^2 - q^2) )^2;
         J[l,j,i] = 2*p*q/((2*k)^(dim-2))*( (q+p-k)*(k+p-q)*(k+q-p)*(k+p+q) )^((dim-3)/2);
     end
 
-    return TaggedActiveMCTKernel(k_array, prefactor, J, V2, Fsol)
+    tDict = Dict(zip(Fsol.t, eachindex(Fsol.t)));
+
+    return TaggedActiveMCTKernel(k_array, prefactor, J, V2, Fsol, tDict)
 end
 
 function evaluate_kernel(kernel::TaggedActiveMCTKernel, Fs, t)
@@ -113,12 +118,15 @@ function evaluate_kernel!(out::Diagonal, kernel::TaggedActiveMCTKernel, Fs, t)
     k_array = kernel.k_array
     Nk = length(k_array)
 
-    # get index of time
-    time = findall(x -> x == t, get_t(kernel.Fsol))[1]; 
-    F_col = get_F(kernel.Fsol, time, :)
+    J = kernel.J;
+    V2 = kernel.V2;
+
+    F_col = get_F(kernel.Fsol, kernel.tDict[t], :)
+    #time = findall(x -> x == t, get_t(kernel.Fsol))[1]; 
+    #F_col = get_F(kernel.Fsol, time, :)
 
     for i = 1:Nk, j = 1:Nk, l=abs(j-i)+1:min(i+j-1,Nk)
-        out.diag[i] += kernel.J[l,j,i] * kernel.V2[l, j, i] * F_col[l] * Fs[j]
+        out.diag[i] += J[l,j,i] * V2[l, j, i] * F_col[l] * Fs[j]
     end
 
     out.diag .*= kernel.prefactor
