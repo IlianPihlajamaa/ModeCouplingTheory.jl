@@ -142,7 +142,7 @@ function fill_A!(kernel::MultiComponentModeCouplingKernel3D, F)
     A1 = kernel.A1
     A2 = kernel.A2
     A3 = kernel.A3
-    x = kernel.ρ/sum(kernel.ρ)
+    x = kernel.ρ / sum(kernel.ρ)
     m = kernel.m
     @fastmath @inbounds for α = 1:Ns
         for β = 1:Ns
@@ -224,7 +224,7 @@ function evaluate_kernel(kernel::MultiComponentModeCouplingKernel3D, F::Vector, 
     return out
 end
 
-struct TaggedMultiComponentModeCouplingKernel3D{F,V,M2,M,T5,FF, V1, FFF} <: MemoryKernel
+struct TaggedMultiComponentModeCouplingKernel3D{F,V,M2,M,T5,FF,V1,FFF} <: MemoryKernel
     s::Int
     ρ::V1
     kBT::F
@@ -302,7 +302,7 @@ function TaggedMultiComponentModeCouplingKernel(s::Int, ρ, kBT, m, k_array, S�
     A3 = similar(k_array, (Nk, Nk))
     V1 = similar(k_array, (Nk, Nk))
     V2 = similar(k_array, (Nk, Nk))
-    V3 = similar(k_array, (Nk, Nk)) 
+    V3 = similar(k_array, (Nk, Nk))
     prefactor = kBT * Δk^2 * ρ_all / (4 * m[s] * (2π)^2)
     for iq = 1:Nk
         for ip = 1:Nk
@@ -319,10 +319,10 @@ function TaggedMultiComponentModeCouplingKernel(s::Int, ρ, kBT, m, k_array, S�
     # converting c and F to base arrays so that LoopVectorization can use them
     c = zeros(T, Ns, Ns, Nk)
     Fc = [zeros(T, Ns, Ns, Nk) for i in eachindex(sol.F)]
-    for a=1:Ns, b = 1:Ns, ik=1:Nk
-        c[a,b,ik] = Cₖ[ik][a,b]
+    for a = 1:Ns, b = 1:Ns, ik = 1:Nk
+        c[a, b, ik] = Cₖ[ik][a, b]
         for i = eachindex(sol.F)
-            Fc[i][a,b,ik] = sol.F[i][ik][a,b]
+            Fc[i][a, b, ik] = sol.F[i][ik][a, b]
         end
     end
     # c = reshape(reinterpret(reshape, eltype(eltype(Cₖ)), Cₖ),Ns,Ns,Nk)
@@ -397,7 +397,7 @@ end
 
 
 
-struct MSDMultiComponentModeCouplingKernel3D{F,V,TDICT,FF, V1, FFF, FS} <: MemoryKernel
+struct MSDMultiComponentModeCouplingKernel3D{F,V,TDICT,FF,V1,FFF,FS} <: MemoryKernel
     s::Int
     ρ::V1
     kBT::F
@@ -478,9 +478,9 @@ function evaluate_kernel(kernel::MSDMultiComponentModeCouplingKernel3D, MSD, t)
     ρ_all = sum(kernel.ρ)
     for α = 1:Ns, β = 1:Ns
         for iq in eachindex(k_array)
-            K += k_array[iq]^4*Ck[iq][α,s]*Ck[iq][s,β]*F[iq][α,β]*Fs[iq]
+            K += k_array[iq]^4 * Ck[iq][α, s] * Ck[iq][s, β] * F[iq][α, β] * Fs[iq]
         end
     end
-    K *= Δk*ρ_all*kernel.kBT/(6π^2*kernel.m[s])
+    K *= Δk * ρ_all * kernel.kBT / (6π^2 * kernel.m[s])
     return K
 end

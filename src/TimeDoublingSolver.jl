@@ -26,10 +26,11 @@ mutable struct TimeDoublingSolver{I,F} <: Solver
     tolerance::F
     verbose::Bool
     inplace::Bool
+    init_with_memory::Bool
 end
 
 """
-    TimeDoublingSolver(N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true)
+    TimeDoublingSolver(N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true, init_with_memory=true)
 
 Uses the algorithm devised by Fuchs et al.
 
@@ -42,9 +43,10 @@ Uses the algorithm devised by Fuchs et al.
 * `tolerance`: while the error is bigger than this value, convergence is not reached. The error by default is computed as the absolute sum of squares
 * `verbose`: if `true`, information will be printed to STDOUT
 * `ismutable`: if `true` and if the type of F is mutable, the solver will try to avoid allocating many temporaries
+* `init_with_memory` if `true`, the solver will include the memory kernels for the short time expansion to bootstrap the algorithm. Sacrifices performance and memory for accuracy.
 """
-function TimeDoublingSolver(; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true)
-    return TimeDoublingSolver(N, Δt, t_max, 0, max_iterations, tolerance, verbose, ismutable)
+function TimeDoublingSolver(; N=32, Δt=10^-10, t_max=10.0^10, max_iterations=10^4, tolerance=10^-10, verbose=false, ismutable=true, init_with_memory=true)
+    return TimeDoublingSolver(N, Δt, t_max, 0, max_iterations, tolerance, verbose, ismutable, init_with_memory)
 end
 
 """
@@ -85,7 +87,26 @@ function allocate_temporary_arrays(equation::MemoryEquation, solver::TimeDoublin
     return temp_arrays
 end
 
+"""
+    initialize_F_temp_Euler!(equation, solver::TimeDoublingSolver, temp_arrays::SolverCache
 
+Fills the first 2N entries of the temporary arrays of F using forward Euler with a memory kernel in order to kickstart the algorithm' scheme.
+"""
+
+function initialize_F_temp_Euler!(equation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
+    N = solver.N
+    Δt_Euler = solver.Δt / (4 * N)
+    tmax_Euler = Δt_Euler * 2 * N
+
+    eulersolver = EulerSolver(Δt=Δt_Euler, t_max=tmax_Euler, verbose=solver.verbose)
+    sol = solve(equation, eulersolver)
+
+    for it in 1:2N
+        F_euler_it = get_F(sol, it + 1) # it = 1 corresponds to t=0 in Euler, whereas it corresponds to Δt in F_temp
+        temp_arrays.F_temp[it] = copy(F_euler_it) # need to make copy for vector valued code.
+    end
+    return
+end
 """
     initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
 
@@ -93,6 +114,10 @@ Fills the first 2N entries of the temporary arrays of F using forward Euler with
 
 """
 function initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache)
+    if solver.init_with_memory
+        initialize_F_temp_Euler!(equation, solver, temp_arrays)
+        return
+    end
     N = solver.N
     δt = solver.Δt / (4 * N)
 
@@ -102,7 +127,7 @@ function initialize_F_temp!(equation::MemoryEquation, solver::TimeDoublingSolver
     ∂ₜF_old = ∂ₜF₀
     F_old = F₀
     for it = 1:2N
-        equation.update_coefficients!(equation.coeffs, δt*it)
+        equation.update_coefficients!(equation.coeffs, δt * it)
         α = equation.coeffs.α
         β = equation.coeffs.β
         γ = equation.coeffs.γ
@@ -277,7 +302,7 @@ function update_Fuchs_parameters!(equation::MemoryEquation, solver::TimeDoubling
     δt = solver.Δt / (4N)
     K_I = temp_arrays.K_I
     F_I = temp_arrays.F_I
-    equation.update_coefficients!(equation.coeffs, δt*it)
+    equation.update_coefficients!(equation.coeffs, δt * it)
     α = equation.coeffs.α
     β = equation.coeffs.β
     γ = equation.coeffs.γ
@@ -434,10 +459,10 @@ function new_time_mapping!(equation::AbstractMemoryEquation, solver::TimeDoublin
             K[j] = K[2j]
         end
         for j = 2N+1:4N
-            F_I[j] = equation.F₀ * zero(eltype(eltype(F_I)))
-            K_I[j] = equation.K₀ * zero(eltype(eltype(K_I)))
-            F[j] = equation.F₀ * zero(eltype(eltype(F)))
-            K[j] = equation.K₀ * zero(eltype(eltype(K)))
+            F_I[j] = equation.F₀ * zero(eltype(eltype(eltype(F_I))))
+            K_I[j] = equation.K₀ * zero(eltype(eltype(eltype(K_I))))
+            F[j] = equation.F₀ * zero(eltype(eltype(eltype(F))))
+            K[j] = equation.K₀ * zero(eltype(eltype(eltype(K))))
         end
     else
         isdiag = check_if_diag(K_I[1])
@@ -466,10 +491,10 @@ end
 function log_results(solver, temp_arrays)
     if solver.verbose
         @printf("elapsed time = %5.2fs, t = %6.2e / %5.2e, kernel evals = %i.\n",
-        time()-temp_arrays.start_time,
-        solver.Δt,
-        solver.t_max, 
-        solver.kernel_evals)
+            time() - temp_arrays.start_time,
+            solver.Δt,
+            solver.t_max,
+            solver.kernel_evals)
     end
 end
 
@@ -531,7 +556,7 @@ function update_integrals!(temp_arrays::SolverCache, ::AbstractNoKernelEquation,
     @. F_I[it] = (F_temp[it] + F_temp[it-1]) / 2
 end
 
-function allocate_results!(t_array, F_array, K_array,::AbstractNoKernelEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache; istart=2(solver.N) + 1, iend=4(solver.N))
+function allocate_results!(t_array, F_array, K_array, ::AbstractNoKernelEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache; istart=2(solver.N) + 1, iend=4(solver.N))
     N = solver.N
     δt = solver.Δt / (4N)
     for it = istart:iend

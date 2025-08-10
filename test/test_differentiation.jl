@@ -7,16 +7,16 @@ function main_scalar(λ)
 
     kernel1 = ExponentiallyDecayingKernel(λ, 1.0)
     system1 = MemoryEquation(α, β, γ, 0.0, F0, ∂F0, kernel1)
-    solver1 = TimeDoublingSolver(Δt=10^-4, t_max=5*10.0^1, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
+    solver1 = TimeDoublingSolver(Δt=10^-4, t_max=5 * 10.0^1, verbose=false, N=128, tolerance=10^-10, max_iterations=10^6)
 
-    sol =  solve(system1, solver1)
+    sol = solve(system1, solver1)
     return [sol.t[2:end], sol.F[2:end], sol.K[2:end]]
 end
 
 function exactf(λ, t)
     # t = 10 .^ range(-4,2,length = 100)
-    temp = sqrt(λ*(λ+4)) 
-    F = @. exp(-0.5* t*(temp+λ+2))  *  (temp*(exp(temp*t)+1)+ λ* (exp(temp*t)-1)) / (2temp) 
+    temp = sqrt(λ * (λ + 4))
+    F = @. exp(-0.5 * t * (temp + λ + 2)) * (temp * (exp(temp * t) + 1) + λ * (exp(temp * t) - 1)) / (2temp)
     return [t, F]
 end
 
@@ -40,23 +40,23 @@ dF = ForwardDiff.derivative(main_scalar, 5.0)
 
 function main_vector(Λ)
     N = 10
-    λ = [sin(i*j/π)^4 for i = 1:N, j = 1:N]*Λ
+    λ = [sin(i * j / π)^4 for i = 1:N, j = 1:N] * Λ
     F0 = ones(N)
     ∂F0 = zeros(N)
     α = 0.0
     β = 1.0
-    γ = [sin(i*j/π)^4 for i = 1:N, j = 1:N]/N^2
+    γ = [sin(i * j / π)^4 for i = 1:N, j = 1:N] / N^2
 
     kernel = SchematicMatrixKernel(λ)
     system = MemoryEquation(α, β, γ, 0.0, F0, ∂F0, kernel)
-    solver = TimeDoublingSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N = 128, tolerance=10^-10, max_iterations=10^6)
-    
-    sol =  solve(system, solver);
+    solver = TimeDoublingSolver(Δt=10^-2, t_max=10.0^3, verbose=false, N=128, tolerance=10^-10, max_iterations=10^6)
+
+    sol = solve(system, solver)
     return sol.F[3000]
 end
 
 Λ = 0.1
 main_vector(Λ)
 dF = ForwardDiff.derivative(main_vector, Λ)
-finite_differences = (main_vector(Λ+sqrt(eps(Float64)))-main_vector(Λ))/sqrt(eps(Float64))
+finite_differences = (main_vector(Λ + sqrt(eps(Float64))) - main_vector(Λ)) / sqrt(eps(Float64))
 @test all(dF .- finite_differences .< 0.001)

@@ -68,17 +68,38 @@ function NaiveMultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
     return kernel
 end
 
-function evaluate_kernel!(out::Diagonal, kernel::NaiveMultiComponentModeCouplingKernel, F::Vector, t)
+function helper!(kernel, F, α, β, ik)
+    Pabk = zero(eltype(kernel.P))
+    prefactor = kernel.prefactor
     V = kernel.V
     k_array = kernel.k_array
-
     Nk = kernel.Nk
     Ns = kernel.Ns
+    for μ2 = 1:Ns 
+        for μ = 1:Ns
+            for ν2 = 1:Ns
+                for ν = 1:Ns
+                    for iq = 1:Nk
+                        for ip = 1:Nk
+                            @inbounds Pabk += prefactor[α, β] * k_array[ip] * k_array[iq] * V[μ2, ν2, α, iq, ip, ik] * F[iq][μ2, μ] * F[ip][ν2, ν] * V[μ, ν, β, iq, ip, ik] / k_array[ik]
+                        end
+                    end
+                end
+            end
+        end
+    end
+    kernel.P[α, β, ik] = Pabk
+end
 
-    prefactor = kernel.prefactor
-    kernel.P .*= 0.0
-    @inbounds for α = 1:Ns, β = 1:Ns, μ2 = 1:Ns, μ = 1:Ns, ν2 = 1:Ns, ν = 1:Ns, ik = 1:Nk, iq = 1:Nk, ip = 1:Nk
-        kernel.P[α, β, ik] += prefactor[α, β] * k_array[ip] * k_array[iq] * V[μ2, ν2, α, iq, ip, ik] * F[iq][μ2, μ] * F[ip][ν2, ν] * V[μ, ν, β, iq, ip, ik] / k_array[ik]
+function evaluate_kernel!(out::Diagonal, kernel::NaiveMultiComponentModeCouplingKernel, F::Vector, t)
+    Nk = kernel.Nk
+    Ns = kernel.Ns
+    for α = 1:Ns
+        for β = 1:Ns 
+            for ik = 1:Nk
+                helper!(kernel, F, α, β, ik)
+            end
+        end
     end
     for ik = 1:Nk
         @views out.diag[ik] = kernel.P[:, :, ik]
@@ -167,10 +188,11 @@ end
 kernel = MultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ)
 kernelnaive = NaiveMultiComponentModeCouplingKernel(ρ, kBT, m, k_array, Sₖ);
 Ftest = rand(eltype(F₀), Nk)
+
 @test all(evaluate_kernel(kernelnaive, Ftest, 0.0) .≈ evaluate_kernel(kernel, Ftest, 0.0))
 system = MemoryEquation(α, β, γ, δ, F₀, ∂ₜF₀, kernel)
 solverFuchs = TimeDoublingSolver(N=4, tolerance=10^-12, max_iterations=20000, Δt=10^-4, t_max=10.0^3, verbose=false)
-sol =  solve(system, solverFuchs);
+sol = solve(system, solverFuchs);
 tFuchs, FFuchs = sol.t, sol.F
 
 ik = 19
@@ -194,7 +216,7 @@ s = 2
 α = 1.0
 β = 0.0
 γ = 0.0
-δ = -6*kBT / m[s]
+δ = -6 * kBT / m[s]
 msd0 = 0.0
 dmsd0 = 0.0
 

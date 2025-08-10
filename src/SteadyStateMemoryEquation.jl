@@ -4,28 +4,28 @@ function solve_steady_state_immutable(γ, F₀, kernel; tolerance=10^-8, max_ite
         γ = Diagonal(γ)
     end
     K = evaluate_kernel(kernel, F₀, t)
-    error = tolerance*2
-    Fold = F₀*one(eltype(F₀))
+    err = tolerance * 2
+    Fold = F₀ * one(eltype(F₀))
     F = F₀
     iterations = 0
     begintime = time()
-    while error > tolerance
+    while err > tolerance
         iterations += 1
         if iterations > max_iterations
-            error("The recursive iteration did not converge. The error is $error after $iterations iterations.")
+            error("The recursive iteration did not converge. The error is $err after $iterations iterations.")
         end
-        F = (K + γ)\(K*F₀)
+        F = (K + γ) \ (K * F₀)
         K = evaluate_kernel(kernel, F, t)
-        error = find_error(F, Fold)
+        err = find_error(F, Fold)
         Fold = F
-        if verbose 
-            println("The error is $(error) after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
+        if verbose && iterations % 10 == 0
+            println("The error is $(err) after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
         end
     end
-    if verbose 
+    if verbose
         println("converged after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
     end
-    return MemoryEquationSolution([Inf64], [F], [K], (tolerance=tolerance, max_iterations=max_iterations, verbose=verbose))    
+    return MemoryEquationSolution([Inf64], [F], [K], (tolerance=tolerance, max_iterations=max_iterations, verbose=verbose))
 end
 
 """
@@ -49,7 +49,7 @@ This function assumes δ = 0, since that would lead to a divergence.
 function solve_steady_state(γ, F₀, kernel; tolerance=10^-8, max_iterations=10^6, verbose=false, inplace=true)
     if ismutable(F₀) && inplace
         return solve_steady_state_mutable(γ, F₀, kernel; tolerance=tolerance, max_iterations=max_iterations, verbose=verbose)
-    else 
+    else
         return solve_steady_state_immutable(γ, F₀, kernel; tolerance=tolerance, max_iterations=max_iterations, verbose=verbose)
     end
 end
@@ -61,40 +61,40 @@ function solve_steady_state_mutable(γ, F₀, kernel; tolerance=10^-8, max_itera
     if typeof(γ) <: AbstractVector
         γ = Diagonal(γ)
     elseif typeof(γ) <: UniformScaling
-        γ = γ*I(length(F₀))
+        γ = γ * I(length(F₀))
     end
     K = evaluate_kernel(kernel, F₀, t)
-    error = tolerance*2
-    F = K*F₀
+    err = tolerance * 2
+    F = K * F₀
     Fold = copy(F₀)
     tempvec = copy(F₀)
-    tempmat = copy(K+γ)
+    tempmat = copy(K + γ)
     iterations = 0
     begintime = time()
-    while error > tolerance
+    while err > tolerance
         iterations += 1
         if iterations > max_iterations
-            error("The recursive iteration did not converge. The error is $error after $iterations iterations.")
+            error("The recursive iteration did not converge. The error is $err after $iterations iterations.")
         end
         # the following lines compute F = (K + γ)\K*F₀
         # F = (K + γ)\K*F₀
         mymul!(tempvec, K, F₀, true, false)
         if check_if_diag(tempmat)
             tempmat.diag .= K.diag .+ γ.diag
-            F .= tempmat.diag.\tempvec
+            F .= tempmat.diag .\ tempvec
         else
             tempmat .= K .+ γ
-            F .= tempmat\tempvec
+            F .= tempmat \ tempvec
         end
         evaluate_kernel!(K, kernel, F, t)
-        error = find_error(F, Fold)
+        err = find_error(F, Fold)
         Fold .= F
-        if verbose 
-            println("The error is $(error) after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
+        if verbose && iterations % 10 == 0
+            println("The error is $(err) after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
         end
     end
-    if verbose 
+    if verbose
         println("converged after $iterations iterations. Elapsed time = $(round((time()-begintime), digits=3)) seconds.")
     end
-    return MemoryEquationSolution([Inf64], [F], [K], (tolerance=tolerance, max_iterations=max_iterations, verbose=verbose))    
+    return MemoryEquationSolution([Inf64], [F], [K], (tolerance=tolerance, max_iterations=max_iterations, verbose=verbose))
 end

@@ -57,13 +57,13 @@ julia> problem.coeffs.γ # a matrix is already in the right format
 
 ### Limitations
 
-This package is not tested for and is not expected to work when the type of `F` is something other than a `Number`, `Vector` or `SVector`. For example, using types like `OffsetArrays` as initial conditions might lead to unexpected behaviour.
+This package is not tested for and is not expected to work when the type of `F` is something other than a `Number`, `Vector` or `SVector`. For example, using types like `OffsetArrays` as initial conditions might lead to unexpected behavior.
 
 ## Solvers
 
 A `Solver` object holds the settings for a specific integration method. This package defines two solvers: `EulerSolver` and `TimeDoublingSolver`. The `EulerSolver` implements a simple forward Euler method (with trapezoidal integration) which is wildly inefficient if the domain of $t$ spans many orders of magnitude (such as it often does in Mode-Coupling Theory). It should therefore mainly be used for testing purposes. The `TimeDoublingSolver` is preferred in almost all other cases. The scheme it implements is outlined in [1] and in the appendix of [2]. If no solver is provided to a `solve` call, the default `TimeDoublingSolver` is used.
 
-In short, the equation is discretised and solved on a grid of `4N` time-points, which are equally spaced over an interval `Δt`. It is solved using an implicit method, and thus a fixed point has to be found for each time point. This is done by recursive iteration. When the solution is found, the interval is doubled `Δt => 2Δt` and the solution on the previous grid is mapped onto the first `2N` time points of the new grid. The solution on the other`2N` points is again found by recursive iteration. This is repeated until some final time `t_max` is reached.
+In short, the equation is discretized and solved on a grid of `4N` time points, which are equally spaced over an interval `Δt`. It is solved using an implicit method, and thus a fixed point has to be found for each time point. This is done by recursive iteration. When the solution is found, the interval is doubled `Δt => 2Δt`, and the solution on the previous grid is mapped onto the first `2N` time points of the new grid. The solution on the other `2N` points is again found by recursive iteration. This is repeated until some final time `t_max` is reached.
 
 A `TimeDoublingSolver` is constructed as follows:
 
@@ -85,7 +85,7 @@ As optional keyword arguments `TimeDoublingSolver` accepts:
 * `verbose`: if `true`, some information will be printed. default = `false`
 * `inplace`: if `true` and if the type of `F` is mutable, the solver will try to avoid allocating many temporaries. default = `true`
 
-Having defined a `MemoryKernel`, `AbstractMemoryEquation` and a `Solver`, one can call `sol = solve(problem, solver)` to solve the problem. It outputs an object `sol` that contains a `Vector` `sol.t` of time points and the solution `sol.F` and memory kernel `sol.K` evaluated at those times points. They can be extracted with `get_t(sol)`, `get_F(sol)` and `get_K(sol)`, respectively. These functions also allow for easy indexing. For example, suppose one has obtained the solution to a vector-valued equation, then extracting the solution over time of the second equation can be done with `get_F(sol, :, 2)`. If instead one wants to extract the solution at the 53th time point for all equations, one may run `get_F(sol, 53, :)`.
+Having defined a `MemoryKernel`, `AbstractMemoryEquation` and a `Solver`, one can call `sol = solve(problem, solver)` to solve the problem. It outputs an object `sol` that contains a `Vector` `sol.t` of time points and the solution `sol.F` and memory kernel `sol.K` evaluated at those times points. They can be extracted with `get_t(sol)`, `get_F(sol)` and `get_K(sol)`, respectively. These functions also allow for easy indexing. For example, suppose one has obtained the solution to a vector-valued equation, then extracting the solution over time of the second equation can be done with `get_F(sol, :, 2)`. If instead, one wants to extract the solution at the 53th time point for all equations, one may run `get_F(sol, 53, :)`.
 
 ### References
 [1] Fuchs, Matthias, et al. "Comments on the alpha-peak shapes for relaxation in supercooled liquids." Journal of Physics: Condensed Matter 3.26 (1991): 5047.

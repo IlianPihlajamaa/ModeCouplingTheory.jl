@@ -41,7 +41,7 @@ end
 * `∂ₜF₀` initial condition of the derivative of F(t)
 * `kernel` instance of a `MemoryKernel` that when called on F₀ and t=0, evaluates to the initial condition of the memory kernel.
 """
-function MemoryEquation(α, β, γ, δ, F₀, ∂ₜF₀, kernel::MemoryKernel; update_coefficients! = (coeffs, t) -> nothing)
+function MemoryEquation(α, β, γ, δ, F₀, ∂ₜF₀, kernel::MemoryKernel; (update_coefficients!)=(coeffs, t) -> nothing)
     K₀ = evaluate_kernel(kernel, F₀, 0.0)
     FKeltype = eltype(K₀ * F₀)
     F₀ = FKeltype.(F₀)

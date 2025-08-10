@@ -1,13 +1,14 @@
 # ModeCouplingTheory.jl
 [![Build status (Github Actions)](https://github.com/IlianPihlajamaa/ModeCouplingTheory.jl/workflows/CI/badge.svg)](https://github.com/IlianPihlajamaa/ModeCouplingTheory.jl/actions)
-[![codecov.io](http://codecov.io/github/IlianPihlajamaa/ModeCouplingTheory.jl/coverage.svg?branch=main)](http://codecov.io/github/IlianPihlajamaa/ModeCouplingTheory.jl?branch=main)
+[![codecov](https://codecov.io/github/IlianPihlajamaa/ModeCouplingTheory.jl/graph/badge.svg?token=e6V2TA22Bg)](https://codecov.io/github/IlianPihlajamaa/ModeCouplingTheory.jl)
 [![](https://img.shields.io/badge/docs-stable-blue.svg)](https://IlianPihlajamaa.github.io/ModeCouplingTheory.jl/stable)
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://IlianPihlajamaa.github.io/ModeCouplingTheory.jl/dev)
-[![Downloads](https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/ModeCouplingTheory)](https://pkgs.genieframework.com?packages=ModeCouplingTheory)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.05737/status.svg)](https://doi.org/10.21105/joss.05737)
+
 
 A generic and fast solver of mode-coupling theory-like integrodifferential equations. It uses the algorithm outlined in [Fuchs et al.](https://iopscience.iop.org/article/10.1088/0953-8984/3/26/022/meta) to solve equations of the form
 $$\alpha \ddot{F}(t) + \beta \dot{F}(t) + \gamma F(t) + \delta + \int_0^t d\tau K(t-\tau)\dot{F}(\tau) = 0, $$
-in which $\alpha$, $\beta$, $\gamma$, and $\delta$ are (possibly time-dependent) coefficients, and $K(t) = K(F(t), t)$ is a memory kernel that may nonlinearly depend on $F(t)$. This package exports some commonly used memory kernels, but it is straightforward to define your own. The solver is differentiable and works for scalar- and vector-valued functions $F(t)$. For more information see the [Documentation](https://IlianPihlajamaa.github.io/ModeCouplingTheory.jl/dev).
+in which $\alpha$, $\beta$, $\gamma$, and $\delta$ are (possibly time-dependent) coefficients, and $K(t) = K(F(t), t)$ is a memory kernel that may nonlinearly depend on $F(t)$. This package exports some commonly used memory kernels, but it is straightforward to define your own. The solver is differentiable and works for scalar- and vector-valued functions $F(t)$. For more information see the [Documentation](https://IlianPihlajamaa.github.io/ModeCouplingTheory.jl/dev). If you use this software, please consider citing [this paper](https://doi.org/10.21105/joss.05737).
 
 
 # Installation
@@ -52,4 +53,6 @@ julia> plot(log10.(t), F)
 
 ![image](readmefig.png)
 
-Please open an issue if anything is unclear in the documentation, if any unexpected errors arise or for feature requests (such as additional kernels). PRs are of course also welcome.
+# Contributing
+
+Please open an issue if anything is unclear in the documentation, if any unexpected errors arise or for feature requests (such as additional kernels). Pull requests are of course also welcome.

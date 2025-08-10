@@ -16,7 +16,7 @@ an MCT object can be indexed such that
 gives the F[2] for all t.
 
 """
-struct MemoryEquationSolution{T1, T2, T3, T4}
+struct MemoryEquationSolution{T1,T2,T3,T4}
     t::T1
     F::T2
     K::T3
@@ -39,7 +39,9 @@ If no solver is provided, it uses the default TimeDoublingSolver.
 * `F` The solution in an array of which the last dimension corresponds to the time.
 * `K` The memory kernel corresponding to each `F`
 """
-function solve(::AbstractMemoryEquation, ::Solver); error("This solver is not known"); end
+function solve(::AbstractMemoryEquation, ::Solver)
+    error("This solver is not known")
+end
 
 solve(p::AbstractMemoryEquation) = solve(p, TimeDoublingSolver())
 
