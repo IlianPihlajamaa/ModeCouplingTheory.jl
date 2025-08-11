@@ -396,9 +396,8 @@ function do_time_steps!(equation::AbstractMemoryEquation, solver::TimeDoublingSo
     tolerance = solver.tolerance
     for it = (2N+1):(4N)
         error = typemax(Float64)
-        iterations = 1
+        iterations = 0
         F_old = temp_arrays.F_old
-
         update_Fuchs_parameters!(equation, solver, temp_arrays, it)
         update_F!(equation, solver, temp_arrays, it)
 
@@ -414,9 +413,9 @@ function do_time_steps!(equation::AbstractMemoryEquation, solver::TimeDoublingSo
             else
                 F_old .= F_temp[it]
             end
+            solver.kernel_evals +=  1
         end
         update_integrals!(temp_arrays, equation, it)
-        solver.kernel_evals += iterations - 1
     end
     return
 end
@@ -518,7 +517,7 @@ function solve(equation::AbstractMemoryEquation, solver::TimeDoublingSolver)
     initialize_temporary_arrays!(equation, solver, kernel, temp_arrays)
     allocate_results!(t_array, F_array, K_array, equation, solver, temp_arrays; istart=1, iend=2(solver.N))
     startΔt = solver.Δt
-    solver.kernel_evals = 1
+    solver.kernel_evals = 0
 
     # main loop of the algorithm
     while solver.Δt < solver.t_max * 2
@@ -554,7 +553,11 @@ end
 function update_integrals!(temp_arrays::SolverCache, ::AbstractNoKernelEquation, it::Int)
     F_I = temp_arrays.F_I
     F_temp = temp_arrays.F_temp
-    F_I[it] = (F_temp[it] + F_temp[it-1]) / 2
+    if temp_arrays.inplace
+        @. F_I[it] = (F_temp[it] + F_temp[it-1]) / 2
+    else
+        F_I[it] = (F_temp[it] + F_temp[it-1]) / 2
+    end
 end
 
 function allocate_results!(t_array, F_array, K_array, ::AbstractNoKernelEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache; istart=2(solver.N) + 1, iend=4(solver.N))
@@ -571,26 +574,48 @@ function new_time_mapping!(equation::AbstractNoKernelEquation, solver::TimeDoubl
     F = temp_arrays.F_temp
     F_I = temp_arrays.F_I
     N = solver.N
-    for j = 1:N
-        F_I[j] = (F_I[2j] + F_I[2j-1]) / 2
-        F[j] = F[2j]
-    end
-    for j = (N+1):2*N
-        # Flenner/Szamel version:
-        #F_I[j] = (F_I[2j] + 4 * F_I[2j-1] + F_I[2j-2]) / 6
-        # Hofacker/Fuchs version:
-        #F_I[j] = (F_I[2j] + F_I[2j-1]) / 2
-        # Hofacker/Fuchs that does not require extra update_integrals!
-        F_I[j] = (F[2j] + 2 * F[2j-1] + F[2j-2]) / 4
-        F[j] = F[2j]
-    end
-    for j = 2N+1:4N
-        F_I[j] = equation.F₀ * zero(eltype(eltype(F_I)))
-        F[j] = equation.F₀ * zero(eltype(eltype(F)))
+    if !solver.inplace 
+        for j = 1:N
+            F_I[j] = (F_I[2j] + F_I[2j-1]) / 2
+            F[j] = F[2j]
+        end
+        for j = (N+1):2*N
+            # Flenner/Szamel version:
+            #F_I[j] = (F_I[2j] + 4 * F_I[2j-1] + F_I[2j-2]) / 6
+            # Hofacker/Fuchs version:
+            #F_I[j] = (F_I[2j] + F_I[2j-1]) / 2
+            # Hofacker/Fuchs that does not require extra update_integrals!
+            F_I[j] = (F[2j] + 2 * F[2j-1] + F[2j-2]) / 4
+            F[j] = F[2j]
+        end
+        for j = 2N+1:4N
+            F_I[j] = equation.F₀ * zero(eltype(eltype(F_I)))
+            F[j] = equation.F₀ * zero(eltype(eltype(F)))
+        end
+    else
+        for j = 1:N
+            @. F_I[j] = (F_I[2j] + F_I[2j-1]) / 2
+            F[j] .= F[2j]
+        end
+        for j = (N+1):2*N
+            # Flenner/Szamel version:
+            #F_I[j] = (F_I[2j] + 4 * F_I[2j-1] + F_I[2j-2]) / 6
+            # Hofacker/Fuchs version:
+            #F_I[j] = (F_I[2j] + F_I[2j-1]) / 2
+            # Hofacker/Fuchs that does not require extra update_integrals!
+            @. F_I[j] = (F[2j] + 2 * F[2j-1] + F[2j-2]) / 4
+            F[j] .= F[2j]
+        end
+        for j = 2N+1:4N
+            # @assert equation.F₀ * zero(eltype(eltype(F_I))) == zeros(length(F_I[j]))
+            # @assert equation.F₀ * zero(eltype(eltype(F))) == zeros(length(F[j]))
+            F_I[j] .= 0.0
+            F[j] .= 0.0
+        end
     end
     solver.Δt *= 2
 end
 
 function initialize_output_arrays(equation::AbstractNoKernelEquation)
-    return [0.0], typeof(equation.F₀)[equation.F₀], nothing
+    return Float64[], typeof(equation.F₀)[], nothing
 end
