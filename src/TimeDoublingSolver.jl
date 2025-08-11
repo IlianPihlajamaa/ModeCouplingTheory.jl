@@ -553,7 +553,11 @@ end
 function update_integrals!(temp_arrays::SolverCache, ::AbstractNoKernelEquation, it::Int)
     F_I = temp_arrays.F_I
     F_temp = temp_arrays.F_temp
-    @. F_I[it] = (F_temp[it] + F_temp[it-1]) / 2
+    if temp_arrays.inplace
+        @. F_I[it] = (F_temp[it] + F_temp[it-1]) / 2
+    else
+        F_I[it] = (F_temp[it] + F_temp[it-1]) / 2
+    end
 end
 
 function allocate_results!(t_array, F_array, K_array, ::AbstractNoKernelEquation, solver::TimeDoublingSolver, temp_arrays::SolverCache; istart=2(solver.N) + 1, iend=4(solver.N))
