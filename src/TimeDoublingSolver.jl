@@ -613,5 +613,5 @@ function new_time_mapping!(equation::AbstractNoKernelEquation, solver::TimeDoubl
 end
 
 function initialize_output_arrays(equation::AbstractNoKernelEquation)
-    return [0.0], typeof(equation.F₀)[equation.F₀], nothing
+    return Float64[], typeof(equation.F₀)[], nothing
 end
