@@ -1,0 +1,133 @@
+
+struct ActiveMultiComponentKernel{F,A,AM,AD,AV,AJ,X} <: MemoryKernel
+    prefactor ::F
+    k_array ::A
+    wk ::AM
+    DCF ::AD
+    V2 ::AV
+    J ::AJ
+    x ::X
+end
+
+function ActiveMultiComponentKernel(ρₐ, k_array, wk, w0, Sk)
+    dim = 3;
+    # note: dim should be an input argument! (Number of arguments should be different than struct)
+
+    ρ_tot = sum(ρₐ);
+    xₐ = ρₐ ./ ρ_tot;
+    Nk = length(k_array);
+    Ns = size(Sk[1],1);
+
+    Δk = k_array[2] - k_array[1];
+    prefactor = zeros(Ns, Ns);
+
+    for α = 1:Ns, β = 1:Ns  # check this expression
+        prefactor[α,β] = Δk^2 * ρ_tot /((2*π)^dim * 2 * sqrt(xₐ[α] * xₐ[β])) * surface_d_dim_unit_sphere(dim-1);
+    end
+
+    J = zeros(Nk, Nk, Nk);
+    V2 = zeros(Nk, Nk, Nk, 2);
+    DCF = 0 .* similar(Sk);
+
+    S_inv = inv.(Sk);
+    w0_inv = inv(w0);
+
+    @inbounds for i=1:Nk  # calculate DCF
+        test = zeros(Ns, Ns);
+
+        for α=1:Ns, β=1:Ns
+            kronecker = 0.0;
+            if α == β  # there's probably a better way to do this
+                kronecker = 1.0;
+            end
+
+            test[α,β] = kronecker / xₐ[α];  # this works
+            # test[α,β] = kronecker;  # this doesn't
+
+            for γ=1:Ns, δ=1:Ns
+                test[α,β] -= w0_inv[α,γ] * wk[i][γ,δ] * S_inv[i][δ,β];
+                # test[α,β] += kronecker - w0_inv[α,γ]*wk[i][γ,δ]*S_inv[i][δ,β];  # vincent's definition
+                # test[α,β] += kronecker / xₐ[α] - w0_inv[α,γ]*wk[i][γ,δ]*S_inv[i][δ,β];  # this definitely doesn't work
+            end
+        end
+
+        DCF[i] = test ./ ρ_tot;
+    end
+
+    # calculate vertices (just k-values)
+    for i=1:Nk, j=1:Nk, l=abs(j-i)+1:min(i+j-1,Nk)
+        k = k_array[i];
+        q = k_array[j];
+        p = k_array[l];
+        
+        V2[l,j,i,1] = 1/(2*k)*(k^2 + q^2 - p^2);  # (k * q) / k
+        V2[l,j,i,2] = 1/(2*k)*(k^2 + p^2 - q^2);  # (k * p) / k
+
+        # jacobian: same as single-component
+        J[l,j,i] = 2*p*q/((2*k)^(dim-2))*( (q+p-k)*(k+p-q)*(k+q-p)*(k+p+q) )^((dim-3)/2);
+    end
+    return ActiveMultiComponentKernel(prefactor, k_array, wk, DCF, V2, J, xₐ)
+end
+
+function evaluate_kernel!(out::Diagonal, kernel::ActiveMultiComponentKernel, F, t)
+    k_array = kernel.k_array;
+
+    DCF = kernel.DCF;
+    V2 = kernel.V2;
+    wk = kernel.wk;
+
+    Nk = length(k_array)
+    Ns = size(DCF[1],1);
+    mk = zeros(Ns, Ns) ::Matrix{Float64};
+
+    @fastmath @inbounds for i=1:Nk
+        mk = zeros(Ns, Ns) ::Matrix{Float64}; # resets per k=point
+
+        for j=1:Nk, l=abs(j-i)+1:min(i+j-1,Nk)
+            v2_1 = V2[l,j,i,1]; v2_2 = V2[l,j,i,2];
+            J = kernel.J[l,j,i];
+
+            for α = 1:Ns, β = 1:Ns # for performance: switch lambda and alpha?
+                for λ = 1:Ns
+                    wk_ay = wk[i][α,λ];
+
+                    pref = kernel.prefactor[λ,β];
+                    F_j_ab = F[j][λ,β];
+                    F_l_ab = F[l][λ,β];
+
+                    for ν = 1:Ns
+                        dcf_j_bv = DCF[j][β,ν];
+                        dcf_l_bv = DCF[l][β,ν];
+                        dcf_l_av = DCF[l][λ,ν];
+                        F_l_av = F[l][λ,ν];
+                        F_l_bv = F[l][β,ν];
+
+                        for μ = 1:Ns
+                            dcf_j_au = DCF[j][λ,μ];
+                            dcf_j_bu = DCF[j][β,μ];
+                            dcf_l_bu = DCF[l][β,μ];
+                            F_j_uv = F[j][μ,ν];
+                            F_j_bu = F[j][β,μ];
+                            F_j_au = F[j][λ,μ];                   
+                            F_l_uv = F[l][μ,ν];
+
+                            one = v2_1 * v2_1 * dcf_j_au * dcf_j_bv * F_j_uv * F_l_ab;
+                            two = v2_1 * v2_2 * dcf_j_au * dcf_l_bv * F_j_bu * F_l_av;
+                            three = v2_1 * v2_2 * dcf_l_av * dcf_j_bu * F_j_au * F_l_bv;
+                            four = v2_2 * v2_2 * dcf_l_av * dcf_l_bu * F_j_ab * F_l_uv;
+
+                            mk[α,β] += J * pref * wk_ay * (one + two + three + four);
+                        end
+                    end
+                end
+            end
+        end
+        out.diag[i] = mk;
+    end
+end
+
+function evaluate_kernel(kernel::ActiveMultiComponentKernel, F, t)
+    out = 0.0 .* Diagonal(similar(F));
+    evaluate_kernel!(out, kernel, F, t)
+    return out
+end
