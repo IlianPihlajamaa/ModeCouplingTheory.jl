@@ -1,18 +1,15 @@
 
-struct ActiveMultiComponentKernel{F,A,AM,AD,AV,AJ,X} <: MemoryKernel
-    prefactor ::F
-    k_array ::A
-    wk ::AM
-    DCF ::AD
-    V2 ::AV
-    J ::AJ
+struct ActiveMultiComponentKernel{Fl,Ve,VM,VM2,V3,VJ,X} <: MemoryKernel
+    prefactor ::Fl
+    k_array ::Ve
+    wk ::VM
+    DCF ::VM2
+    V2 ::V3
+    J ::VJ
     x ::X
 end
 
-function ActiveMultiComponentKernel(ρₐ, k_array, wk, w0, Sk)
-    dim = 3;
-    # note: dim should be an input argument! (Number of arguments should be different than struct)
-
+function ActiveMultiComponentKernel(ρₐ, k_array, wk, w0, Sk, dim = 3)
     ρ_tot = sum(ρₐ);
     xₐ = ρₐ ./ ρ_tot;
     Nk = length(k_array);
@@ -54,12 +51,12 @@ function ActiveMultiComponentKernel(ρₐ, k_array, wk, w0, Sk)
         DCF[i] = test ./ ρ_tot;
     end
 
-    # calculate vertices (just k-values)
     for i=1:Nk, j=1:Nk, l=abs(j-i)+1:min(i+j-1,Nk)
         k = k_array[i];
         q = k_array[j];
         p = k_array[l];
         
+        # vertices: only the prefactors
         V2[l,j,i,1] = 1/(2*k)*(k^2 + q^2 - p^2);  # (k * q) / k
         V2[l,j,i,2] = 1/(2*k)*(k^2 + p^2 - q^2);  # (k * p) / k
 
@@ -78,38 +75,41 @@ function evaluate_kernel!(out::Diagonal, kernel::ActiveMultiComponentKernel, F, 
 
     Nk = length(k_array)
     Ns = size(DCF[1],1);
-    mk = zeros(Ns, Ns) ::Matrix{Float64};
+    mk = zeros(Ns, Ns) ::Matrix{Float64}
 
-    @fastmath @inbounds for i=1:Nk
+    @assert size(DCF) == size(wk) == size(F)
+    @assert length(DCF) == Nk
+
+    @inbounds for i=1:Nk
         mk = zeros(Ns, Ns) ::Matrix{Float64}; # resets per k=point
 
         for j=1:Nk, l=abs(j-i)+1:min(i+j-1,Nk)
-            v2_1 = V2[l,j,i,1]; v2_2 = V2[l,j,i,2];
-            J = kernel.J[l,j,i];
+            v2_1 = V2[l,j,i,1]; v2_2 = V2[l,j,i,2]
+            J = kernel.J[l,j,i]
 
-            for α = 1:Ns, β = 1:Ns # for performance: switch lambda and alpha?
-                for λ = 1:Ns
-                    wk_ay = wk[i][α,λ];
+            for β = 1:Ns, λ = 1:Ns
+                pref = kernel.prefactor[λ,β];
+                F_j_ab = F[j][λ,β];
+                F_l_ab = F[l][λ,β];
 
-                    pref = kernel.prefactor[λ,β];
-                    F_j_ab = F[j][λ,β];
-                    F_l_ab = F[l][λ,β];
+                for ν = 1:Ns
+                    dcf_j_bv = DCF[j][β,ν];
+                    dcf_l_bv = DCF[l][β,ν];
+                    dcf_l_av = DCF[l][λ,ν];
+                    F_l_av = F[l][λ,ν];
+                    F_l_bv = F[l][β,ν];
 
-                    for ν = 1:Ns
-                        dcf_j_bv = DCF[j][β,ν];
-                        dcf_l_bv = DCF[l][β,ν];
-                        dcf_l_av = DCF[l][λ,ν];
-                        F_l_av = F[l][λ,ν];
-                        F_l_bv = F[l][β,ν];
+                    for μ = 1:Ns
+                        dcf_j_au = DCF[j][λ,μ];
+                        dcf_j_bu = DCF[j][β,μ];
+                        dcf_l_bu = DCF[l][β,μ];
+                        F_j_uv = F[j][μ,ν];
+                        F_j_bu = F[j][β,μ];
+                        F_j_au = F[j][λ,μ];                   
+                        F_l_uv = F[l][μ,ν];
 
-                        for μ = 1:Ns
-                            dcf_j_au = DCF[j][λ,μ];
-                            dcf_j_bu = DCF[j][β,μ];
-                            dcf_l_bu = DCF[l][β,μ];
-                            F_j_uv = F[j][μ,ν];
-                            F_j_bu = F[j][β,μ];
-                            F_j_au = F[j][λ,μ];                   
-                            F_l_uv = F[l][μ,ν];
+                        for α=1:Ns
+                            wk_ay = wk[i][α,λ];
 
                             one = v2_1 * v2_1 * dcf_j_au * dcf_j_bv * F_j_uv * F_l_ab;
                             two = v2_1 * v2_2 * dcf_j_au * dcf_l_bv * F_j_bu * F_l_av;
