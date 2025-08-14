@@ -9,6 +9,26 @@ struct ActiveMultiComponentKernel{Fl,Ve,VM,VM2,V3,VJ,X} <: MemoryKernel
     x ::X
 end
 
+"""
+    ActiveMultiComponentKernel(ρₐ, k_array, wk, w0, Sk, dim)
+
+Implements the following multi-component active MCT kernel:
+
+M{αβ}(k,t) = ρ / (2*(2π)^dim) ∑{μνμ'ν'λ} ∫ dq F{μμ'}(q,t) F{νν'}(k-q,t) w{αλ}(k) V{μ'ν'λ}(k,q) V{μνβ}(k,q)
+
+where Greek indices {...} denote species labels and the expression for the vertices V are given in the documentation.
+Note: the input data should be given in the format of Vector{ Matrix }, with the Vector having length Nk
+and the Matrix having size Ns x Ns. Nk is the number of k-points and Ns is the number of species in the mixture.
+
+# Arguments:
+
+* ρₐ: number densities of each species (a vector of length Ns)
+* k_array: k-values at which to evaluate the kernel (a vector of length Nk)
+* wk: velocity correlations of each species (a vector of Ns x Ns matrices) 
+* w0: local velocity correlations (a Ns x Ns matrix)
+* Sk: partial structure factors ( a vector of Ns x Ns matrices)
+* dim: dimensionality of the kernel (the default `dim=3`)
+"""
 function ActiveMultiComponentKernel(ρₐ, k_array, wk, w0, Sk, dim = 3)
     ρ_tot = sum(ρₐ);
     xₐ = ρₐ ./ ρ_tot;

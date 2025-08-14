@@ -9,21 +9,24 @@ end
 """
     ActiveMCTKernel(ρ, k_array, wk, w0, Sk, dim=3)
 
-Implements the following single-component active MCT kernel:
+Implements the following active MCT kernel:
+
 M(k,t) =  ρ / (2(2π)^dim ) ∫ dq w(k) V(k,q)^2 F(q,t) F(k-q,t)
+
+with the vertices:
+
+V(k,q) = c(q) * (k * q)/k + c(p) (k * p)/k
 
 # Arguments:
 
 * ρ: number density
-* k_array: array of wavevectors at which to evaluate all quantities
-* wk: steady-state velocity correlations ( w(k) )
-* w0: "pure" velocity correlations ( w(k→∞) )
+* k_array: array of wavevectors at which to evaluate the kernel
+* wk: steady-state velocity correlations ( w(k) ) - this depends on k
+* w0: local velocity correlations ( w(∞) ) - this is a constant
 * Sk: steady-state structure factor
-* dim: dimensionality (dim=2 or dim=3)
+* dim: dimensionality of the problem (the default `dim=3`)
 """
 function ActiveMCTKernel(ρ, k_array, wk, w0, Sk, dim=3)
-    @assert dim == 2 || dim == 3 "This kernel has been tested for dim=2 and dim=3"
-
     Δk = k_array[2] - k_array[1];
     prefactor = Δk^2* ρ / (2*(2*π)^dim) * surface_d_dim_unit_sphere(dim-1);
     Nk = length(k_array);
@@ -75,12 +78,23 @@ struct TaggedActiveMCTKernel{V,F,VA,FF,tD} <: MemoryKernel
 end
 
 """
-    TaggedActiveMCTkernel(ρ, k_array, w0, wk, Sk, Fsol, dim)
+    TaggedActiveMCTkernel(ρ, k_array, wk, w0, Sk, Fsol, dim)
 
-M(k,t) =  ρ w0 / ((2π)^dim ) ∫ dq  V(k,q)^2 F(q,t) Fs(k-q,t)
-V(k,q) = 1/k (k * q) c(q)
+This function implements the following kernel for the self-intermediate scattering function:
+
+M(k,t) =  ρ w0 / ((2π)^dim ) ∫ dq  ( (k*p)/(2k) * c(p) )^2 F(q,t) Fs(k-q,t)
+
+# Arguments
+
+* ρ: number density
+* k_array: k-values at which to evaluate the kernel
+* wk: steady-state velocity correlations ( w(k) ) - this depends on k
+* w0: local velocity correlations ( w(∞) ) - this is a constant
+* Sk: steady-state structure factor
+* Fsol: solution of the coherent mode-coupling kernel
+* dim: dimensionality of the problem (the default `dim=3`)
 """
-function TaggedActiveMCTKernel(ρ, k_array, w0, wk, Sk, Fsol, dim)
+function TaggedActiveMCTKernel(ρ, k_array, wk, w0, Sk, Fsol, dim=3)
     Δk = k_array[2] - k_array[1];
     prefactor = ρ * Δk^2 / ((2*π)^dim) * surface_d_dim_unit_sphere(dim-1);
     Nk = length(k_array);

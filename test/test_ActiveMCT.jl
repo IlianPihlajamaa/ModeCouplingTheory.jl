@@ -77,7 +77,7 @@ ker_tag = TaggedModeCouplingKernel(ρ, kbT, m, k_array, Sk, sol, dims=3);
 prob_tag = MemoryEquation(α, β, γ2, 0.0, ones(Nk), zeros(Nk), ker_tag);
 sol_tag = solve(prob_tag);
 
-ker_tag_act = ModeCouplingTheory.TaggedActiveMCTKernel(ρ, k_array, w0, wk, Sk, sol_act, 3);
+ker_tag_act = TaggedActiveMCTKernel(ρ, k_array, w0, wk, Sk, sol_act, 3);
 prob_tag_act = MemoryEquation(α, β, γ2, 0.0, ones(Nk), zeros(Nk), ker_tag_act);
 sol_tag_act = solve(prob_tag_act);
 
