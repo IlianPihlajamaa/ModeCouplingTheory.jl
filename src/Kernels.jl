@@ -6,6 +6,7 @@ include("Kernels/MultiComponentKernels.jl")
 include("Kernels/SCGLEkernel.jl")
 include("Kernels/ActiveMCTKernel.jl")
 include("Kernels/MCActiveMCTKernel.jl")
+include("Kernels/newMCActiveKernel.jl")  # delete this later
 
 """
     evaluate_kernel!(out, kernel::MemoryKernel, F, t)
