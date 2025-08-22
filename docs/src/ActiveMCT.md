@@ -2,25 +2,25 @@
 
 ### Single-component active MCT
 
-Next to standard Mode-Coupling Theory, we also implemented a Mode-Coupling Theory for self-propelled (active) particles as derived in [1,2]. The equation of motion is slightly different than for passive Mode-Coupling Theory:
+Next to standard Mode-Coupling Theory, we also implemented a Mode-Coupling Theory for athermal self-propelled (active) particles as derived in [1,2]. Athermal means that there is no thermal motion. The equation of motion is slightly different than for passive Mode-Coupling Theory:
 
-$$\ddot{F}(k,t) + \frac{1}{\tau_p}\dot{F}(k,t) + \frac{\omega(k) k^2}{S(k)}F(k,t) + \int_0^t \text{d}t' M(k,t-t') \dot{F}(k,t') = 0.$$
+$$\ddot{F}(k,t) + \frac{1}{\tau_p}\dot{F}(k,t) + \frac{\omega(k) k^2}{S(k)}F(k,t) + \int_0^t \text{d}t'\ M(k,t-t') \dot{F}(k,t') = 0.$$
 
-Here $\tau_p$ is the persistence time of a single active particle, and $\omega(k)$ represents equal-time velocity correlations, as introduced in [1]. The memory kernel $M(k,t)$ is given by
+Here, $\tau_p$ is the persistence time of a single active particle. This version of active MCT requires extra input in the form of spatial velocity correlations $\omega(k)$. Since the effect of active forces is encoded in $S(k)$ and $w(k)$, the theory can be applied to different systems, such as active Brownian particles or active Ornstein-Uhlenbeck particles.
 
-$$M(k,t) = \frac{\rho \omega(k)}{2 (2\pi)^d} \int \text{d}\mathbf{q} V(k,q)^2 F(q,t) F(|\mathbf{k}-\mathbf{q}|,t).$$
+The memory kernel $M(k,t)$ in $d$ dimensions is given by
 
-We also need modified expressions for the vertices $V(k,q)$ and direct correlation function $\mathcal{C}(k)$:
+$$M(k,t) = \frac{\rho\, \omega(k)}{2 (2\pi)^d} \int \text{d}\mathbf{q}\ V(\mathbf{k},\mathbf{q})^2 F(q,t) F(|\mathbf{k}-\mathbf{q}|,t).$$
 
-$$V(k,q) = \frac{\mathbf{k}\cdot\mathbf{q}}{k} \mathcal{C}(q) + \frac{\mathbf{k}\cdot(\mathbf{k}-\mathbf{q})}{k} \mathcal{C}(|\mathbf{k}-\mathbf{q}|)$$
+We also need modified expressions for the vertices $V(\mathbf{k},\mathbf{q})$ and direct correlation function $\mathcal{C}(k)$:
+
+$$V(\mathbf{k},\mathbf{q}) = \frac{\mathbf{k}\cdot\mathbf{q}}{k} \mathcal{C}(q) + \frac{\mathbf{k}\cdot(\mathbf{k}-\mathbf{q})}{k} \mathcal{C}(|\mathbf{k}-\mathbf{q}|)$$
 
 $$\rho \mathcal{C}(k) = 1 - \frac{\omega(k)}{w(\infty) S(k)}$$
 
-This version of active MCT requires extra input in the form of velocity correlations. It can be used for systems of active Brownian particles or active Ornstein-Uhlenbeck particles.
+The discretization of the kernel is described in `MCT.md`. The kernel is not implemented using Bengtzelius' trick, as we are mostly interested in two-dimensional applications where this is not applicable. The dimensionality of the kernel can be chosen with the parameter `dim` (the default is `dim=3`). Already implemented functionalities from standard MCT were re-used, so any dimension up to $d \approx 20$ should be supported, although here we only explicitly tested `dim=2` and `dim=3`.
 
-The kernel is discretized with the same method as described in `MCT.md`. It is not implemented according to Bengtzelius' trick, as we are mostly interested in two-dimensional applications where this trick is not applicable. The dimensionality of the kernel can be chosen with the parameter `dim` (the default is `dim=3`).
-
-### Example code
+### Example code single-component
 ```julia
 using ModeCouplingTheory, Plots
 
@@ -90,40 +90,66 @@ title!("Active mode-coupling kernel for k = $(k_array[n]), η = $(η)")
 
 ### Tagged-particle kernel
 
-- equations (Szamel appendix A)
+The dynamics of a tagged active particle is governed by the following equation [1]:
+
+$$
+\ddot{F}_s(k,t) + \frac{1}{\tau_p} \dot{F}_s(k,t) + w(\infty) k^2 F_s(k,t) + \int_0^t \text{d}t'\ M_s(k,t-t') \dot{F}_s(k,t') = 0,
+$$
+
+where $F_s(k,t)$ is the self-intermediate scattering function. The memory kernel is given by
+
+$$
+M_s(k,t) = \frac{\rho\, w(\infty)}{(2\pi)^d} \int \text{d}\mathbf{q}\ \left( \frac{\mathbf{k}\cdot(\mathbf{k} - \mathbf{q})}{k} \right)^2 F_s(q,t) F(|\mathbf{k}-\mathbf{q}|,t).
+$$
+
+So the tagged-particle memory kernel requires the collective intermediate scattering function $F(k,t)$ as input. An example of the implemented tagged active memory kernel is given below.
+
+
 - example code
+
+#### Example code tagged-particle kernel
 
 
 
 
 ### Multi-component
 
-- multi-component equations
+Active mode-coupling theory can also be solved for mixtures of particles. The multi-component equation reads [2]
 
-$$ \ddot{F}^{\alpha\beta}_k(t) + \frac{1}{\tau_p}\dot{F}^{\alpha\beta}_k(t) + \sum_{\gamma\delta} k^2 w^{\alpha\gamma}_k \left( S^{-1}_k \right)^{\gamma\delta} F^{\delta\beta}_k(t) + \sum_\gamma \int_0^t \text{d}t'\ M^{\alpha\gamma}_k(t-t') \dot{F}^{\gamma\beta}_k(t') = 0 $$
+
+$$ \ddot{F}^{\alpha\beta}_k(t) + \frac{1}{\tau_p}\dot{F}^{\alpha\beta}_k(t) + \sum_{\gamma\delta} k^2 \omega^{\alpha\gamma}_k \left( S^{-1}_k \right)^{\gamma\delta} F^{\delta\beta}_k(t) + \sum_\gamma \int_0^t \text{d}t'\ M^{\alpha\gamma}_k(t-t') \dot{F}^{\gamma\beta}_k(t') = 0, $$
+
+where Greek letters denote particle species. Now, the input of the theory consists of partial structure factors $S_k^{\alpha\beta}$ and partial velocity correlations $\omega_k^{\alpha\beta}$. The multicomponent memory kernel can be written as
 
 $$
-M^{\alpha\beta}_k(t) = \frac{\rho}{2 (2\pi)^d} \sum_{\substack{\mu\, \nu \\ \mu'\nu'}}\sum_{\lambda} \int \text{d}\mathbf{q}\ w^{\alpha\gamma}_k V^{\mu\nu\gamma}_{k,q} V^{\mu'\nu'\beta}_{k,q} F^{\mu\mu'}_q(t) F^{\nu\nu'}_{|\mathbf{k}-\mathbf{q}|}(t).
+M^{\alpha\beta}_k(t) = \frac{1}{2 (2\pi)^d} \sum_{\substack{\mu\, \nu \\ \mu'\nu'}}\sum_{\lambda} \int \text{d}\mathbf{q}\ V^{\mu\nu\alpha}_{\mathbf{k},\mathbf{q}} V^{\mu'\nu'\lambda}_{\mathbf{k},\mathbf{q}} F^{\mu\mu'}_q(t) F^{\nu\nu'}_{|\mathbf{k}-\mathbf{q}|}(t) (\omega^{-1}_k)^{\lambda\beta}.
 $$
 
 The multicomponent vertices are defined as
 
 $$
-V^{\mu\nu\alpha}_{k,q}= \frac{1}{\sqrt{x_\alpha}} \left( \frac{\mathbf{k}\cdot\mathbf{q}}{k} \delta^{\alpha\nu} \mathcal{C}_q^{\alpha\mu} + \frac{\mathbf{k}\cdot(\mathbf{k}-\mathbf{q})}{k} \delta^{\alpha\mu} \mathcal{C}_q^{\alpha\nu} \right),
+V^{\mu\nu\alpha}_{\mathbf{k},\mathbf{q}}= \sum_{\gamma}\frac{\omega_k^{\alpha\gamma}}{\sqrt{\rho_\gamma}} \left( \frac{\mathbf{k}\cdot\mathbf{q}}{k} \delta_{\gamma\nu} \mathcal{C}_q^{\gamma\mu} + \frac{\mathbf{k}\cdot(\mathbf{k}-\mathbf{q})}{k} \delta_{\gamma\mu} \mathcal{C}^{\gamma\nu}_{|\mathbf{k}-\mathbf{q}|} \right),
 $$
 
 where $x_\alpha$ is the fraction of particles of species $\alpha$. The modified direct correlation function is defined as 
 
 $$
-\rho \mathcal{C}_q^{\alpha\beta} = \delta^{\alpha\beta} - \sum_{\gamma\sigma} (w_\infty^{-1})^{\alpha\gamma} w_q^{\gamma\sigma} (S_q^{-1})^{\sigma\beta}
+\mathcal{C}_q^{\alpha\beta} = \delta_{\alpha\beta} - \sum_{\gamma\sigma} (w_\infty^{-1})^{\alpha\gamma} w_q^{\gamma\sigma} (S_q^{-1})^{\sigma\beta}
 $$
 
-- note on implementation (why not Bengtzelius? performance?)
-- example code
+The multi-component kernel is not implemented using Bengtzelius' trick. If you want to use this kernel in odd dimensions greater than 3, you could consider implementing this trick (see also the passive multi-component MCT kernel) as it would yield a significant speedup of the program.
+
+- mention Tullio for speedup?
+
+#### Example code multi-component kernel
+
+- example code (use Vincent's data)
+
+
 
 
 ## References
 
 [1] G. Szamel (2016). “Theory for the dynamics of dense systems of athermal self-propelled particles,” Phys. Rev. E, vol. 93, p. 012603. http://dx.doi.org/10.1103/PhysRevE.93.012603.
 
-[2] V. Debets and L. M. C. Janssen (2023). “Mode-coupling theory for mixtures of athermal self-propelled particles,” J. Chem. Phys., vol. 159, p. 014502 https://doi.org/10.1063/5.0155142.
+[2] V.E. Debets and L.M.C. Janssen (2023). “Mode-coupling theory for mixtures of athermal self-propelled particles,” J. Chem. Phys., vol. 159, p. 014502 https://doi.org/10.1063/5.0155142.
