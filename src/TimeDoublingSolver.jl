@@ -574,7 +574,7 @@ function new_time_mapping!(equation::AbstractNoKernelEquation, solver::TimeDoubl
     F = temp_arrays.F_temp
     F_I = temp_arrays.F_I
     N = solver.N
-    if !solver.inplace 
+    if !temp_arrays.inplace 
         for j = 1:N
             F_I[j] = (F_I[2j] + F_I[2j-1]) / 2
             F[j] = F[2j]
