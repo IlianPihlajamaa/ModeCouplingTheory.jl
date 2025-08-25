@@ -1,6 +1,4 @@
-## Active Mode-Coupling Theory
-
-### Single-component active MCT
+## Single-component active MCT
 
 Next to standard mode-coupling theory (MCT), we also implemented a mode-coupling theory for athermal self-propelled (active) particles as derived in [1,2]. Athermal means that there is no thermal motion. The equation of motion is slightly different than for passive mode-coupling theory:
 
@@ -88,7 +86,7 @@ title!("Active mode-coupling kernel for k = $(k_array[n]), η = $(η)")
 ![image](images/activeMCT_sc_plot.png)
 
 
-### Tagged-particle kernel
+## Tagged-particle kernel
 
 The dynamics of a tagged active particle is governed by the following equation [1]:
 
@@ -104,15 +102,40 @@ $$
 
 The tagged-particle memory kernel requires the collective intermediate scattering function $F(k,t)$ as input. An example implementation of the tagged active memory kernel is given below.
 
-#### Example code tagged-particle kernel
-- add example code
+### Example code tagged-particle kernel
+
+```julia
+# run the code from the single-component active MCT example
+# for the constants and input data
+
+kernelA = ActiveMCTKernel(ρ, k_array, wk, w0, Sk, 3);
+problemA = MemoryEquation(α, β, γ, δ, Sk, zeros(Nk), kernelA);
+solA = solve(problemA);
+
+γT = @. k_array^2 * w0 / Sk;
+
+kernelT = TaggedActiveMCTKernel(ρ, k_array, wk, w0, Sk, solA, 3);
+problemT = MemoryEquation(α, β, γT, δ, ones(Nk), zeros(Nk), kernelT);
+solT = solve(problemT);
+
+n = 11;
+t = get_t(solA);
+Fc = get_F(solA,:,n);
+Ft = get_F(solT,:,n);
+
+plot(t, Ft, xaxis=(:log10), dpi=500, lc=:black, lw=1.7, labels="Tagged Fₛ(k=8.4,t)", framestyle=:box)
+plot!(t, Fc/Sk[n], labels="Collective F(k=8.4,t)", lw=1.7)
+xlabel!("time")
+ylabel!("F(k,t)")
+xlims!((1e-10,1e10))
+title!("Active tagged mode-coupling kernel")
+```
+![image](images/activeMCT_tag_plot.png)
 
 
-
-### Multi-component
+## Multi-component active MCT
 
 Active mode-coupling theory can also be solved for mixtures of particles. The multi-component equation reads [2]
-
 
 $$ \ddot{F}^{\alpha\beta}_k(t) + \frac{1}{\tau_p}\dot{F}^{\alpha\beta}_k(t) + \sum_{\gamma\delta} k^2 \omega^{\alpha\gamma}_k \left( S^{-1}_k \right)^{\gamma\delta} F^{\delta\beta}_k(t) + \sum_\gamma \int_0^t \text{d}t'\ M^{\alpha\gamma}_k(t-t') \dot{F}^{\gamma\beta}_k(t') = 0, $$
 
@@ -134,28 +157,77 @@ $$
 \mathcal{C}_q^{\alpha\beta} = \delta_{\alpha\beta} - \sum_{\gamma\sigma} (w_\infty^{-1})^{\alpha\gamma} w_q^{\gamma\sigma} (S_q^{-1})^{\sigma\beta}
 $$
 
-The multi-component kernel is not implemented using Bengtzelius' trick. If you want to use this kernel in odd dimensions greater than 3, you could consider implementing this trick (see also the passive multi-component MCT kernel), though [...].
+The multi-component kernel is not implemented using Bengtzelius' trick. If you want to use this kernel in odd dimensions greater than 3, you could consider implementing this trick (see also the passive multi-component MCT kernel). Instead, we used the package Tullio to improve the performance of the active kernel.
 
-- mention Tullio for speedup?
+### Example code multi-component kernel
 
-#### Example code multi-component kernel
+```julia
+using ModeCouplingTheory, Plots, DelimitedFiles, StaticArrays
 
-- add example code (use Vincent's data)
+Ns = 2         # number of species          
+Nk = 100       # number of k-values
+kmax = 40.0; dk = kmax/Nk;
+k_array = dk*(collect(1:Nk) .- 0.5);
+
+τₚ = 0.001      # persistence time
+x = [0.8, 0.2]  # number fractions
+ρ_all = 1.2     # (total) number density
+ρₐ = ρ_all * x  # partial densities
+
+# the input data can be found in the \test\ folder
+Sk_file = readdlm("dataVincent_Sk_Teff4.0_tau0.001.txt", ';')
+wk_file = readdlm("dataVincent_wk_Teff4.0_tau0.001.txt", ';')
+w0 = SMatrix{Ns,Ns}(readdlm("dataVincent_w0_Teff4.0_tau0.001.txt",';'));
+
+# rewrite data as a vector of Static Matrices for improved performance
+Sk = [@SMatrix zeros(Ns, Ns) for i=1:Nk]
+wk = [@SMatrix zeros(Ns, Ns) for i=1:Nk]
+
+for i=1:Nk
+    Sk[i] = Sk_file[i,:]
+    wk[i] = wk_file[i,:]
+end
+
+# define mode-coupling parameters
+α = 1.0; β = 1/τₚ;
+δ = @SMatrix zeros(Ns, Ns)
+γ = [@SMatrix zeros(Ns, Ns) for j in 1:length(k_array)]
+
+for i=1:Nk
+    γ[i] = k_array[i]^2 .* wk[i] * inv(Sk[i]);
+end
+
+kernel  = ActiveMultiComponentKernel(ρₐ, k_array, wk, w0, Sk, 3);
+problem = MemoryEquation(α, β, γ, δ, Sk, 0.0.*similar(Sk), kernel);
+solver  = TimeDoublingSolver(verbose=true, N=16, Δt = 10^(-6), tolerance=10^-8, max_iterations=10^8, t_max=10^5.0);
+sol     = @time solve(problem, solver);
+
+k_index = 19;
+t = get_t(sol);
+F_11 = get_F(sol, :, k_index, 1);
+F_12 = get_F(sol, :, k_index, 2);
+F_21 = get_F(sol, :, k_index, 3);
+F_22 = get_F(sol, :, k_index, 4);
+
+plot(t,  F_11/Sk[k_index][1], xaxis=(:log10, [10^-5, 10^2]), dpi=500, lc=1, lw=2, labels="F{AA}(k,t)", framestyle=:box)
+plot!(t, F_12/Sk[k_index][2], dpi=500, lc=:orange, lw=2, labels="F{AB}(k,t)")
+plot!(t, F_21/Sk[k_index][3], dpi=500, lc=4, lw=2, ls=:dash, labels="F{BA}(k,t)")
+plot!(t, F_22/Sk[k_index][4], dpi=500, lc=3, lw=2, labels="F{BB}(k,t)")
+xlabel!("time")
+title!("Active multicomponent mode-coupling kernel (k=7.4)")
+```
+![image](images/activeMCT_mc_plot.png)
 
 
-
-### Note on input data
+## Note on input data
 
 The input data is expected to be a vector of matrices, with the vector having length $N_k$ and the matrix having size $N_s$ x $N_s$.
 
-Note that all active MCT kernels have been implemented with the following convention for the (partial) static structure factor and direct correlation function, **which is different** from the convention used for the passive kernels in this package (the conventions used for the passive kernels are as described in [3]).
+Note that all active MCT kernels have been implemented with the following convention for the (partial) static structure factor and direct correlation function, *which is different* from the convention used for the passive kernels in this package (the definitions used in the passive kernels are described in [3]).
 
-$$
-S_k^{\alpha\beta} = \frac{1}{\sqrt{N_\alpha N_\beta}} \sum_{i=1}^{N_\alpha} \sum_{j=1}^{N_\beta} \braket{ e^{i\mathbf{k}\cdot(\mathbf{r}_j^\beta - \mathbf{r}_i^\alpha)}}
-$$
-$$
-C_{k,\text{passive}}^{\alpha\beta} = \delta_{\alpha\beta} - (S^{-1}_k)^{\alpha\beta}
-$$
+$$ S_k^{\alpha\beta} = \frac{1}{\sqrt{N_\alpha N_\beta}} \sum_{i=1}^{N_\alpha} \sum_{j=1}^{N_\beta} \braket{ e^{i\mathbf{k}\cdot(\mathbf{r}_j^\beta - \mathbf{r}_i^\alpha)}} $$
+
+$$ C_{k,\text{passive}}^{\alpha\beta} = \delta_{\alpha\beta} - (S^{-1}_k)^{\alpha\beta} $$
 
 
 ## References
