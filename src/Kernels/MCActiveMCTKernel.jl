@@ -1,11 +1,9 @@
-struct ActiveMultiComponentKernel{Fl,Ve,VM,V3,VJ,X} <: MemoryKernel
+struct ActiveMultiComponentKernel{Fl,Ve,VM,V3,VJ} <: MemoryKernel
     prefactor ::Fl
     k_array ::Ve
     wk ::VM
-    DCF ::VM
     V2 ::V3
     J ::VJ
-    ρ ::X
     wkinv ::VM
     F_arr::Array{Float64,3}
     M_arr::Array{Float64,3}
@@ -65,7 +63,7 @@ function ActiveMultiComponentKernel(ρₐ, k_array, wk, w0, Sk, dim = 3)
         J[l,j,i] = 2*p*q/((2*k)^(dim-2))*( (q+p-k)*(k+p-q)*(k+q-p)*(k+p+q) )^((dim-3)/2);
     end
 
-    return ActiveMultiComponentKernel(prefactor, k_array, wk, DCF, V2, J, ρₐ, inv.(wk),
+    return ActiveMultiComponentKernel(prefactor, k_array, wk, V2, J, inv.(wk),
                                        zeros(Float64, Ns, Ns, Nk), zeros(Float64, Ns, Ns, Nk), zeros(Float64, Ns, Ns))
 end
 
@@ -82,9 +80,9 @@ function evaluate_kernel!(out::Diagonal, kernel::ActiveMultiComponentKernel, F, 
     @assert size(wk) == size(F)
     @assert length(wk) == Nk
 
-    F_arr = kernel.F_arr # F_arr[μ, μ2, j] = F{μμ'}(q,t) for q=k_array[j]
-    M_arr = kernel.M_arr # M_arr[α, β, i] = M{αβ}(k_array[i],t) for k_array[i]
-    M_arr .= 0.0  # reset M_arr to zero
+    F_arr = kernel.F_arr  # F_arr[μ, μ2, j] = F{μμ'}(q,t) for q=k_array[j]
+    M_arr = kernel.M_arr  # M_arr[α, β, i] = M{αβ}(k_array[i],t) for k_array[i]
+    M_arr .= 0.0          # reset M_arr to zero
 
     for μ=1:Ns, μ2=1:Ns, j=1:Nk
         F_arr[μ, μ2, j] = F[j][μ, μ2]
@@ -102,7 +100,7 @@ function evaluate_kernel!(out::Diagonal, kernel::ActiveMultiComponentKernel, F, 
                 temp[α, β] += (M_arr[α, γ, i] * wkinv[i][γ, β])
             end
         end
-        out.diag[i] = SMatrix{Ns, Ns, Float64, Ns*Ns}(temp) * kernel.prefactor  # store the result in the diagonal of
+        out.diag[i] = SMatrix{Ns, Ns, Float64, Ns*Ns}(temp) * kernel.prefactor  # store the result in the diagonal
     end
 end
 
