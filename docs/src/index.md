@@ -41,7 +41,7 @@ in which α is a Float64,
          δ is a Float64,
   and K(t) is a SchematicF2Kernel{Float64}.
 ```
-and jula solver:
+and Julia solver:
 
 ```julia
 julia> solver = TimeDoublingSolver()
