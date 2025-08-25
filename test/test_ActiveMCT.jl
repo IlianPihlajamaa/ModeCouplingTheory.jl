@@ -1,28 +1,8 @@
-
-Nk = 50; kmax = 20.0; dk = kmax / Nk;
+Nk = 20; kmax = 20.0; dk = kmax / Nk;
 k_array = dk * (collect(1:Nk) .- 0.5);
-
-# same analytical functions as defined in test_MCT.jl
-function find_analytical_C_k(k, η)
-    A = -(1 - η)^-4 *(1 + 2η)^2
-    B = (1 - η)^-4*  6η*(1 + η/2)^2
-    D = -(1 - η)^-4 * 1/2 * η*(1 + 2η)^2
-    Cₖ = @. 4π/k^6 * 
-    (
-        24*D - 2*B * k^2 - (24*D - 2 * (B + 6*D) * k^2 + (A + B + D) * k^4) * cos(k)
-     + k * (-24*D + (A + 2*B + 4*D) * k^2) * sin(k)
-    )
-    return Cₖ
-end
-
-function find_analytical_S_k(k, η)
-        Cₖ = find_analytical_C_k(k, η)
-        ρ = 6/π * η
-        Sₖ = @. 1 + ρ*Cₖ / (1 - ρ*Cₖ)
-    return Sₖ
-end
-
 ρ = 0.51; m = 1.0; kbT = 1.0;
+
+# these are the same analytical functions as defined in test_MCT.jl
 Sk = find_analytical_S_k(k_array, ρ*π/6);
 wk = ones(Nk); w0 = 1.0;
 
@@ -77,7 +57,7 @@ ker_tag = TaggedModeCouplingKernel(ρ, kbT, m, k_array, Sk, sol, dims=3);
 prob_tag = MemoryEquation(α, β, γ2, 0.0, ones(Nk), zeros(Nk), ker_tag);
 sol_tag = solve(prob_tag);
 
-ker_tag_act = TaggedActiveMCTKernel(ρ, k_array, w0, wk, Sk, sol_act, 3);
+ker_tag_act = TaggedActiveMCTKernel(ρ, k_array, wk, w0, Sk, sol_act, 3);
 prob_tag_act = MemoryEquation(α, β, γ2, 0.0, ones(Nk), zeros(Nk), ker_tag_act);
 sol_tag_act = solve(prob_tag_act);
 
