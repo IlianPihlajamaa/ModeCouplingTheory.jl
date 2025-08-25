@@ -34,7 +34,7 @@ prob = MemoryEquation(α, β, γ, δ, Sk, 0.0.*similar(Sk), ker);
 sol = solve(prob, solver);
 
 # check interchangeability of indices
-@test get_F(sol,1,:,(1,2)) == get_F(sol,1,:,(2,1))                   # exactly symmetric at t=0.0
+@test get_F(sol,1,:,(1,2)) == get_F(sol,1,:,(2,1))           # exactly symmetric at t=0.0
 @test get_F(sol,:,:,(1,2)) ≈ get_F(sol,:,:,(2,1)) rtol=1e-5  # approximately symmetric at t=t_max
 
 
@@ -53,12 +53,6 @@ for i=1:Nk
     end
     Sk_2[i] = test ./ sum(Na);
 end
-
-plot(k_array, [Sk_0[i][1] for i=1:Nk])
-plot!(k_array, [Sk_2[i][1] for i=1:Nk])
-
-plot(k_array, [Sk_0[i][2] for i=1:Nk])
-plot!(k_array, [Sk_2[i][2] for i=1:Nk])
 
 wk_pass = [SMatrix{Ns,Ns}(1.0.*I(Ns)) for i=1:Nk];
 w0_pass = SMatrix{Ns,Ns}(1.0.*I(Ns));
@@ -79,11 +73,6 @@ sol2 = solve(prob2, solver);
 kerP = MultiComponentModeCouplingKernel(ρₐ, 1.0, ones(Ns), k_array, Sk_2);
 probP = MemoryEquation(0.0, 1.0, γ_pas2, δ, Sk_2, 0.0.*similar(Sk_2), kerP);
 solP = solve(probP, solver);
-
-# using Plots
-p = 10; sp = 2;
-plot(log10.(get_t(sol2)), get_F(sol2,:,p,sp)/Sk_0[p][sp], lw=1.5, lc=:black)
-plot!(log10.(get_t(solP)), get_F(solP,:,p,sp)/Sk_2[p][sp], lw=1.5, lc=:orange, ls=:dash)
 
 @test sum(sum(sum( get_F(sol2,:,1,1) / Sk_0[1][1] ))) ≈ sum(sum(sum( get_F(solP,:,1,1) / Sk_2[1][1] ))) rtol=1e-7
 @test sum(sum(sum( get_F(sol2,:,1,2) / Sk_0[1][2] ))) ≈ sum(sum(sum( get_F(solP,:,1,2) / Sk_2[1][2] ))) rtol=1e-7
