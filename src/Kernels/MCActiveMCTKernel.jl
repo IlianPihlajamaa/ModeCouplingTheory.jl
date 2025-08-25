@@ -41,11 +41,11 @@ function ActiveMultiComponentKernel(ρₐ, k_array, wk, w0, Sk, dim = 3)
     V2 = zeros(Nk, Nk, Nk, Ns, Ns, Ns);
     DCF = 0 .* similar(Sk);
 
-    for i=1:Nk
+    for i=1:Nk  # calculate direct correlation function
         DCF[i] = I(Ns) - inv(w0) * wk[i] * inv(Sk[i]);
     end
 
-    for i=1:Nk, j=1:Nk, l=abs(j-i)+1:min(i+j-1,Nk)
+    for i=1:Nk, j=1:Nk, l=abs(j-i)+1:min(i+j-1,Nk)  # calculate the vertices and Jacobian
         k = k_array[i]; q = k_array[j]; p = k_array[l];
        
         kdotq = (k^2 + q^2 - p^2)/(2*k);
@@ -82,7 +82,7 @@ function evaluate_kernel!(out::Diagonal, kernel::ActiveMultiComponentKernel, F, 
 
     F_arr = kernel.F_arr  # F_arr[μ, μ2, j] = F{μμ'}(q,t) for q=k_array[j]
     M_arr = kernel.M_arr  # M_arr[α, β, i] = M{αβ}(k_array[i],t) for k_array[i]
-    M_arr .= 0.0          # reset M_arr to zero
+    M_arr .= 0.0
 
     for μ=1:Ns, μ2=1:Ns, j=1:Nk
         F_arr[μ, μ2, j] = F[j][μ, μ2]
@@ -91,6 +91,7 @@ function evaluate_kernel!(out::Diagonal, kernel::ActiveMultiComponentKernel, F, 
     temp = kernel.temp
     temp .= 0.0
 
+    # evaluate the memory kernel
     @tullio grad=false M_arr[α, β, i] = V2[l,j,i,μ,ν,α] * V2[l,j,i,μ2,ν2,β] * F_arr[μ, μ2, j] * F_arr[ν, ν2, l] * J[l,j,i]
     
     for i in 1:Nk
@@ -100,7 +101,7 @@ function evaluate_kernel!(out::Diagonal, kernel::ActiveMultiComponentKernel, F, 
                 temp[α, β] += (M_arr[α, γ, i] * wkinv[i][γ, β])
             end
         end
-        out.diag[i] = SMatrix{Ns, Ns, Float64, Ns*Ns}(temp) * kernel.prefactor  # store the result in the diagonal
+        out.diag[i] = SMatrix{Ns, Ns, Float64, Ns*Ns}(temp) * kernel.prefactor
     end
 end
 

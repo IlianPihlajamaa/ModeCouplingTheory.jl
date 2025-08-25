@@ -1,4 +1,3 @@
-
 struct ActiveMCTKernel <: MemoryKernel
     k_array ::Vector{Float64}
     prefactor ::Float64
@@ -91,7 +90,7 @@ M(k,t) =  ρ w0 / ((2π)^dim ) ∫ dq  ( (k*p)/(2k) * c(p) )^2 F(q,t) Fs(k-q,t)
 * wk: steady-state velocity correlations ( w(k) ) - this depends on k
 * w0: local velocity correlations ( w(∞) ) - this is a constant
 * Sk: steady-state structure factor
-* Fsol: solution of the coherent mode-coupling kernel
+* Fsol: solution of the collective mode-coupling equation
 * dim: dimensionality of the problem (the default `dim=3`)
 """
 function TaggedActiveMCTKernel(ρ, k_array, wk, w0, Sk, Fsol, dim=3)

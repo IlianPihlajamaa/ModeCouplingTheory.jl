@@ -11,6 +11,7 @@ makedocs(
         "Kernels" => "Kernels.md",
         "Mode-Coupling Theory" => "MCT.md",
         "Self-Consistent Generalized Langevin Equation Theory" => "SCGLET.md",
+        "Active Mode-Coupling Theory" => "ActiveMCT.md",
         "Scope" => "Scope.md",
         "From Python" => "FromPython.md",
         "Internals" => "internals.md",
