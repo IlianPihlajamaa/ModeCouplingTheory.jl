@@ -4,7 +4,8 @@ include("Kernels/SchematicKernels.jl")
 include("Kernels/ModeCouplingKernels.jl")
 include("Kernels/MultiComponentKernels.jl")
 include("Kernels/SCGLEkernel.jl")
-
+include("Kernels/ActiveMCTKernel.jl")
+include("Kernels/MCActiveMCTKernel.jl")
 
 """
     evaluate_kernel!(out, kernel::MemoryKernel, F, t)

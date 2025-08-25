@@ -3,13 +3,14 @@
 Package to solve mode-coupling theory like equations
 """
 module ModeCouplingTheory
-using StaticArrays, SparseArrays, LinearAlgebra, Random, LoopVectorization, Dierckx, Printf, SpecialFunctions
+using StaticArrays, SparseArrays, LinearAlgebra, Random, LoopVectorization, Dierckx, Printf, SpecialFunctions, Tullio, Base.Threads
 import LinearSolve
 
 export solve, TimeDoublingSolver, EulerSolver
 export ModeCouplingKernel, MultiComponentModeCouplingKernel, ExponentiallyDecayingKernel, SchematicDiagonalKernel, SchematicF123Kernel, SchematicF1Kernel, SchematicF2Kernel, SchematicMatrixKernel
 export SjogrenKernel, TaggedSchematicF2Kernel, TaggedModeCouplingKernel, TaggedMultiComponentModeCouplingKernel
 export InterpolatingKernel, SCGLEKernel
+export ActiveMCTKernel, TaggedActiveMCTKernel, ActiveMultiComponentKernel
 export AbstractMemoryEquation, MemoryEquation
 export MemoryKernel, evaluate_kernel, evaluate_kernel!
 export find_relaxation_time, solve_steady_state

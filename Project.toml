@@ -13,6 +13,7 @@ Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
+Tullio = "bc48ee85-29a4-5162-ae0b-a64e1601d4bc"
 
 [compat]
 Dierckx = "0.5"
@@ -20,4 +21,5 @@ LinearSolve = "2"
 LoopVectorization = "0.12.160"
 SpecialFunctions = "2"
 StaticArrays = "1.5"
+Tullio = "0.3"
 julia = "1.9"
