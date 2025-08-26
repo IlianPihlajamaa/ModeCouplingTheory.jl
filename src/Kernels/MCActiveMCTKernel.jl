@@ -39,7 +39,7 @@ function ActiveMultiComponentKernel(ρₐ, k_array, wk, w0, Sk, dim = 3)
 
     J = zeros(Nk, Nk, Nk);
     V2 = zeros(Nk, Nk, Nk, Ns, Ns, Ns);
-    DCF = 0 .* similar(Sk);
+    DCF = zero(Sk);
 
     for i=1:Nk  # calculate direct correlation function
         DCF[i] = I(Ns) - inv(w0) * wk[i] * inv(Sk[i]);

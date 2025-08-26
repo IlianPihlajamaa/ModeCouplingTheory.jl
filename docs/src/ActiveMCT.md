@@ -89,15 +89,11 @@ title!("Active mode-coupling kernel for k = $(k_array[n]), η = $(η)")
 
 The dynamics of a tagged active particle is governed by the following equation [1]:
 
-$$
-\ddot{F}_s(k,t) + \frac{1}{\tau_p} \dot{F}_s(k,t) + w(\infty) k^2 F_s(k,t) + \int_0^t \text{d}t'\ M_s(k,t-t') \dot{F}_s(k,t') = 0,
-$$
+$$\ddot{F}_s(k,t) + \frac{1}{\tau_p} \dot{F}_s(k,t) + w(\infty) k^2 F_s(k,t) + \int_0^t \text{d}t'\ M_s(k,t-t') \dot{F}_s(k,t') = 0,$$
 
 where $F_s(k,t)$ is the self-intermediate scattering function. The memory kernel is given by
 
-$$
-M_s(k,t) = \frac{\rho\, w(\infty)}{(2\pi)^d} \int \text{d}\mathbf{q}\ \left( \frac{\mathbf{k}\cdot(\mathbf{k} - \mathbf{q})}{k} \right)^2 F_s(q,t) F(|\mathbf{k}-\mathbf{q}|,t).
-$$
+$$M_s(k,t) = \frac{\rho\, w(\infty)}{(2\pi)^d} \int \text{d}\mathbf{q}\ \left( \frac{\mathbf{k}\cdot(\mathbf{k} - \mathbf{q})}{k} \right)^2 F_s(q,t) F(|\mathbf{k}-\mathbf{q}|,t).$$
 
 The tagged-particle memory kernel requires the collective intermediate scattering function $F(k,t)$ as input. An example implementation of the tagged active memory kernel is given below.
 
@@ -122,7 +118,7 @@ t  = get_t(solA);
 Fc = get_F(solA,:,n);
 Ft = get_F(solT,:,n);
 
-plot(t, Ft, xaxis=(:log10), dpi=500, lc=:black, lw=1.7, labels="Tagged Fₛ(k=8.4,t)", framestyle=:box)
+plot(t, Ft, xaxis=(:log10, [10^-4, :auto]), dpi=500, lc=:black, lw=1.7, labels="Tagged Fₛ(k=8.4,t)", framestyle=:box)
 plot!(t, Fc/Sk[n], labels="Collective F(k=8.4,t)", lw=1.7)
 xlabel!("time")
 ylabel!("F(k,t)")
@@ -136,27 +132,21 @@ title!("Active tagged mode-coupling kernel")
 
 Active mode-coupling theory can also be solved for mixtures of particles. The multi-component equation reads [2]
 
-$$ \ddot{F}^{\alpha\beta}_k(t) + \frac{1}{\tau_p}\dot{F}^{\alpha\beta}_k(t) + \sum_{\gamma\delta} k^2 \omega^{\alpha\gamma}_k \left( S^{-1}_k \right)^{\gamma\delta} F^{\delta\beta}_k(t) + \sum_\gamma \int_0^t \text{d}t'\ M^{\alpha\gamma}_k(t-t') \dot{F}^{\gamma\beta}_k(t') = 0, $$
+$$\ddot{F}^{\alpha\beta}_k(t) + \frac{1}{\tau_p}\dot{F}^{\alpha\beta}_k(t) + \sum_{\gamma\delta} k^2 \omega^{\alpha\gamma}_k \left( S^{-1}_k \right)^{\gamma\delta} F^{\delta\beta}_k(t) + \sum_\gamma \int_0^t \text{d}t'\ M^{\alpha\gamma}_k(t-t') \dot{F}^{\gamma\beta}_k(t') = 0,$$
 
 where Greek letters denote particle species. The input now consists of partial structure factors ( $S_k^{\alpha\beta}$ ) and partial velocity correlations ( $\omega_k^{\alpha\beta}$ and $\omega_\infty^{\alpha\beta}$ ). The multicomponent memory kernel can be written as
 
-$$
-M^{\alpha\beta}_k(t) = \frac{1}{2 (2\pi)^d} \sum_{\substack{\mu\, \nu \\ \mu'\nu'}}\sum_{\lambda} \int \text{d}\mathbf{q}\ F^{\mu\mu'}_q(t) F^{\nu\nu'}_{|\mathbf{k}-\mathbf{q}|}(t) V^{\mu\nu\alpha}_{\mathbf{k},\mathbf{q}} V^{\mu'\nu'\lambda}_{\mathbf{k},\mathbf{q}} (\omega^{-1}_k)^{\lambda\beta}.
-$$
+$$M^{\alpha\beta}_k(t) = \frac{1}{2 (2\pi)^d} \sum_{\substack{\mu\, \nu \\ \mu'\nu'}}\sum_{\lambda} \int \text{d}\mathbf{q}\ F^{\mu\mu'}_q(t) F^{\nu\nu'}_{|\mathbf{k}-\mathbf{q}|}(t) V^{\mu\nu\alpha}_{\mathbf{k},\mathbf{q}} V^{\mu'\nu'\lambda}_{\mathbf{k},\mathbf{q}} (\omega^{-1}_k)^{\lambda\beta}.$$
 
 The multicomponent vertices are defined as
 
-$$
-V^{\mu\nu\alpha}_{\mathbf{k},\mathbf{q}}= \sum_{\gamma}\frac{\omega_k^{\alpha\gamma}}{\sqrt{\rho_\gamma}} \left( \frac{\mathbf{k}\cdot\mathbf{q}}{k} \delta_{\gamma\nu} \mathcal{C}_q^{\gamma\mu} + \frac{\mathbf{k}\cdot(\mathbf{k}-\mathbf{q})}{k} \delta_{\gamma\mu} \mathcal{C}^{\gamma\nu}_{|\mathbf{k}-\mathbf{q}|} \right),
-$$
+$$V^{\mu\nu\alpha}_{\mathbf{k},\mathbf{q}}= \sum_{\gamma}\frac{\omega_k^{\alpha\gamma}}{\sqrt{\rho_\gamma}} \left( \frac{\mathbf{k}\cdot\mathbf{q}}{k} \delta_{\gamma\nu} \mathcal{C}_q^{\gamma\mu} + \frac{\mathbf{k}\cdot(\mathbf{k}-\mathbf{q})}{k} \delta_{\gamma\mu} \mathcal{C}^{\gamma\nu}_{|\mathbf{k}-\mathbf{q}|} \right),$$
 
-where $x_\alpha$ is the fraction of particles of species $\alpha$ and $\delta_{\alpha\beta}$ is a Kronecker delta. The modified direct correlation function is defined as 
+where $x_\alpha$ is the fraction of particles of species $\alpha$ and $\delta_{\alpha\beta}$ is a Kronecker delta. The multi-component modified direct correlation function is defined as 
 
-$$
-\mathcal{C}_q^{\alpha\beta} = \delta_{\alpha\beta} - \sum_{\gamma\sigma} (w_\infty^{-1})^{\alpha\gamma} w_q^{\gamma\sigma} (S_q^{-1})^{\sigma\beta}
-$$
+$$\mathcal{C}_q^{\alpha\beta} = \delta_{\alpha\beta} - \sum_{\gamma\sigma} (w_\infty^{-1})^{\alpha\gamma} w_q^{\gamma\sigma} (S_q^{-1})^{\sigma\beta}$$
 
-The multi-component kernel is not implemented using Bengtzelius' trick. Instead, we used the package Tullio to improve the performance of the active kernel. If you want to use an active kernel in odd dimensions greater than 3, you could consider implementing this trick (see also the passive multi-component MCT kernel) for better performance.
+The multi-component kernel is also not implemented using Bengtzelius' trick. Instead, we used the package Tullio to improve the performance of the active kernel. If you want to use an active kernel in odd dimensions greater than 3, you could consider implementing this trick (see also the passive multi-component MCT kernel) for better performance.
 
 ### Example code multi-component kernel
 
@@ -196,7 +186,7 @@ for i=1:Nk
 end
 
 kernel  = ActiveMultiComponentKernel(ρₐ, k_array, wk, w0, Sk, 3);
-problem = MemoryEquation(α, β, γ, δ, Sk, 0.0.*similar(Sk), kernel);
+problem = MemoryEquation(α, β, γ, δ, Sk, zero(Sk), kernel);
 solver  = TimeDoublingSolver(verbose=true, N=16, Δt = 10^(-6), tolerance=10^-8, max_iterations=10^8, t_max=10^5.0);
 sol     = @time solve(problem, solver);
 
@@ -223,9 +213,9 @@ The input data (consisting of $S_k^{\alpha\beta}$ and $\omega_k^{\alpha\beta}$) 
 
 Note that the multicomponent active MCT kernel has been implemented with the following convention for the partial structure factor and direct correlation function, **which is different** from the convention used for the passive kernels in this package:
 
-$$ S_k^{\alpha\beta} = \frac{1}{\sqrt{N_\alpha N_\beta}} \sum_{i=1}^{N_\alpha} \sum_{j=1}^{N_\beta} \braket{ e^{i\mathbf{k}\cdot(\mathbf{r}_j^\beta - \mathbf{r}_i^\alpha)}} $$
+$$S_k^{\alpha\beta} = \frac{1}{\sqrt{N_\alpha N_\beta}} \sum_{i=1}^{N_\alpha} \sum_{j=1}^{N_\beta} \braket{ e^{i\mathbf{k}\cdot(\mathbf{r}_j^\beta - \mathbf{r}_i^\alpha)}}$$
 
-$$ C_{k}^{\alpha\beta} = \delta_{\alpha\beta} - (S^{-1}_k)^{\alpha\beta} $$
+$$C_{k}^{\alpha\beta} = \delta_{\alpha\beta} - (S^{-1}_k)^{\alpha\beta}$$
 
 The definitions used in the passive kernels are given in [3]. The structure factor can be converted to the right format by simply changing the (species-dependent) prefactor.
 
