@@ -30,7 +30,7 @@ end
 solver = TimeDoublingSolver(verbose=false, N=16, Δt = 10^(-6), tolerance=10^-8, max_iterations=10^6, t_max=10.0);
 
 ker = ActiveMultiComponentKernel(ρₐ, k_array, wk, w0, Sk, 3);
-prob = MemoryEquation(α, β, γ, δ, Sk, 0.0.*similar(Sk), ker);
+prob = MemoryEquation(α, β, γ, δ, Sk, zero(Sk), ker);
 sol = solve(prob, solver);
 
 # check interchangeability of indices
@@ -67,11 +67,11 @@ end
 γ_pas2 = J .* inv.(Sk_2);
 
 ker2 = ActiveMultiComponentKernel(ρₐ, k_array, wk_pass, w0_pass, Sk_0, 3);
-prob2 = MemoryEquation(0.0, 1.0, γ_pass, δ, Sk_0, 0.0.*similar(Sk_0), ker2);
+prob2 = MemoryEquation(0.0, 1.0, γ_pass, δ, Sk_0, zero(Sk_0), ker2);
 sol2 = solve(prob2, solver);
 
 kerP = MultiComponentModeCouplingKernel(ρₐ, 1.0, ones(Ns), k_array, Sk_2);
-probP = MemoryEquation(0.0, 1.0, γ_pas2, δ, Sk_2, 0.0.*similar(Sk_2), kerP);
+probP = MemoryEquation(0.0, 1.0, γ_pas2, δ, Sk_2, zero(Sk_2), kerP);
 solP = solve(probP, solver);
 
 @test find_relaxation_time(get_t(sol2), get_F(sol2,:,5,1)) ≈ find_relaxation_time(get_t(solP), get_F(solP,:,5,1)) rtol=1e-5
@@ -109,11 +109,11 @@ for i=1:Nk
 end
 
 ker3 = ActiveMultiComponentKernel(ρₐ, k_array, wk, w0, Sk, 3);
-prob3 = MemoryEquation(α, β, γ, δ, copy(Sk), 0.0.*similar(Sk), ker3);
+prob3 = MemoryEquation(α, β, γ, δ, copy(Sk), zero(Sk), ker3);
 sol3 = solve(prob3, solver);
 
 ker_sc = ActiveMCTKernel(ρ_all[1], k_array, wk_sc, w0[1], Sk_sc, 3);
-prob_sc = MemoryEquation(α, β, γ_sc, 0.0, copy(Sk_sc), 0.0.*similar(Sk_sc), ker_sc);
+prob_sc = MemoryEquation(α, β, γ_sc, 0.0, copy(Sk_sc), zero(Sk_sc), ker_sc);
 sol_sc = solve(prob_sc, solver);
 
 @test get_F(sol3,:,15,1) ≈ get_F(sol_sc,:,15) rtol=1e-10
